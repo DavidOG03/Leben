@@ -35,5 +35,5 @@ export interface ConsistencyScoreProps {
   habits: HabitCard[];
   consistencyScore: number;
   checkedCount: number;
-  books: BookFormData;
+  books: Book[];
 }
