@@ -1,0 +1,8 @@
+{
+  "/goals/page": "app/goals/page.js",
+  "/page": "app/page.js",
+  "/habits/page": "app/habits/page.js",
+  "/ai/page": "app/ai/page.js",
+  "/analytics/page": "app/analytics/page.js",
+  "/settings/page": "app/settings/page.js"
+}
