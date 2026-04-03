@@ -3,7 +3,7 @@
 import { useState } from "react";
 import TaskList from "./TaskList";
 import WeeklyProductivity from "./WeeklyProductivity";
-import SmartSuggestion from "./SmartSuggestion";
+import SmartSuggestion from "../tasks/SmartSuggestion";
 
 export default function TasksMainPanel() {
   const [view, setView] = useState<"list" | "kanban">("list");
@@ -18,7 +18,11 @@ export default function TasksMainPanel() {
         <div>
           <h1
             className="text-white font-bold"
-            style={{ fontSize: "32px", letterSpacing: "-0.025em", lineHeight: 1.1 }}
+            style={{
+              fontSize: "32px",
+              letterSpacing: "-0.025em",
+              lineHeight: 1.1,
+            }}
           >
             Daily Tasks
           </h1>
@@ -46,12 +50,33 @@ export default function TasksMainPanel() {
             >
               {v === "list" ? (
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M1 3h10M1 6h10M1 9h10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                  <path
+                    d="M1 3h10M1 6h10M1 9h10"
+                    stroke="currentColor"
+                    strokeWidth="1.3"
+                    strokeLinecap="round"
+                  />
                 </svg>
               ) : (
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <rect x="1" y="1" width="4" height="10" rx="1" stroke="currentColor" strokeWidth="1.3" />
-                  <rect x="7" y="1" width="4" height="10" rx="1" stroke="currentColor" strokeWidth="1.3" />
+                  <rect
+                    x="1"
+                    y="1"
+                    width="4"
+                    height="10"
+                    rx="1"
+                    stroke="currentColor"
+                    strokeWidth="1.3"
+                  />
+                  <rect
+                    x="7"
+                    y="1"
+                    width="4"
+                    height="10"
+                    rx="1"
+                    stroke="currentColor"
+                    strokeWidth="1.3"
+                  />
                 </svg>
               )}
               {v === "list" ? "List" : "Kanban"}
@@ -68,7 +93,9 @@ export default function TasksMainPanel() {
           border: "1px solid #1e1e1e",
         }}
       >
-        <span style={{ fontSize: "13px", color: "#333" }}>Add a new task...</span>
+        <span style={{ fontSize: "13px", color: "#333" }}>
+          Add a new task...
+        </span>
         <button
           className="flex items-center justify-center rounded-lg transition-colors hover:bg-white/10"
           style={{
@@ -80,7 +107,12 @@ export default function TasksMainPanel() {
           }}
         >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path
+              d="M6 1v10M1 6h10"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
           </svg>
         </button>
       </div>
