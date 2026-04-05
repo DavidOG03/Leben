@@ -52,7 +52,7 @@ export function computeStatCards(
   habits: Habit[],
   goals: Goal[],
 ): StatCard[] {
-  const completedTasks = tasks.filter((t) => t.done).length;
+  const completedTasks = tasks.filter((t) => t.completed).length;
 
   // Habit consistency: across last 7 days, how many completions vs expected
   const last7 = lastNDays(7);
@@ -217,7 +217,7 @@ export function computeAIInsights(
 
   // Habit streak encouragement
   const bestHabit = habits
-    .map((h) => ({ name: h.name, total: (h.completedDates ?? []).length }))
+    .map((h) => ({ name: h.label, total: (h.completedDates ?? []).length }))
     .sort((a, b) => b.total - a.total)[0];
   if (bestHabit) {
     insights.push({

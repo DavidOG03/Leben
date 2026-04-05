@@ -14,7 +14,7 @@ export default function AIRightPanel() {
       {/* Today's Focus */}
       <div className="mb-6">
         <p className="uppercase tracking-widest mb-4" style={{ fontSize: "9px", color: "#3a3a3a", letterSpacing: "0.14em" }}>
-          Today's Focus
+          Today&apos;s Focus
         </p>
         <div className="space-y-3">
           {focusItems.map((item) => (

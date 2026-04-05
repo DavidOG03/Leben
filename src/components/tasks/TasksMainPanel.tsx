@@ -20,6 +20,7 @@ export default function TasksMainPanel() {
       completed: false,
       tag: "PERSONAL",
       date: new Date().toISOString().slice(0, 10),
+      createdAt: new Date().toISOString(),
     });
     setTask("");
   };

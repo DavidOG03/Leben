@@ -4,7 +4,6 @@ import { createGoalsSlice, GoalsSlice } from "./goalSlice";
 import { createBooksSlice, BooksSlice } from "./bookSlice";
 
 export interface Task {
-  done: unknown;
   id: string;
   title: string;
   completed: boolean; // use this, matches toggleTask in store
