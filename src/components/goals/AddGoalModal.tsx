@@ -29,6 +29,9 @@ export default function AddGoalModal({ onClose }: AddGoalModalProps) {
     deadline: "",
     icon: "🎯",
     milestones: ["", "", ""],
+    color: "#7c6af0",
+    targetValue: 100,
+    currentValue: 0,
   });
 
   const [errors, setErrors] = useState<
