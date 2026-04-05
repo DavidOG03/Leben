@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { HABIT_COLORS, HABIT_ICONS } from "@/constants/habits";
-import type { HabitCard } from "../../utils/habits.types";
+import type { Habit } from "@/store/useStore";
 
 interface AddHabitModalProps {
-  onAdd: (h: HabitCard) => void;
+  onAdd: (h: Habit) => void;
   onClose: () => void;
 }
 
@@ -26,7 +26,9 @@ export default function AddHabitModal({ onAdd, onClose }: AddHabitModalProps) {
       color,
       icon,
       checked: false,
-      history: [],
+      completedDates: [],
+      name: "",
+      pct: 0,
     });
     onClose();
   };

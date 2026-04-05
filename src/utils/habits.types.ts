@@ -1,29 +1,18 @@
-import { Book, BookFormData } from "@/store/bookSlice";
-
-export interface HabitCard {
-  id: string;
-  label: string;
-  sub: string;
-  streak: number;
-  longestStreak: number;
-  color: string;
-  icon: string;
-  checked: boolean;
-  history: string[];
-}
+import { Book } from "@/store/bookSlice";
+import { Habit } from "@/store/useStore";
 
 export type { Book } from "@/store/bookSlice";
 
 export interface DailyRitualProps {
   setShowAddHabit: (show: boolean) => void;
-  habits: HabitCard[];
+  habits: Habit[];
   onSelectedHabitId: (id: string | null) => void;
-  activeHabit: HabitCard | null;
+  activeHabit: Habit | null;
   toggleHabit: (id: string) => void;
 }
 
 export interface WeeklyProgressProps {
-  habits: HabitCard[];
+  habits: Habit[];
 }
 
 export interface ReadingTrackerProps {
@@ -32,7 +21,7 @@ export interface ReadingTrackerProps {
 }
 
 export interface ConsistencyScoreProps {
-  habits: HabitCard[];
+  habits: Habit[];
   consistencyScore: number;
   checkedCount: number;
   books: Book[];

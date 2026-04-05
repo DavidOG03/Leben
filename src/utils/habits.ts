@@ -1,5 +1,5 @@
 import { WEEKS, DAYS } from "@/constants/habits";
-import type { HabitCard } from "@/utils/habits.types";
+import { Habit } from "@/store/useStore";
 
 /** Returns today's date as an ISO YYYY-MM-DD string. */
 export const today = () => new Date().toISOString().slice(0, 10);
@@ -24,15 +24,15 @@ export function cellDate(w: number, d: number): string {
 }
 
 /** How many habits were completed on a given date. */
-export function countOnDate(habits: HabitCard[], dateStr: string): number {
-  return habits.filter((h) => h.history.includes(dateStr)).length;
+export function countOnDate(habits: Habit[], dateStr: string): number {
+  return habits.filter((h) => h.completedDates.includes(dateStr)).length;
 }
 
 /**
  * Builds a WEEKS×DAYS matrix where each cell is the ratio of habits
  * completed on that day (0 = none, 1 = all habits done).
  */
-export function buildAllHabitsMatrix(habits: HabitCard[]): number[][] {
+export function buildAllHabitsMatrix(habits: Habit[]): number[][] {
   const total = habits.length;
   return Array.from({ length: WEEKS }, (_, w) =>
     Array.from({ length: DAYS }, (_, d) => {

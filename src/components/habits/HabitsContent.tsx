@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { today, calcStreak, buildAllHabitsMatrix } from "@/utils/habits";
-import { useLebenStore } from "@/store/useStore";
-import type { HabitCard, Book } from "../../utils/habits.types";
+import { useLebenStore, Habit } from "@/store/useStore";
+import type { Book } from "../../utils/habits.types";
 import AddHabitModal from "./AddHabitModal";
 import AddBookModal from "./AddBookModal";
 import DailyRituals from "./DailyRituals";
@@ -25,17 +25,17 @@ export default function HabitsContent() {
   const [selectedHabitId, setSelectedHabitId] = useState<string | null>(null);
 
   /* habit actions */
-  const addHabit = (h: HabitCard) => {
+  const addHabit = (h: Habit) => {
     addHabitToStore(h);
     if (!selectedHabitId) setSelectedHabitId(h.id);
   };
 
   /* derived */
-  const checkedCount = habits.filter((h: HabitCard) => h.checked).length;
+  const checkedCount = habits.filter((h: Habit) => h.checked).length;
   const consistencyScore =
     habits.length > 0 ? Math.round((checkedCount / habits.length) * 100) : 0;
   const activeHabit =
-    habits.find((h: HabitCard) => h.id === selectedHabitId) ??
+    habits.find((h: Habit) => h.id === selectedHabitId) ??
     habits[0] ??
     null;
   // const allHabitsMatrix = buildAllHabitsMatrix(habits);

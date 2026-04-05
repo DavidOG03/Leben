@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useLebenStore } from "@/store/useStore";
-import { HabitCard } from "@/utils/habits.types";
+import { useLebenStore, Habit } from "@/store/useStore";
 
 export default function HabitStreaks() {
-  const habits = useLebenStore((s: any) => s.habits) as HabitCard[];
+  const habits = useLebenStore((s: any) => s.habits) as Habit[];
   const toggleHabit = useLebenStore((s: any) => s.toggleHabit);
 
   return (
@@ -44,7 +43,7 @@ export default function HabitStreaks() {
         </div>
       ) : (
         <div className="w-full flex-1 flex flex-col gap-4">
-          {habits.slice(0, 3).map((h: HabitCard) => (
+          {habits.slice(0, 3).map((h: Habit) => (
             <div key={h.id} className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div

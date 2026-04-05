@@ -40,6 +40,10 @@ export const createGoalsSlice: StateCreator<GoalsSlice, [], [], GoalsSlice> = (
       milestones,
       tasksLinked: 0,
       createdAt: Date.now(),
+      name: data.title,
+      color: data.color,
+      targetValue: data.targetValue,
+      currentValue: data.currentValue,
     };
 
     set((state) => ({ goals: [...state.goals, newGoal] }));
@@ -68,7 +72,9 @@ export const createGoalsSlice: StateCreator<GoalsSlice, [], [], GoalsSlice> = (
 
   updateGoal: (goalId: string, updates: Partial<Goal>) => {
     set((state) => ({
-      goals: state.goals.map((g) => (g.id === goalId ? { ...g, ...updates } : g)),
+      goals: state.goals.map((g) =>
+        g.id === goalId ? { ...g, ...updates } : g,
+      ),
     }));
   },
 

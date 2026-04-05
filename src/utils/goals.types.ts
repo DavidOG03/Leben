@@ -12,9 +12,16 @@ export interface Goal {
   milestones: Milestone[];
   tasksLinked: number;
   createdAt: number; // timestamp
+  name: string;
+  color: string;
+  targetValue: number;
+  currentValue: number;
 }
 
 export interface GoalFormData {
+  color: string;
+  targetValue: number;
+  currentValue: number;
   title: string;
   deadline: string;
   icon: string;

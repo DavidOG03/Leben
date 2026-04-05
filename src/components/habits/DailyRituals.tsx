@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { GhostCard } from "./GhostCards";
-import type { DailyRitualProps, HabitCard } from "../../utils/habits.types";
-import { useLebenStore } from "@/store/useStore";
+import { useLebenStore, Habit } from "@/store/useStore";
+import type { DailyRitualProps } from "../../utils/habits.types";
 
 const DailyRituals: React.FC<DailyRitualProps> = ({
   setShowAddHabit,
@@ -17,7 +17,7 @@ const DailyRituals: React.FC<DailyRitualProps> = ({
   const [editLabel, setEditLabel] = useState("");
   const [editSub, setEditSub] = useState("");
 
-  const startEdit = (h: HabitCard) => {
+  const startEdit = (h: Habit) => {
     setEditingHabitId(h.id);
     setEditLabel(h.label);
     setEditSub(h.sub);

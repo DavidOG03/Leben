@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useLebenStore } from "@/store/useStore";
 import { deriveGoalStats, Goal, Milestone } from "@/utils/goals.types";
+import { useRouter } from "next/navigation";
 
 export default function GoalProgress() {
   const goals = useLebenStore((s: any) => s.goals) as Goal[];
   const toggleMilestone = useLebenStore((s: any) => s.toggleMilestone);
 
+  const router = useRouter();
   return (
     <div
       className="rounded-2xl p-6 flex flex-col"
@@ -17,7 +19,10 @@ export default function GoalProgress() {
         minHeight: "200px",
       }}
     >
-      <h3 className="font-semibold text-white mb-5" style={{ fontSize: "15px" }}>
+      <h3
+        className="font-semibold text-white mb-5"
+        style={{ fontSize: "15px" }}
+      >
         Goal Progress
       </h3>
 
@@ -27,7 +32,12 @@ export default function GoalProgress() {
           <Link
             href="/goals"
             className="px-4 py-1.5 rounded-lg transition-opacity hover:opacity-80"
-            style={{ fontSize: "11px", color: "#666", border: "1px solid #222", textDecoration: "none" }}
+            style={{
+              fontSize: "11px",
+              color: "#666",
+              border: "1px solid #222",
+              textDecoration: "none",
+            }}
           >
             Create a goal
           </Link>
@@ -41,11 +51,16 @@ export default function GoalProgress() {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span style={{ fontSize: "14px" }}>{g.icon}</span>
-                    <span className="font-medium text-white truncate" style={{ fontSize: "13px", maxWidth: "120px" }}>
+                    <span
+                      className="font-medium text-white truncate"
+                      style={{ fontSize: "13px", maxWidth: "120px" }}
+                    >
                       {g.title}
                     </span>
                   </div>
-                  <span style={{ fontSize: "11px", color: "#888", fontWeight: 500 }}>
+                  <span
+                    style={{ fontSize: "11px", color: "#888", fontWeight: 500 }}
+                  >
                     {progress}%
                   </span>
                 </div>
@@ -63,7 +78,7 @@ export default function GoalProgress() {
                 </div>
                 {/* Milestones toggles (limit to first 2 active or pending) */}
                 <div className="space-y-1.5">
-                  {g.milestones.slice(0, 2).map((m: Milestone) => (
+                  {g.milestones.slice(0, 3).map((m: Milestone) => (
                     <button
                       key={m.id}
                       onClick={() => toggleMilestone(g.id, m.id)}
@@ -74,12 +89,21 @@ export default function GoalProgress() {
                         style={{
                           width: "14px",
                           height: "14px",
-                          backgroundColor: m.done ? "rgba(124,106,240,0.2)" : "transparent",
-                          border: m.done ? "1px solid #7c6af0" : "1px solid #333",
+                          backgroundColor: m.done
+                            ? "rgba(124,106,240,0.2)"
+                            : "transparent",
+                          border: m.done
+                            ? "1px solid #7c6af0"
+                            : "1px solid #333",
                         }}
                       >
                         {m.done && (
-                          <svg width="7" height="7" viewBox="0 0 8 8" fill="none">
+                          <svg
+                            width="7"
+                            height="7"
+                            viewBox="0 0 8 8"
+                            fill="none"
+                          >
                             <path
                               d="M1.5 4l1.8 1.8L6.5 2"
                               stroke="#7c6af0"
@@ -90,11 +114,33 @@ export default function GoalProgress() {
                           </svg>
                         )}
                       </div>
-                      <span className="truncate" style={{ fontSize: "11px", color: m.done ? "#888" : "#666" }}>
+                      <span
+                        className="truncate"
+                        style={{
+                          fontSize: "11px",
+                          color: m.done ? "#888" : "#666",
+                        }}
+                      >
                         {m.label}
                       </span>
                     </button>
                   ))}
+                  <button
+                    className="flex items-center gap-2 w-full text-left transition-colors hover:opacity-80"
+                    onClick={() => {
+                      router.push("/goals");
+                    }}
+                  >
+                    <span
+                      className="truncate"
+                      style={{
+                        fontSize: "11px",
+                        color: "#666",
+                      }}
+                    >
+                      {g.milestones.length - 2} more
+                    </span>
+                  </button>
                 </div>
               </div>
             );
@@ -104,7 +150,11 @@ export default function GoalProgress() {
               <Link
                 href="/goals"
                 className="transition-opacity hover:opacity-80"
-                style={{ fontSize: "11px", color: "#666", textDecoration: "none" }}
+                style={{
+                  fontSize: "11px",
+                  color: "#666",
+                  textDecoration: "none",
+                }}
               >
                 See all {goals.length} goals
               </Link>

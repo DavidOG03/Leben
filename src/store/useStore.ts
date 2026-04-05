@@ -3,24 +3,35 @@ import { persist } from "zustand/middleware";
 import { createGoalsSlice, GoalsSlice } from "./goalSlice";
 import { createBooksSlice, BooksSlice } from "./bookSlice";
 
-interface Task {
+export interface Task {
+  done: unknown;
   id: string;
   title: string;
-  completed: boolean;
+  completed: boolean; // use this, matches toggleTask in store
   tag: "WORK" | "PERSONAL";
   date: string;
+  createdAt: string;
+  completedAt?: string; // needed by analytics to group by day
 }
 
 export interface Habit {
   id: string;
+  name: string;
   label: string;
+  sub: string;
+  icon: string;
   streak: number;
+  longestStreak: number;
   checked: boolean;
+  color: string;
+  pct: number;
+  completedDates: string[];
 }
 
 interface TasksHabitsSlice {
   tasks: Task[];
   habits: Habit[];
+  addHabit: (habit: Habit) => void;
   toggleTask: (id: string) => void;
   toggleHabit: (id: string) => void;
   addTask: (task: Task) => void;
@@ -47,18 +58,38 @@ export const useLebenStore = create<LebenState>()(
 
       toggleHabit: (id) =>
         set((state) => ({
-          habits: state.habits.map((h: any) => {
-            if (h.id === id) {
-              const newChecked = !h.checked;
-              const newStreak = newChecked ? h.streak + 1 : Math.max(0, h.streak - 1);
-              const newLongest = newStreak > (h.longestStreak || 0) ? newStreak : (h.longestStreak || 0);
-              return { ...h, checked: newChecked, streak: newStreak, longestStreak: newLongest };
-            }
-            return h;
+          habits: state.habits.map((h) => {
+            if (h.id !== id) return h;
+
+            const today = new Date().toISOString().split("T")[0];
+            const dates = h.completedDates ?? [];
+            const alreadyDone = dates.includes(today);
+
+            const newChecked = !h.checked;
+            const newStreak = newChecked
+              ? h.streak + 1
+              : Math.max(0, h.streak - 1);
+            const newLongest =
+              newStreak > (h.longestStreak || 0)
+                ? newStreak
+                : h.longestStreak || 0;
+
+            return {
+              ...h,
+              checked: newChecked,
+              streak: newStreak,
+              longestStreak: newLongest,
+              completedDates: alreadyDone
+                ? dates.filter((d) => d !== today)
+                : [...dates, today],
+            };
           }),
         })),
 
       addTask: (task) => set((state) => ({ tasks: [...state.tasks, task] })),
+
+      addHabit: (habit) =>
+        set((state) => ({ habits: [...state.habits, habit] })),
 
       deleteTask: (id) =>
         set((state) => ({ tasks: state.tasks.filter((t) => t.id !== id) })),

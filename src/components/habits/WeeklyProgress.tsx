@@ -1,5 +1,6 @@
 import React from "react";
-import { HabitCard, WeeklyProgressProps } from "../../utils/habits.types";
+import { Habit } from "@/store/useStore";
+import { WeeklyProgressProps } from "../../utils/habits.types";
 
 const WeeklyProgress: React.FC<WeeklyProgressProps> = ({
   habits,
@@ -92,7 +93,7 @@ const WeeklyProgress: React.FC<WeeklyProgressProps> = ({
                 >
                   {Math.max(
                     0,
-                    ...habits.map((h: HabitCard) => h.longestStreak),
+                    ...habits.map((h: Habit) => h.longestStreak),
                   )}{" "}
                   days
                 </span>

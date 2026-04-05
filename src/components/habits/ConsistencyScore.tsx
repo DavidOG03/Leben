@@ -1,9 +1,7 @@
 import React from "react";
-import {
-  Book,
-  ConsistencyScoreProps,
-  HabitCard,
-} from "../../utils/habits.types";
+import { Book } from "@/store/bookSlice";
+import { Habit } from "@/store/useStore";
+import type { ConsistencyScoreProps } from "../../utils/habits.types";
 
 const ConsistencyScore: React.FC<ConsistencyScoreProps> = ({
   habits,
@@ -96,7 +94,7 @@ const ConsistencyScore: React.FC<ConsistencyScoreProps> = ({
               {[
                 {
                   label: "BEST STREAK",
-                  val: `${Math.max(0, ...habits.map((h: HabitCard) => h.longestStreak))}d`,
+                  val: `${Math.max(0, ...habits.map((h: Habit) => h.longestStreak))}d`,
                 },
                 { label: "TOTAL HABITS", val: `${habits.length}` },
                 {
