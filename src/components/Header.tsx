@@ -2,9 +2,18 @@
 
 import { BellIcon, GearIcon, SearchIcon } from "../constants/Icons";
 
+interface HeaderProps {
+  title?: React.ReactNode;
+  subtitle?: string;
+}
 
-
-export default function Header() {
+export default function Header({ title, subtitle }: HeaderProps) {
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 18) return "Good afternoon";
+    return "Good evening";
+  };
   return (
     <header
       className="flex items-center justify-between px-8 py-5"
@@ -14,20 +23,57 @@ export default function Header() {
         height: "72px",
       }}
     >
-      {/* Left: Greeting */}
+      {/* Left: Greeting or Custom Title */}
       <div>
-        <h1
-          className="text-white font-semibold"
-          style={{ fontSize: "20px", letterSpacing: "-0.01em", lineHeight: 1.2 }}
-        >
-          Good morning, David
-        </h1>
-        <p
-          className="uppercase tracking-widest mt-0.5"
-          style={{ fontSize: "10px", color: "#555555", letterSpacing: "0.12em" }}
-        >
-          Tuesday, Oct 24
-        </p>
+        {title ? (
+          <div className="flex flex-col">
+            <h1
+              className="text-white font-semibold"
+              style={{
+                fontSize: "18px",
+                letterSpacing: "-0.01em",
+                lineHeight: 1.2,
+              }}
+            >
+              {title}
+            </h1>
+            {subtitle && (
+              <p
+                className="uppercase tracking-widest mt-0.5"
+                style={{
+                  fontSize: "9px",
+                  color: "#555555",
+                  letterSpacing: "0.12em",
+                }}
+              >
+                {subtitle}
+              </p>
+            )}
+          </div>
+        ) : (
+          <>
+            <h1
+              className="text-white font-semibold"
+              style={{
+                fontSize: "20px",
+                letterSpacing: "-0.01em",
+                lineHeight: 1.2,
+              }}
+            >
+              {getGreeting()}, David
+            </h1>
+            <p
+              className="uppercase tracking-widest mt-0.5"
+              style={{
+                fontSize: "10px",
+                color: "#555555",
+                letterSpacing: "0.12em",
+              }}
+            >
+              Tuesday, Oct 24
+            </p>
+          </>
+        )}
       </div>
 
       {/* Right: Search + icons */}
@@ -44,7 +90,9 @@ export default function Header() {
           <span style={{ color: "#444444" }}>
             <SearchIcon />
           </span>
-          <span style={{ fontSize: "13px", color: "#444444" }}>Search anything...</span>
+          <span style={{ fontSize: "13px", color: "#444444" }}>
+            Search tasks...
+          </span>
         </div>
 
         {/* Icon buttons */}
@@ -71,7 +119,6 @@ export default function Header() {
             border: "1.5px solid #333",
           }}
         >
-          {/* Bust silhouette placeholder matching the design */}
           <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
             <circle cx="11" cy="8" r="4" fill="#888" />
             <path d="M3 20c0-4.4 3.6-8 8-8s8 3.6 8 8" fill="#888" />

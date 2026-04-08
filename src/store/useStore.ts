@@ -6,11 +6,15 @@ import { createBooksSlice, BooksSlice } from "./bookSlice";
 export interface Task {
   id: string;
   title: string;
-  completed: boolean; // use this, matches toggleTask in store
+  completed: boolean;
   tag: "WORK" | "PERSONAL";
   date: string;
   createdAt: string;
-  completedAt?: string; // needed by analytics to group by day
+  completedAt?: string;
+
+  // Added for planner + AI
+  priority?: "high" | "medium" | "low"; // optional so existing tasks don't break
+  category?: string; // optional free-text label e.g. "Engineering"
 }
 
 export interface Habit {
@@ -27,6 +31,17 @@ export interface Habit {
   completedDates: string[];
 }
 
+export interface ScheduleItem {
+  id: string;
+  start: string;
+  end: string;
+  title: string;
+  description: string;
+  tag: string;
+  priority: "low" | "medium" | "high";
+  status: "pending" | "completed";
+}
+
 interface TasksHabitsSlice {
   tasks: Task[];
   habits: Habit[];
@@ -37,6 +52,8 @@ interface TasksHabitsSlice {
   deleteTask: (id: string) => void;
   removeHabit: (id: string) => void;
   updateHabit: (id: string, updates: Partial<Habit>) => void;
+  schedule: ScheduleItem[];
+  setSchedule: (schedule: ScheduleItem[]) => void;
 }
 
 export type LebenState = TasksHabitsSlice & GoalsSlice & BooksSlice;
@@ -102,6 +119,9 @@ export const useLebenStore = create<LebenState>()(
             h.id === id ? { ...h, ...updates } : h,
           ),
         })),
+
+      schedule: [],
+      setSchedule: (schedule) => set({ schedule }),
 
       // --- Goals slice ---
       ...createGoalsSlice(set, get, store),
