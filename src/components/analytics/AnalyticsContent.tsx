@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useLebenStore } from "@/store/useStore";
 import { buildAnalyticsData } from "@/utils/analytics.utils";
+import { ProductivityScore } from "./ProductivityScore";
 
 import StatCards from "./StatCard";
 import WeeklyActivityChart from "./WeeklyActivities";
@@ -10,7 +11,6 @@ import WeeklyActivityChart from "./WeeklyActivities";
 import HabitBreakdown from "./HabitBreakdown";
 import GoalBreakdown from "./GoalBreakdown";
 import AIInsights from "./AiInsights";
-import { ProductivityScore } from "./ProductivityScore";
 
 /**
  * AnalyticsContent is the only component that knows about the Zustand store.
@@ -33,7 +33,7 @@ export default function AnalyticsContent() {
 
   const analytics = useMemo(
     () => buildAnalyticsData(tasks, habits, goals),
-    [tasks, habits, goals],
+    [tasks, habits, goals]
   );
 
   return (
@@ -45,10 +45,7 @@ export default function AnalyticsContent() {
       <StatCards cards={analytics.statCards} />
 
       {/* Row 2: activity chart + productivity score */}
-      <div
-        className="grid gap-5 mb-5"
-        style={{ gridTemplateColumns: "1fr 1fr" }}
-      >
+      <div className="grid gap-5 mb-5" style={{ gridTemplateColumns: "1fr 1fr" }}>
         <WeeklyActivityChart
           data={analytics.weekActivity}
           hasData={analytics.hasTaskData}
@@ -56,18 +53,11 @@ export default function AnalyticsContent() {
         <ProductivityScore
           data={analytics.productivity}
           hasData={analytics.hasTaskData || analytics.hasHabitData}
-          score={0}
-          trend={[]}
-          taskCount={0}
-          habitCount={0}
         />
       </div>
 
       {/* Row 3: habits + goals + AI insights */}
-      <div
-        className="grid gap-5"
-        style={{ gridTemplateColumns: "1fr 1fr 1fr" }}
-      >
+      <div className="grid gap-5" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
         <HabitBreakdown
           habits={analytics.topHabits}
           hasData={analytics.hasHabitData}
@@ -78,11 +68,7 @@ export default function AnalyticsContent() {
         />
         <AIInsights
           insights={analytics.aiInsights}
-          hasData={
-            analytics.hasTaskData ||
-            analytics.hasHabitData ||
-            analytics.hasGoalData
-          }
+          hasData={analytics.hasTaskData || analytics.hasHabitData || analytics.hasGoalData}
         />
       </div>
     </main>
