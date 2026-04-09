@@ -84,15 +84,14 @@ export function ProductivityScoreSkeleton() {
 
 // ─── Live productivity score ──────────────────────────────────────────────────
 interface Props {
-  score: number;
-  trend: number[];
-  taskCount: number;
-  habitCount: number;
+  data: ProductivityData;
+  hasData: boolean;
 }
 
 export function ProductivityScore({ data, hasData }: Props) {
-  const deepWorkSessions = Math.floor(data.score / 3); // update references
-  const avgDailyScore = Math.round(data.score * 0.9);
+  const score = data.score;
+  const deepWorkSessions = Math.floor(score / 3);
+  const avgDailyScore = Math.round(score * 0.9);
 
   return (
     <div

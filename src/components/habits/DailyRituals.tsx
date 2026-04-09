@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from "react";
 import { GhostCard } from "./GhostCards";
 import { useLebenStore, Habit } from "@/store/useStore";
