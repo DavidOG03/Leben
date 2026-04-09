@@ -33,5 +33,5 @@ export function useLoadUserData() {
     };
 
     load();
-  }, []);
+  }, [setTasks,setHabits,setGoals]);
 }

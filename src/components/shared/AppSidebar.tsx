@@ -30,13 +30,7 @@ const navItems = [
   { label: "Settings", icon: <GearIcon />, href: "/settings" },
 ];
 
-interface AppSidebarProps {
-  newEntryLabel?: string;
-}
-
-export default function AppSidebar({
-  newEntryLabel = "New Entry",
-}: AppSidebarProps) {
+export default function AppSidebar() {
   const pathname = usePathname();
   const [user, setUser] = useState<any>(null);
 
@@ -171,21 +165,6 @@ export default function AppSidebar({
           );
         })}
       </nav>
-
-      {/* New Entry */}
-      <div className="px-4 mt-4 mb-3">
-        <button
-          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg"
-          style={{
-            background: "#1a1a1a",
-            border: "1px solid #2a2a2a",
-            color: "#888",
-            fontSize: "12px",
-          }}
-        >
-          <PlusIcon /> {newEntryLabel}
-        </button>
-      </div>
 
       {/* Bottom */}
       <div className="px-3 space-y-px">

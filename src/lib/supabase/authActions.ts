@@ -35,7 +35,7 @@ export async function signInWithEmail(
   if (error) return { error: error.message };
 
   // redirect() throws internally, so it must be called outside try/catch
-  redirect("/dashboard");
+  redirect("/");
 }
 
 // ─── Sign Up ──────────────────────────────────────────────────────────────────
@@ -57,7 +57,7 @@ export async function signUpWithEmail(data: SignUpData): Promise<AuthResult> {
 
   // After signup, Supabase sends a confirmation email.
   // We redirect to a "check your email" page.
-  redirect("/auth/verify-email");
+  redirect("/");
 }
 
 // ─── Sign Out ─────────────────────────────────────────────────────────────────
