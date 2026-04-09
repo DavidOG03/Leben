@@ -13,7 +13,6 @@ import {
   SettingsIcon,
   HelpIcon,
   LogoutIcon,
-  PlusIcon,
   GearIcon,
 } from "@/constants/Icons";
 

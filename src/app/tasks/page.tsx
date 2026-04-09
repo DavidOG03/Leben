@@ -1,4 +1,3 @@
-import TasksSidebar from "@/components/activeTasks/TasksSidebar";
 import TasksHeader from "@/components/activeTasks/TasksHeader";
 import TasksViewPanel from "@/components/tasks/TasksViewPanel";
 import TasksMainPanel from "@/components/tasks/TasksMainPanel";

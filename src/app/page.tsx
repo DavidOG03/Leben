@@ -1,4 +1,3 @@
-import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import AIMorningBrief from "@/components/AIMorningBrief";
 import EfficiencyScore from "@/components/EfficiencyScore";
