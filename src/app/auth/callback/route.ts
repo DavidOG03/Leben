@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
   // Optional: where to redirect after successful auth
   // Supabase lets you pass a "next" param so you can redirect to a specific page
-  const next = searchParams.get("next") ?? "/dashboard";
+  const next = searchParams.get("next") ?? "/";
 
   if (code) {
     const cookieStore = await cookies();

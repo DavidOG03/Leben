@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "@/lib/supabase/authActions";
 import {
   GridIcon,
   TaskIcon,
@@ -13,6 +14,7 @@ import {
   HelpIcon,
   LogoutIcon,
   PlusIcon,
+  GearIcon,
 } from "@/constants/Icons";
 
 const navItems = [
@@ -22,7 +24,7 @@ const navItems = [
   { label: "Goals", icon: <GoalIcon />, href: "/goals" },
   { label: "Daily Planner", icon: <AIIcon />, href: "/planner" },
   { label: "Analytics", icon: <AnalyticsIcon />, href: "/analytics" },
-  { label: "Settings", icon: <SettingsIcon />, href: "/settings" },
+  { label: "Settings", icon: <GearIcon />, href: "/settings" },
 ];
 
 interface AppSidebarProps {
@@ -159,6 +161,7 @@ export default function AppSidebar({
           <HelpIcon /> Help
         </button>
         <button
+          onClick={() => signOut()}
           className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg"
           style={{ color: "#444", fontSize: "12px" }}
         >

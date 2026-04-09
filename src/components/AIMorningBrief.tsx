@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useLebenStore } from "@/store/useStore";
 import { GoogleGenAI } from "@google/genai";
+import { executeWithRateLimit, generateOpenAiRateLimitError } from "@/lib/ai/withRateLimit";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -38,19 +39,12 @@ const ArrowRightIcon = () => (
   </svg>
 );
 
-// ─── AI fetch function ────────────────────────────────────────────────────────
-// Kept outside the component so it never gets recreated on re-render.
-// Only asks for summary + insights - the planner page handles the full schedule.
-
 async function fetchMorningBrief(
   tasks: object[],
   habits: object[],
   goals: object[],
+  onWait?: (sec: number) => void
 ): Promise<BriefData> {
-  const ai = new GoogleGenAI({
-    apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY!,
-  });
-
   const prompt = `
 You are an AI productivity assistant for an app called Leben.
 
@@ -72,14 +66,47 @@ Habits: ${JSON.stringify(habits)}
 Goals: ${JSON.stringify(goals)}
 `;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: prompt,
-  });
+  const geminiCall = async () => {
+    const ai = new GoogleGenAI({
+      apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY!,
+    });
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
+    const raw = response.text ?? "";
+    const clean = raw.replace(/```json|```/g, "").trim();
+    return JSON.parse(clean) as BriefData;
+  };
 
-  const raw = response.text ?? "";
-  const clean = raw.replace(/```json|```/g, "").trim();
-  return JSON.parse(clean) as BriefData;
+  const openAiCall = async () => {
+    const openAiResponse = await fetch(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          response_format: { type: "json_object" },
+          messages: [{ role: "user", content: prompt }],
+        }),
+      },
+    );
+
+    if (!openAiResponse.ok) {
+      throw generateOpenAiRateLimitError(openAiResponse);
+    }
+
+    const data = await openAiResponse.json();
+    const raw = data.choices[0].message.content ?? "";
+    const clean = raw.replace(/```json|```/g, "").trim();
+    return JSON.parse(clean) as BriefData;
+  };
+
+  return executeWithRateLimit(geminiCall, openAiCall, onWait);
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -90,15 +117,28 @@ export default function AIMorningBrief() {
   const [brief, setBrief] = useState<BriefData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [waitCountdown, setWaitCountdown] = useState<number | null>(null);
 
-  const hasData = tasks.length > 0;
+  const hasData = tasks.length > 0 || habits.length > 0 || goals.length > 0;
 
-  const handleGenerate = async () => {
+  useEffect(() => {
+    if (waitCountdown !== null && waitCountdown > 0) {
+      const timer = setTimeout(() => setWaitCountdown(waitCountdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (waitCountdown === 0) {
+      setWaitCountdown(null);
+    }
+  }, [waitCountdown]);
+
+  const handleGenerate = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setWaitCountdown(null);
 
     try {
-      const result = await fetchMorningBrief(tasks, habits, goals);
+      const result = await fetchMorningBrief(tasks, habits, goals, (sec) =>
+        setWaitCountdown(sec)
+      );
       setBrief(result);
     } catch (err) {
       console.error("Morning brief failed:", err);
@@ -106,7 +146,27 @@ export default function AIMorningBrief() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [tasks, habits, goals]);
+
+  const currentDataStr = JSON.stringify({ tasks, habits, goals });
+  const isFirstRun = useRef(true);
+
+  useEffect(() => {
+    if (!hasData) {
+      setBrief(null);
+      return;
+    }
+
+    if (isFirstRun.current) {
+      isFirstRun.current = false;
+      handleGenerate();
+    } else {
+      const timeoutId = setTimeout(() => {
+        handleGenerate();
+      }, 2000); // 2s debounce
+      return () => clearTimeout(timeoutId);
+    }
+  }, [currentDataStr, hasData, handleGenerate]);
 
   return (
     <div
@@ -119,16 +179,16 @@ export default function AIMorningBrief() {
     >
       <div>
         <div className="flex items-center gap-2 mb-5">
-          <SparkleIcon />
+          {/* <SparkleIcon /> */}
           <span
             className="uppercase tracking-widest font-medium"
             style={{
-              fontSize: "10px",
+              fontSize: "12px",
               color: "#7c6af0",
               letterSpacing: "0.14em",
             }}
           >
-            AI Morning Brief
+            Welcome to Leben
           </span>
         </div>
 
@@ -158,8 +218,22 @@ export default function AIMorningBrief() {
         {/* Content area */}
         {hasData ? (
           <div className="space-y-4">
+            {/* Countdown indication */}
+            {waitCountdown !== null && waitCountdown > 0 && (
+              <div
+                className="px-3 py-2 text-[12px] font-medium border rounded-lg animate-pulse"
+                style={{
+                  color: "#d97706",
+                  backgroundColor: "rgba(245, 158, 11, 0.05)",
+                  borderColor: "rgba(245, 158, 11, 0.2)"
+                }}
+              >
+                Quota exceeded. Analyzing gently... retrying in {waitCountdown}s.
+              </div>
+            )}
+
             {/* Loading skeleton */}
-            {loading && (
+            {loading && waitCountdown === null && (
               <div className="space-y-2 animate-pulse">
                 <div className="h-3 rounded bg-white/5 w-3/4" />
                 <div className="h-3 rounded bg-white/5 w-1/2" />
@@ -210,8 +284,8 @@ export default function AIMorningBrief() {
       <div className="flex items-center gap-3 mt-6">
         {hasData ? (
           <>
-            {/* Generate brief button - only shown before brief is loaded */}
-            {!brief && (
+            {/* Generate brief button - only shown if there's an error on initial load */}
+            {!brief && error && (
               <button
                 onClick={handleGenerate}
                 disabled={loading}
@@ -223,7 +297,7 @@ export default function AIMorningBrief() {
                   fontSize: "14px",
                 }}
               >
-                {loading ? "Generating..." : "Get My Brief"}
+                {loading ? "Generating..." : "Retry Brief"}
                 {!loading && <SparkleIcon />}
               </button>
             )}

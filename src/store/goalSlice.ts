@@ -9,6 +9,7 @@ import {
 
 export interface GoalsSlice {
   goals: Goal[];
+  setGoals: (goals: Goal[]) => void;
   addGoal: (data: GoalFormData) => void;
   toggleMilestone: (goalId: string, milestoneId: string) => void;
   removeGoal: (goalId: string) => void;
@@ -22,6 +23,7 @@ export const createGoalsSlice: StateCreator<GoalsSlice, [], [], GoalsSlice> = (
   set,
 ) => ({
   goals: [],
+  setGoals: (goals: Goal[]) => set({ goals }),
 
   addGoal: (data: GoalFormData) => {
     const milestones: Milestone[] = data.milestones

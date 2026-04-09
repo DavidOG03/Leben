@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useLebenStore } from "@/store/useStore";
 
 function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
   return (
@@ -25,17 +27,34 @@ function SectionLabel({ text }: { text: string }) {
   );
 }
 
-const intelligenceFeatures = [
-  { id: "predictive", label: "Predictive Scheduling", sub: "Auto-arrange tasks based on focus windows", locked: false },
-  { id: "summaries", label: "Smart Summaries", sub: "LLM-driven briefing for unread archives", locked: false },
-  { id: "synthesis", label: "Contextual Synthesis", sub: "Beta feature: multi-document linking", locked: true },
-];
-
 export default function SettingsContent() {
   const [theme, setTheme] = useState<"Dark" | "Light">("Dark");
   const [notifs, setNotifs] = useState({ audio: true, email: false, push: true });
-  const [neuralOn, setNeuralOn] = useState(true);
-  const [features, setFeatures] = useState<Record<string, boolean>>({ predictive: true, summaries: true, synthesis: false });
+  const [user, setUser] = useState<any>(null);
+
+  const purgeAll = useLebenStore((s) => s.purgeAll);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) {
+        setUser(data.user);
+      }
+    });
+  }, []);
+
+  const handlePurge = () => {
+    const confirmed = window.confirm(
+      "CRITICAL WARNING:\n\nThis will permanently delete all tasks, habits, goals, and books from the server. This action is irreversible. \n\nAre you absolutely sure?"
+    );
+    if (confirmed) {
+      purgeAll();
+      alert("Workspace has been purged.");
+    }
+  };
+
+  const displayName = user?.user_metadata?.full_name || "Leben User";
+  const displayEmail = user?.email || "Loading...";
 
   return (
     <main className="flex-1 overflow-y-auto" style={{ padding: "32px 40px", backgroundColor: "#0a0a0a" }}>
@@ -59,20 +78,19 @@ export default function SettingsContent() {
         {/* Name / badge */}
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>Julian Thorne</h1>
-            <span className="px-2.5 py-1 rounded-lg font-semibold" style={{ fontSize: "10px", backgroundColor: "rgba(124,106,240,0.15)", color: "#9d8ff5", border: "1px solid rgba(124,106,240,0.25)", letterSpacing: "0.06em" }}>
-              PRO CURATOR
-            </span>
+            <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>
+              {user ? displayName : "Loading Context..."}
+            </h1>
           </div>
-          <p style={{ fontSize: "13px", color: "#555" }}>julian.thorne@leben.premium</p>
+          <p style={{ fontSize: "13px", color: "#555" }}>{displayEmail}</p>
         </div>
       </div>
 
       {/* Display name + Workspace ID */}
       <div className="grid gap-4 mb-8" style={{ gridTemplateColumns: "1fr 1fr" }}>
         {[
-          { label: "DISPLAY NAME", val: "Julian Thorne" },
-          { label: "WORKSPACE ID", val: "OS-8829-ALPHA" },
+          { label: "DISPLAY NAME", val: displayName },
+          { label: "WORKSPACE ID", val: user ? `OS-${user.id.substring(0, 8).toUpperCase()}` : "SYNCING..." },
         ].map(({ label, val }) => (
           <div key={label} className="rounded-xl p-4" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e" }}>
             <p style={{ fontSize: "9px", color: "#555", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "6px" }}>{label}</p>
@@ -137,72 +155,27 @@ export default function SettingsContent() {
         </div>
       </div>
 
-      {/* Intelligence Layer */}
-      <SectionLabel text="Intelligence Layer" />
-      <div className="grid gap-4 mb-8" style={{ gridTemplateColumns: "1fr 1fr" }}>
-        {/* Neural Engine */}
-        <div className="rounded-xl p-5" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e" }}>
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <p className="font-bold text-white" style={{ fontSize: "15px" }}>Neural Engine v2.4</p>
-                <span className="px-2 py-0.5 rounded font-semibold" style={{ fontSize: "9px", backgroundColor: "rgba(74,200,120,0.15)", color: "#4ac878", border: "1px solid rgba(74,200,120,0.25)", letterSpacing: "0.08em" }}>STABLE</span>
-              </div>
-              <p style={{ fontSize: "12px", color: "#555", lineHeight: 1.5 }}>Advanced synaptic processing for deep pattern recognition across your workspace.</p>
-            </div>
-            <Toggle on={neuralOn} onChange={() => setNeuralOn((v) => !v)} />
-          </div>
-          <div className="mt-4">
-            <div className="flex justify-between mb-1.5">
-              <span style={{ fontSize: "10px", color: "#444" }}></span>
-              <span style={{ fontSize: "10px", color: "#555" }}>LOAD: 24%</span>
-            </div>
-            <div className="rounded-full overflow-hidden" style={{ height: "3px", backgroundColor: "#1a1a1a" }}>
-              <div className="h-full rounded-full" style={{ width: "24%", background: "linear-gradient(90deg,#5a4fd4,#7c6af0)" }} />
-            </div>
-          </div>
-        </div>
-
-        {/* Feature toggles */}
-        <div className="space-y-3">
-          {intelligenceFeatures.map((feat) => (
-            <div key={feat.id} className="flex items-center justify-between rounded-xl px-4 py-3" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e", opacity: feat.locked ? 0.6 : 1 }}>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center rounded-lg" style={{ width: "28px", height: "28px", backgroundColor: "#1a1a1a" }}>
-                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="2" width="11" height="9" rx="1.3" stroke="#666" strokeWidth="1.1" /><path d="M1 5h11M4 1v2M9 1v2" stroke="#666" strokeWidth="1.1" strokeLinecap="round" /></svg>
-                </div>
-                <div>
-                  <p className="font-medium text-white" style={{ fontSize: "12px" }}>{feat.label}</p>
-                  <p style={{ fontSize: "10px", color: "#555" }}>{feat.sub}</p>
-                </div>
-              </div>
-              {feat.locked ? (
-                <span className="px-2 py-1 rounded" style={{ fontSize: "9px", color: "#555", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", letterSpacing: "0.08em" }}>LOCKED</span>
-              ) : (
-                <Toggle on={features[feat.id]} onChange={() => setFeatures((p) => ({ ...p, [feat.id]: !p[feat.id] }))} />
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Danger zone */}
-      <div className="flex items-center justify-between rounded-xl px-6 py-5" style={{ backgroundColor: "#110a0a", border: "1px solid #2a1515" }}>
+      <div className="flex items-center justify-between rounded-xl px-6 py-5 mt-8" style={{ backgroundColor: "#110a0a", border: "1px solid #2a1515" }}>
         <div>
           <p className="font-bold mb-1" style={{ fontSize: "15px", color: "#e85555" }}>Workspace Termination</p>
           <p style={{ fontSize: "12px", color: "#666", maxWidth: "480px" }}>
-            Permanently delete all neural mappings and stored insights. This action is irreversible.
+            Permanently delete all tasks, habits, goals, and books spanning your workspace. This action is irreversible.
           </p>
         </div>
-        <button className="px-5 py-2.5 rounded-xl font-semibold transition-opacity hover:opacity-90" style={{ backgroundColor: "#e85555", color: "white", fontSize: "13px" }}>
+        <button 
+          onClick={handlePurge}
+          className="px-5 py-2.5 rounded-xl font-semibold transition-opacity hover:opacity-90" 
+          style={{ backgroundColor: "#e85555", color: "white", fontSize: "13px" }}
+        >
           Purge Core
         </button>
       </div>
 
       {/* Footer */}
       <div className="flex items-center justify-between mt-6" style={{ paddingTop: "16px", borderTop: "1px solid #161616" }}>
-        <span style={{ fontSize: "10px", color: "#2a2a2a", letterSpacing: "0.1em" }}>LAST SYNC: 2M AGO • LATENCY: 14MS</span>
-        <span style={{ fontSize: "10px", color: "#2a2a2a", letterSpacing: "0.1em" }}>Leben V4.0.2 // BUILD 8283-CURATOR</span>
+        <span style={{ fontSize: "10px", color: "#2a2a2a", letterSpacing: "0.1em" }}>LIVE SYNC: ACTIVE • DB SECURE</span>
+        <span style={{ fontSize: "10px", color: "#2a2a2a", letterSpacing: "0.1em" }}>Leben V4.0.2</span>
       </div>
     </main>
   );

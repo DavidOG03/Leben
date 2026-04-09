@@ -24,7 +24,9 @@ export function TodaysFocusCard({ focusItems }: TodaysFocusCardProps) {
 
       <div className="space-y-4">
         {focusItems.length === 0 ? (
-          <p className="text-[#444]" style={{ fontSize: "12px" }}>No high-priority focus set.</p>
+          <p className="text-[#444]" style={{ fontSize: "12px" }}>
+            No high-priority focus set.
+          </p>
         ) : (
           focusItems.map((item, i) => (
             <div key={i} className="flex gap-4 group">
@@ -43,10 +45,20 @@ export function TodaysFocusCard({ focusItems }: TodaysFocusCardProps) {
                 0{i + 1}
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-white font-medium" style={{ fontSize: "13px" }}>
+                <span
+                  className="text-white font-medium"
+                  style={{ fontSize: "13px" }}
+                >
                   {item.title}
                 </span>
-                <span className="uppercase" style={{ fontSize: "9px", color: "#444", letterSpacing: "0.08em" }}>
+                <span
+                  className="uppercase"
+                  style={{
+                    fontSize: "9px",
+                    color: "#444",
+                    letterSpacing: "0.08em",
+                  }}
+                >
                   {item.reason}
                 </span>
               </div>

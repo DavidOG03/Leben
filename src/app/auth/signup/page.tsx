@@ -2,7 +2,9 @@
 
 import { AuthHeroPanel } from "@/components/auth/AuthHeroPanel";
 import { SignUpForm } from "@/components/auth/SignUpForm";
-import "@/app/auth/auth.css";
+import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "Create Account | Leben",
@@ -19,7 +21,18 @@ const SIGNUP_FEATURES = [
   },
 ];
 
-export default function SignUpPage() {
+export default async function SignUpPage() {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    redirect("/");
+  }
+
   return (
     <main className="auth-layout">
       {/* Left: Hero panel */}

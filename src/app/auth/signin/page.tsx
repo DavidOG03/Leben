@@ -4,13 +4,26 @@
 
 import { AuthHeroPanel } from "@/components/auth/AuthHeroPanel";
 import { SignInForm } from "@/components/auth/SignInForm";
-import "@/app/auth/auth.css";
+import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "Sign In | Leben",
 };
 
-export default function SignInPage() {
+export default async function SignInPage() {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    redirect("/");
+  }
+
   return (
     <main className="auth-layout">
       {/* Left: Hero panel */}
@@ -27,7 +40,7 @@ export default function SignInPage() {
           subheading="Continue building your life system with the digital curator designed for focused execution."
         />
 
-        <div className="auth-social-proof">
+        {/* <div className="auth-social-proof">
           <div className="avatar-stack" aria-hidden="true">
             {["DG", "AM", "LK"].map((initials) => (
               <div key={initials} className="avatar">
@@ -36,7 +49,7 @@ export default function SignInPage() {
             ))}
           </div>
           <span className="social-proof-text">JOINED BY 12K+ CREATORS</span>
-        </div>
+        </div> */}
       </section>
 
       {/* Right: Sign in form */}

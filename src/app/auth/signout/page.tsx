@@ -1,15 +1,26 @@
-// app/auth/signout/page.tsx
 // This page is shown AFTER the user has been signed out.
 // The actual sign-out action happens server-side via the signOut() action.
 // This page is purely presentational.
 
-import "@/app/auth/auth.css";
+import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
 export const metadata = {
   title: "Signed Out | Leben",
 };
 
-export default function SignedOutPage() {
+export default async function SignedOutPage() {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    await supabase.auth.signOut();
+  }
+
   return (
     <main className="signout-layout">
       {/* Geometric background shapes */}

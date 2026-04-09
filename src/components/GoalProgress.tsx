@@ -138,7 +138,7 @@ export default function GoalProgress() {
                         color: "#666",
                       }}
                     >
-                      {g.milestones.length - 2} more
+                      {g.milestones.length - 1} more
                     </span>
                   </button>
                 </div>

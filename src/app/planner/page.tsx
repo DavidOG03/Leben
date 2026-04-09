@@ -16,9 +16,15 @@ export default function PlannerPage() {
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Header */}
-        <Header 
-          title="WORKSPACE - Daily Planner" 
-          subtitle="TUESDAY, OCT 24"
+        <Header
+          title="WORKSPACE - Daily Planner"
+          subtitle={new Date()
+            .toLocaleDateString("en-US", {
+              weekday: "long",
+              month: "short",
+              day: "numeric",
+            })
+            .toUpperCase()}
         />
 
         {/* Content area */}

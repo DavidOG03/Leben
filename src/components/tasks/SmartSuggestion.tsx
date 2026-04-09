@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { GoogleGenAI } from "@google/genai";
 import { useLebenStore } from "@/store/useStore";
 import { SparkleIcon } from "../../constants/Icons";
+import { executeWithRateLimit, generateOpenAiRateLimitError } from "@/lib/ai/withRateLimit";
 
 interface Suggestion {
   task: string;
@@ -21,17 +22,29 @@ export default function SmartSuggestion() {
   const tasks = useLebenStore((s) => s.tasks);
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
   const [loading, setLoading] = useState(false);
+  const [waitCountdown, setWaitCountdown] = useState<number | null>(null);
   const [dots, setDots] = useState(".");
   const dotsRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const pendingTasks = tasks.filter((t) => !t.completed);
   const hasTasks = pendingTasks.length > 0;
 
+  useEffect(() => {
+    if (waitCountdown !== null && waitCountdown > 0) {
+      const timer = setTimeout(() => setWaitCountdown(waitCountdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (waitCountdown === 0) {
+      setWaitCountdown(null);
+    }
+  }, [waitCountdown]);
+
   const fetchSuggestion = async () => {
     if (!hasTasks || loading) return;
 
     setLoading(true);
     setSuggestion(null);
+    setWaitCountdown(null);
+
     dotsRef.current = setInterval(() => {
       setDots((d) => (d.length >= 3 ? "." : d + "."));
     }, 400);
@@ -60,16 +73,45 @@ export default function SmartSuggestion() {
         Schema: {"task":"<exact title>","reason":"<coaching insight>","action":"<CTA>","priorityScore":1-100}
       `;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-      });
+      const geminiCall = async () => {
+        const response = await ai.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: prompt,
+        });
+        const raw = response.text ?? "";
+        const clean = raw.replace(/```json|```/g, "").trim();
+        return JSON.parse(clean);
+      };
 
-      const raw = response.text ?? "";
-      const clean = raw.replace(/```json|```/g, "").trim();
-      setSuggestion(JSON.parse(clean));
-    } catch (error) {
-      console.error("AI Error:", error);
+      const openAiCall = async () => {
+        const openAiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            response_format: { type: "json_object" },
+            messages: [{ role: "user", content: prompt }],
+          }),
+        });
+
+        if (!openAiResponse.ok) {
+          throw generateOpenAiRateLimitError(openAiResponse);
+        }
+
+        const data = await openAiResponse.json();
+        const raw = data.choices[0].message.content ?? "";
+        const clean = raw.replace(/```json|```/g, "").trim();
+        return JSON.parse(clean);
+      };
+
+      const result = await executeWithRateLimit(geminiCall, openAiCall, (sec) => setWaitCountdown(sec));
+      setSuggestion(result);
+    } catch (err) {
+      console.error("AI Error:", err);
+      // Fallback UI handled by null suggestion
       setSuggestion(null);
     } finally {
       if (dotsRef.current) clearInterval(dotsRef.current);
@@ -106,10 +148,10 @@ export default function SmartSuggestion() {
             textTransform: "uppercase",
           }}
         >
-          {loading ? `Prioritizing${dots}` : "Priority Insight"}
+          {loading && waitCountdown === null ? `Prioritizing${dots}` : "Priority Insight"}
         </p>
 
-        {loading && (
+        {loading && waitCountdown === null && (
           <div className="space-y-2 animate-pulse">
             <div style={{ height: "12px", borderRadius: "4px", backgroundColor: "rgba(255,255,255,0.07)", width: "100%" }} />
             <div style={{ height: "12px", borderRadius: "4px", backgroundColor: "rgba(255,255,255,0.05)", width: "80%" }} />
@@ -134,7 +176,13 @@ export default function SmartSuggestion() {
           </div>
         )}
 
-        {!loading && !suggestion && (
+        {waitCountdown !== null && waitCountdown > 0 && (
+          <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 animate-pulse mt-2" style={{ fontSize: "10px", fontWeight: 600 }}>
+             Retrying in {waitCountdown}s...
+          </div>
+        )}
+
+        {!loading && !suggestion && waitCountdown === null && (
           <p style={{ fontSize: "12px", color: "rgba(200,190,255,0.4)", lineHeight: 1.5 }}>
             {hasTasks
               ? "Analysis required to find your high-impact task."
@@ -161,13 +209,13 @@ export default function SmartSuggestion() {
             style={{
               fontSize: "11px",
               letterSpacing: "0.02em",
-              backgroundColor: hasTasks && !loading ? "#7c6af0" : "rgba(255,255,255,0.04)",
-              color: hasTasks && !loading ? "#ffffff" : "rgba(200,190,255,0.25)",
-              cursor: hasTasks && !loading ? "pointer" : "not-allowed",
-              boxShadow: hasTasks && !loading ? "0 4px 12px rgba(124,106,240,0.3)" : "none",
+              backgroundColor: hasTasks && !loading && waitCountdown === null ? "#7c6af0" : "rgba(255,255,255,0.04)",
+              color: hasTasks && !loading && waitCountdown === null ? "#ffffff" : "rgba(200,190,255,0.25)",
+              cursor: hasTasks && !loading && waitCountdown === null ? "pointer" : "not-allowed",
+              boxShadow: hasTasks && !loading && waitCountdown === null ? "0 4px 12px rgba(124,106,240,0.3)" : "none",
             }}
           >
-            {loading ? "Calculating..." : "Identify Priority"}
+            {waitCountdown !== null ? "Waiting bounds..." : loading ? "Calculating..." : "Identify Priority"}
           </button>
         )}
       </div>

@@ -2,6 +2,15 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { createGoalsSlice, GoalsSlice } from "./goalSlice";
 import { createBooksSlice, BooksSlice } from "./bookSlice";
+import {
+  deleteTask,
+  insertHabit,
+  insertTask,
+  removeHabit,
+  updateHabit,
+  updateTask,
+  purgeAllData,
+} from "@/lib/supabase/db";
 
 export interface Task {
   id: string;
@@ -33,6 +42,7 @@ export interface Habit {
 
 export interface ScheduleItem {
   id: string;
+  taskId?: string;
   start: string;
   end: string;
   title: string;
@@ -45,6 +55,8 @@ export interface ScheduleItem {
 interface TasksHabitsSlice {
   tasks: Task[];
   habits: Habit[];
+  setTasks: (tasks: Task[]) => void;
+  setHabits: (habits: Habit[]) => void;
   addHabit: (habit: Habit) => void;
   toggleTask: (id: string) => void;
   toggleHabit: (id: string) => void;
@@ -54,6 +66,8 @@ interface TasksHabitsSlice {
   updateHabit: (id: string, updates: Partial<Habit>) => void;
   schedule: ScheduleItem[];
   setSchedule: (schedule: ScheduleItem[]) => void;
+  toggleScheduleItem: (id: string) => void;
+  purgeAll: () => void;
 }
 
 export type LebenState = TasksHabitsSlice & GoalsSlice & BooksSlice;
@@ -64,15 +78,19 @@ export const useLebenStore = create<LebenState>()(
       // --- Tasks & Habits slice ---
       tasks: [],
       habits: [],
+      setTasks: (tasks) => set({ tasks }),
+      setHabits: (habits) => set({ habits }),
 
-      toggleTask: (id) =>
+      toggleTask: (id) => {
         set((state) => ({
           tasks: state.tasks.map((t) =>
             t.id === id ? { ...t, completed: !t.completed } : t,
           ),
-        })),
-
-      toggleHabit: (id) =>
+        }));
+        const task = get().tasks.find((t) => t.id === id);
+        if (task) updateTask(id, { completed: !task.completed });
+      },
+      toggleHabit: (id) => {
         set((state) => ({
           habits: state.habits.map((h) => {
             if (h.id !== id) return h;
@@ -100,18 +118,28 @@ export const useLebenStore = create<LebenState>()(
                 : [...dates, today],
             };
           }),
-        })),
+        }));
+        const updated = get().habits.find((h) => h.id === id);
+        if (updated) updateHabit(id, updated);
+      },
+      addTask: (task) => {
+        set((state) => ({ tasks: [...state.tasks, task] }));
+        insertTask(task);
+      },
 
-      addTask: (task) => set((state) => ({ tasks: [...state.tasks, task] })),
+      addHabit: (habit) => {
+        set((state) => ({ habits: [...state.habits, habit] }));
+        insertHabit(habit);
+      },
+      deleteTask: (id) => {
+        set((state) => ({ tasks: state.tasks.filter((t) => t.id !== id) }));
+        deleteTask(id);
+      },
 
-      addHabit: (habit) =>
-        set((state) => ({ habits: [...state.habits, habit] })),
-
-      deleteTask: (id) =>
-        set((state) => ({ tasks: state.tasks.filter((t) => t.id !== id) })),
-
-      removeHabit: (id) =>
-        set((state) => ({ habits: state.habits.filter((h) => h.id !== id) })),
+      removeHabit: (id) => {
+        set((state) => ({ habits: state.habits.filter((h) => h.id !== id) }));
+        removeHabit(id);
+      },
 
       updateHabit: (id, updates) =>
         set((state) => ({
@@ -122,6 +150,33 @@ export const useLebenStore = create<LebenState>()(
 
       schedule: [],
       setSchedule: (schedule) => set({ schedule }),
+      toggleScheduleItem: (id) =>
+        set((state) => {
+          const scheduleItem = state.schedule.find((s) => s.id === id);
+          if (!scheduleItem) return state;
+
+          const newStatus: "pending" | "completed" =
+            scheduleItem.status === "completed" ? "pending" : "completed";
+          const newSchedule = state.schedule.map((s) =>
+            s.id === id ? { ...s, status: newStatus } : s,
+          );
+
+          let newTasks = state.tasks;
+          if (scheduleItem.taskId) {
+            newTasks = state.tasks.map((t) =>
+              t.id === scheduleItem.taskId
+                ? { ...t, completed: newStatus === "completed" }
+                : t,
+            );
+          }
+
+          return { schedule: newSchedule, tasks: newTasks };
+        }),
+
+      purgeAll: () => {
+        set({ tasks: [], habits: [], goals: [], books: [], schedule: [] });
+        purgeAllData();
+      },
 
       // --- Goals slice ---
       ...createGoalsSlice(set, get, store),

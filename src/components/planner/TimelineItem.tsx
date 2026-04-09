@@ -1,7 +1,7 @@
 "use client";
 
 import { EditIcon } from "@/constants/Icons";
-import { ScheduleItem } from "@/store/useStore";
+import { useLebenStore, ScheduleItem } from "@/store/useStore";
 
 interface TimelineItemProps {
   item: ScheduleItem;
@@ -9,6 +9,8 @@ interface TimelineItemProps {
 }
 
 export function TimelineItem({ item, isCurrent }: TimelineItemProps) {
+  const toggleScheduleItem = useLebenStore((s) => s.toggleScheduleItem);
+  
   const isDeepWork = item.tag.toLowerCase().includes("work");
   const isRecharge = item.tag.toLowerCase().includes("health") || item.tag.toLowerCase().includes("mind");
   
@@ -69,7 +71,8 @@ export function TimelineItem({ item, isCurrent }: TimelineItemProps) {
               <EditIcon />
             </button>
             <div 
-               className="w-4 h-4 rounded border border-[#333] flex items-center justify-center cursor-pointer"
+               onClick={() => toggleScheduleItem(item.id)}
+               className="w-4 h-4 rounded border border-[#333] flex items-center justify-center cursor-pointer transition-colors hover:border-[#7c6af0]"
                style={{ backgroundColor: item.status === "completed" ? "#7c6af0" : "transparent" }}
             >
               {item.status === "completed" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}

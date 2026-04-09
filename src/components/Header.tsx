@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { BellIcon, GearIcon, SearchIcon } from "../constants/Icons";
 
 interface HeaderProps {
@@ -8,6 +10,22 @@ interface HeaderProps {
 }
 
 export default function Header({ title, subtitle }: HeaderProps) {
+  const [firstName, setFirstName] = useState("User");
+
+  useEffect(() => {
+    async function fetchUser() {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user?.user_metadata?.full_name) {
+        setFirstName(user.user_metadata.full_name.split(" ")[0]);
+      }
+    }
+    fetchUser();
+  }, []);
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "Good morning";
@@ -60,7 +78,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                 lineHeight: 1.2,
               }}
             >
-              {getGreeting()}, David
+              {getGreeting()}, {firstName}
             </h1>
             <p
               className="uppercase tracking-widest mt-0.5"
@@ -78,7 +96,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
 
       {/* Right: Search + icons */}
       <div className="flex items-center gap-4">
-        {/* Search bar */}
+        {/* Search bar
         <div
           className="flex items-center gap-2 px-3 py-2 rounded-lg"
           style={{
@@ -93,7 +111,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
           <span style={{ fontSize: "13px", color: "#444444" }}>
             Search tasks...
           </span>
-        </div>
+        </div> */}
 
         {/* Icon buttons */}
         <button
@@ -102,12 +120,12 @@ export default function Header({ title, subtitle }: HeaderProps) {
         >
           <BellIcon />
         </button>
-        <button
+        {/* <button
           className="flex items-center justify-center rounded-lg transition-colors hover:bg-white/5"
           style={{ width: "36px", height: "36px", color: "#666666" }}
         >
           <GearIcon />
-        </button>
+        </button> */}
 
         {/* Avatar */}
         <div

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import UserDataProvider from "@/components/UserDataProvider";
 
 export const metadata: Metadata = {
   title: "Leben",
@@ -13,7 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <UserDataProvider />
+        {children}
+      </body>
     </html>
   );
 }

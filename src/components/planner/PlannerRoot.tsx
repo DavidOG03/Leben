@@ -7,7 +7,6 @@ import { Timeline } from "./Timeline";
 import { AIInsightsCard } from "./AIInsightsCard";
 import { TodaysFocusCard } from "./TodaysFocusCard";
 import { EnergyDistribution } from "./EnergyDistribution";
-import { UnscheduledTasks } from "./UnscheduledTasks";
 import { EmptyPlannerState } from "./EmptyPlannerState";
 import {
   RefreshIcon,
@@ -16,6 +15,7 @@ import {
   TrashIcon,
 } from "@/constants/Icons";
 import { generateDayPlan } from "@/lib/ai/aiPlanner";
+import { useRouter } from "next/navigation";
 
 export function PlannerRoot() {
   const tasks = useLebenStore((s) => s.tasks);
@@ -23,12 +23,27 @@ export function PlannerRoot() {
   const goals = useLebenStore((s) => s.goals);
   const schedule = useLebenStore((s) => s.schedule);
   const setSchedule = useLebenStore((s) => s.setSchedule);
+  const router = useRouter();
 
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [aiInsights, setAiInsights] = useState<string[]>([]);
   const [insightsLoading, setInsightsLoading] = useState(false);
+  const [mainFocus, setMainFocus] = useState<{
+    title: string;
+    reason: string;
+  } | null>(null);
+  const [waitCountdown, setWaitCountdown] = useState<number | null>(null);
 
   const isAlive = tasks.length > 2;
+
+  useEffect(() => {
+    if (waitCountdown !== null && waitCountdown > 0) {
+      const timer = setTimeout(() => setWaitCountdown(waitCountdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (waitCountdown === 0) {
+      setWaitCountdown(null);
+    }
+  }, [waitCountdown]);
 
   // Auto-generate on first load if schedule is empty
   useEffect(() => {
@@ -38,35 +53,27 @@ export function PlannerRoot() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAlive]);
 
-  // After (matches your store)
-  const todaysFocus = tasks
-    .filter((t) => !t.completed && t.priority === "high")
-    .slice(0, 3)
-    .map((t) => ({
-      title: t.title,
-      reason: t.category
-        ? `${t.category.toUpperCase()} • HIGH PRIORITY`
-        : t.tag
-          ? `${t.tag} • HIGH PRIORITY` // fall back to the tag field you already have
-          : "HIGH PRIORITY",
-    }));
   // ─── Regenerate: calls Gemini with your real tasks ────────────────────────
   const handleRegenerate = async () => {
     if (!isAlive) return;
 
     setIsRegenerating(true);
     setInsightsLoading(true);
+    setWaitCountdown(null);
 
     try {
-      // generateDayPlan is defined below - it calls Gemini
-      const { schedule: newSchedule, insights } = await generateDayPlan({
-        tasks,
-        habits,
-        goals,
-      });
+      // generateDayPlan calls Gemini
+      const {
+        schedule: newSchedule,
+        insights,
+        mainFocus: newMainFocus,
+      } = await generateDayPlan({ tasks, habits, goals }, (sec) =>
+        setWaitCountdown(sec),
+      );
 
       setSchedule(newSchedule);
       setAiInsights(insights);
+      if (newMainFocus) setMainFocus(newMainFocus);
     } catch (err) {
       console.error("Planner AI failed:", err);
     } finally {
@@ -105,21 +112,33 @@ export function PlannerRoot() {
             Optimized for your current energy peaks and high-priority
             deliverables.
           </p>
+
+          {waitCountdown !== null && waitCountdown > 0 && (
+            <div className="text-[12px] font-bold text-amber-500 animate-pulse mt-1 decoration-amber-500/30 w-fit rounded-lg py-1 px-3 bg-amber-500/10 border border-amber-500/20">
+              API limits busy. Auto-retrying in {waitCountdown}s...
+            </div>
+          )}
         </div>
 
         <button
           onClick={handleRegenerate}
-          disabled={isRegenerating}
+          disabled={isRegenerating && waitCountdown === null} // Don't strictly disable if it's counting down, though it's nice to prevent double clicks
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
           style={{
             background: "#161616",
             border: "1px solid #222",
             color: "#eee",
             fontSize: "13px",
+            opacity: waitCountdown ? 0.8 : 1,
+            pointerEvents: waitCountdown ? "none" : "auto",
           }}
         >
           <RefreshIcon className={isRegenerating ? "animate-spin" : ""} />
-          {isRegenerating ? "Regenerating..." : "Regenerate Plan"}
+          {waitCountdown !== null && waitCountdown > 0
+            ? "Retrying..."
+            : isRegenerating
+              ? "Regenerating..."
+              : "Regenerate Plan"}
         </button>
       </div>
 
@@ -151,8 +170,7 @@ export function PlannerRoot() {
           {/* Pass real AI insights - loading state handled inside AIInsightsCard */}
           <AIInsightsCard insights={aiInsights} isLoading={insightsLoading} />
 
-          {/* Pass real focus items derived from high-priority tasks */}
-          <TodaysFocusCard focusItems={todaysFocus} />
+          <TodaysFocusCard focusItems={mainFocus ? [mainFocus] : []} />
 
           <EnergyDistribution />
         </div>
@@ -161,12 +179,15 @@ export function PlannerRoot() {
       {/* Bottom Actions */}
       <div className="flex flex-col gap-8 mb-12">
         <div className="flex items-center gap-4">
-          <button className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[#111] border border-[#1e1e1e] text-[#666] font-bold text-[13px] hover:bg-white/[0.02]">
+          <button
+            onClick={() => router.push("/tasks")}
+            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[#111] border border-[#1e1e1e] text-[#666] font-bold text-[13px] hover:bg-white/[0.02]"
+          >
             <PlusIcon /> Add Task
           </button>
-          <button className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[#111] border border-[#1e1e1e] text-[#666] font-bold text-[13px] hover:bg-white/[0.02]">
+          {/* <button className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[#111] border border-[#1e1e1e] text-[#666] font-bold text-[13px] hover:bg-white/[0.02]">
             <LightningIcon /> Adjust Plan
-          </button>
+          </button> */}
           <button
             onClick={() => setSchedule([])}
             className="ml-auto flex items-center gap-2 px-5 py-3 rounded-xl hover:text-red-400 text-[#444] font-bold text-[13px]"
@@ -174,7 +195,6 @@ export function PlannerRoot() {
             <TrashIcon /> Clear Schedule
           </button>
         </div>
-        <UnscheduledTasks />
       </div>
     </div>
   );
