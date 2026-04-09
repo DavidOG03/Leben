@@ -10,7 +10,7 @@ interface HeaderProps {
 }
 
 export default function Header({ title, subtitle }: HeaderProps) {
-  const [firstName, setFirstName] = useState("User");
+  const [firstName, setFirstName] = useState("Guest");
 
   useEffect(() => {
     async function fetchUser() {
@@ -21,6 +21,10 @@ export default function Header({ title, subtitle }: HeaderProps) {
 
       if (user?.user_metadata?.full_name) {
         setFirstName(user.user_metadata.full_name.split(" ")[0]);
+      } else if (user?.email) {
+        setFirstName(user.email.split("@")[0]);
+      } else {
+        setFirstName("Guest");
       }
     }
     fetchUser();

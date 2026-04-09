@@ -1,15 +1,24 @@
 "use client";
 
-import Link from "next/link";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { useLebenStore } from "@/store/useStore";
 import { deriveGoalStats, Goal, Milestone } from "@/utils/goals.types";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function GoalProgress() {
   const goals = useLebenStore((s: any) => s.goals) as Goal[];
   const toggleMilestone = useLebenStore((s: any) => s.toggleMilestone);
+  const [user, setUser] = useState<any>(null);
 
   const router = useRouter();
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+  }, []);
+
   return (
     <div
       className="rounded-2xl p-6 flex flex-col"
@@ -26,7 +35,35 @@ export default function GoalProgress() {
         Goal Progress
       </h3>
 
-      {goals.length === 0 ? (
+      {!user ? (
+        <div className="flex-1 flex flex-col items-center justify-center py-4 gap-3">
+          <p
+            style={{
+              fontSize: "12px",
+              color: "#555",
+              textAlign: "center",
+              lineHeight: 1.6,
+            }}
+          >
+            Vision requires focus.
+            <br />
+            Sign in to track your goals.
+          </p>
+          <Link
+            href="/auth/signin"
+            className="px-4 py-2 rounded-lg transition-colors hover:bg-[#7c6af0]/10"
+            style={{
+              fontSize: "12px",
+              color: "#7c6af0",
+              border: "1px solid #7c6af040",
+              textDecoration: "none",
+              fontWeight: 600,
+            }}
+          >
+            Sign In to Track
+          </Link>
+        </div>
+      ) : goals.length === 0 ? (
         <div className="flex flex-col items-center gap-2 mt-auto pt-2">
           <p style={{ fontSize: "11px", color: "#333" }}>No goals added yet</p>
           <Link

@@ -17,6 +17,9 @@ import {
   GearIcon,
 } from "@/constants/Icons";
 
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+
 const navItems = [
   { label: "Dashboard", icon: <GridIcon />, href: "/" },
   { label: "Tasks", icon: <TaskIcon />, href: "/tasks" },
@@ -29,18 +32,24 @@ const navItems = [
 
 interface AppSidebarProps {
   newEntryLabel?: string;
-  userName?: string;
-  userRole?: string;
-  showUser?: boolean;
 }
 
 export default function AppSidebar({
   newEntryLabel = "New Entry",
-  userName = "Alex Rivera",
-  userRole = "Premium Curator",
-  showUser = false,
 }: AppSidebarProps) {
   const pathname = usePathname();
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+    });
+  }, []);
+
+  const userName = user?.user_metadata?.full_name || "Guest";
+  const userRole = user ? "Premium Curator" : "Preview Mode";
+  const isAuthenticated = !!user;
 
   return (
     <aside
@@ -119,7 +128,7 @@ export default function AppSidebar({
             <Link
               key={item.label}
               href={item.href}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors"
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors group"
               style={{
                 backgroundColor: active ? "#1e1e1e" : "transparent",
                 color: active ? "#f0f0f0" : "#555",
@@ -132,6 +141,32 @@ export default function AppSidebar({
                 {item.icon}
               </span>
               {item.label}
+              {!isAuthenticated &&
+                item.href !== "/tasks" &&
+                item.href !== "/" && (
+                  <span className="ml-auto opacity-20 group-hover:opacity-100 transition-opacity">
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect
+                        x="3"
+                        y="11"
+                        width="18"
+                        height="11"
+                        rx="2"
+                        ry="2"
+                      ></rect>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                  </span>
+                )}
             </Link>
           );
         })}
@@ -160,51 +195,63 @@ export default function AppSidebar({
         >
           <HelpIcon /> Help
         </button>
-        <button
-          onClick={() => signOut()}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg"
-          style={{ color: "#444", fontSize: "12px" }}
-        >
-          <LogoutIcon /> Logout
-        </button>
-      </div>
-
-      {/* User profile (optional) */}
-      {showUser && (
-        <div
-          className="flex items-center gap-2.5 mx-3 mt-3 pt-3"
-          style={{ borderTop: "1px solid #1a1a1a" }}
-        >
-          <div
-            className="rounded-full flex-shrink-0"
+        {isAuthenticated ? (
+          <button
+            onClick={() => signOut()}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg"
+            style={{ color: "#444", fontSize: "12px" }}
+          >
+            <LogoutIcon /> Logout
+          </button>
+        ) : (
+          <Link
+            href="/auth/signin"
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors hover:bg-white/5"
             style={{
-              width: "30px",
-              height: "30px",
-              background: "linear-gradient(135deg,#3a3a4a,#1e1e2e)",
-              border: "1.5px solid #333",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              color: "#7c6af0",
+              fontSize: "12px",
+              textDecoration: "none",
             }}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="6" r="2.5" fill="#888" />
-              <path d="M3 14c0-2.8 2.2-5 5-5s5 2.2 5 5" fill="#888" />
-            </svg>
-          </div>
-          <div>
-            <p
-              className="text-white font-medium"
-              style={{ fontSize: "12px", lineHeight: 1.3 }}
-            >
-              {userName}
-            </p>
-            <p style={{ fontSize: "10px", color: "#444", lineHeight: 1.3 }}>
-              {userRole}
-            </p>
-          </div>
+            <LogoutIcon /> Sign In
+          </Link>
+        )}
+      </div>
+
+      {/* User profile */}
+      <div
+        className="flex items-center gap-2.5 mx-3 mt-3 pt-3"
+        style={{ borderTop: "1px solid #1a1a1a" }}
+      >
+        <div
+          className="rounded-full flex-shrink-0"
+          style={{
+            width: "30px",
+            height: "30px",
+            background: "linear-gradient(135deg,#3a3a4a,#1e1e2e)",
+            border: "1.5px solid #333",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="6" r="2.5" fill="#888" />
+            <path d="M3 14c0-2.8 2.2-5 5-5s5 2.2 5 5" fill="#888" />
+          </svg>
         </div>
-      )}
+        <div>
+          <p
+            className="text-white font-medium"
+            style={{ fontSize: "12px", lineHeight: 1.3 }}
+          >
+            {userName}
+          </p>
+          <p style={{ fontSize: "10px", color: "#444", lineHeight: 1.3 }}>
+            {userRole}
+          </p>
+        </div>
+      </div>
     </aside>
   );
 }

@@ -1,11 +1,18 @@
 "use client";
-
-import Link from "next/link";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { useLebenStore, Habit } from "@/store/useStore";
+import Link from "next/link";
 
 export default function HabitStreaks() {
   const habits = useLebenStore((s: any) => s.habits) as Habit[];
   const toggleHabit = useLebenStore((s: any) => s.toggleHabit);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+  }, []);
 
   return (
     <div
@@ -23,7 +30,35 @@ export default function HabitStreaks() {
         Habit Streaks
       </h3>
 
-      {habits.length === 0 ? (
+      {!user ? (
+        <div className="flex-1 flex flex-col items-center justify-center py-4 gap-3">
+          <p
+            style={{
+              fontSize: "12px",
+              color: "#555",
+              textAlign: "center",
+              lineHeight: 1.6,
+            }}
+          >
+            Consistency is key.
+            <br />
+            Sign in to track your streaks.
+          </p>
+          <Link
+            href="/auth/signin"
+            className="px-4 py-2 rounded-lg transition-colors hover:bg-[#7c6af0]/10"
+            style={{
+              fontSize: "12px",
+              color: "#7c6af0",
+              border: "1px solid #7c6af040",
+              textDecoration: "none",
+              fontWeight: 600,
+            }}
+          >
+            Sign In to Track
+          </Link>
+        </div>
+      ) : habits.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center py-4 gap-3">
           <p style={{ fontSize: "11px", color: "#333", marginTop: "8px" }}>
             No habits tracked yet

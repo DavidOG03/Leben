@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useLebenStore } from "@/store/useStore";
 import { GoogleGenAI } from "@google/genai";
 import { executeWithRateLimit, generateOpenAiRateLimitError } from "@/lib/ai/withRateLimit";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -38,6 +40,8 @@ const ArrowRightIcon = () => (
     />
   </svg>
 );
+
+// ─── Data fetcher ─────────────────────────────────────────────────────────────
 
 async function fetchMorningBrief(
   tasks: object[],
@@ -113,14 +117,23 @@ Goals: ${JSON.stringify(goals)}
 
 export default function AIMorningBrief() {
   const { tasks, habits, goals } = useLebenStore();
+  const router = useRouter();
 
   const [brief, setBrief] = useState<BriefData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [waitCountdown, setWaitCountdown] = useState<number | null>(null);
+  const [user, setUser] = useState<any>(null);
 
   const hasData = tasks.length > 0 || habits.length > 0 || goals.length > 0;
 
+  // Detect auth state
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+  }, []);
+
+  // Countdown ticker
   useEffect(() => {
     if (waitCountdown !== null && waitCountdown > 0) {
       const timer = setTimeout(() => setWaitCountdown(waitCountdown - 1), 1000);
@@ -131,6 +144,11 @@ export default function AIMorningBrief() {
   }, [waitCountdown]);
 
   const handleGenerate = useCallback(async () => {
+    // Guest guard
+    if (!user) {
+      router.push("/auth/signin");
+      return;
+    }
     setLoading(true);
     setError(null);
     setWaitCountdown(null);
@@ -146,13 +164,13 @@ export default function AIMorningBrief() {
     } finally {
       setLoading(false);
     }
-  }, [tasks, habits, goals]);
+  }, [tasks, habits, goals, user, router]);
 
   const currentDataStr = JSON.stringify({ tasks, habits, goals });
   const isFirstRun = useRef(true);
 
   useEffect(() => {
-    if (!hasData) {
+    if (!hasData || !user) {
       setBrief(null);
       return;
     }
@@ -163,10 +181,12 @@ export default function AIMorningBrief() {
     } else {
       const timeoutId = setTimeout(() => {
         handleGenerate();
-      }, 2000); // 2s debounce
+      }, 2000);
       return () => clearTimeout(timeoutId);
     }
-  }, [currentDataStr, hasData, handleGenerate]);
+  }, [currentDataStr, hasData, handleGenerate, user]);
+
+  // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
     <div
@@ -201,171 +221,183 @@ export default function AIMorningBrief() {
             color: "#f0f0f0",
           }}
         >
-          {hasData ? (
-            // Once brief is loaded, show the AI summary as the headline
-            brief ? (
-              brief.summary
+          {user ? (
+            hasData ? (
+              brief ? brief.summary : "Ready to plan your day?"
             ) : (
-              "Ready to plan your day?"
+              <>Welcome to <span style={{ color: "#7c6af0" }}>Leben.</span></>
             )
           ) : (
-            <>
-              Welcome to <span style={{ color: "#7c6af0" }}>Leben.</span>
-            </>
+            <>Unlock AI <span style={{ color: "#7c6af0" }}>Insights.</span></>
           )}
         </h2>
 
         {/* Content area */}
-        {hasData ? (
-          <div className="space-y-4">
-            {/* Countdown indication */}
-            {waitCountdown !== null && waitCountdown > 0 && (
-              <div
-                className="px-3 py-2 text-[12px] font-medium border rounded-lg animate-pulse"
-                style={{
-                  color: "#d97706",
-                  backgroundColor: "rgba(245, 158, 11, 0.05)",
-                  borderColor: "rgba(245, 158, 11, 0.2)"
-                }}
-              >
-                Quota exceeded. Analyzing gently... retrying in {waitCountdown}s.
-              </div>
-            )}
+        {user ? (
+          hasData ? (
+            <div className="space-y-4">
+              {waitCountdown !== null && waitCountdown > 0 && (
+                <div
+                  className="px-3 py-2 text-[12px] font-medium border rounded-lg animate-pulse"
+                  style={{
+                    color: "#d97706",
+                    backgroundColor: "rgba(245, 158, 11, 0.05)",
+                    borderColor: "rgba(245, 158, 11, 0.2)"
+                  }}
+                >
+                  Quota exceeded. Analyzing gently... retrying in {waitCountdown}s.
+                </div>
+              )}
 
-            {/* Loading skeleton */}
-            {loading && waitCountdown === null && (
-              <div className="space-y-2 animate-pulse">
-                <div className="h-3 rounded bg-white/5 w-3/4" />
-                <div className="h-3 rounded bg-white/5 w-1/2" />
-              </div>
-            )}
+              {loading && waitCountdown === null && (
+                <div className="space-y-2 animate-pulse">
+                  <div className="h-3 rounded bg-white/5 w-3/4" />
+                  <div className="h-3 rounded bg-white/5 w-1/2" />
+                </div>
+              )}
 
-            {/* Error state */}
-            {error && !loading && (
-              <p style={{ fontSize: "13px", color: "#f87171" }}>{error}</p>
-            )}
+              {error && !loading && (
+                <p style={{ fontSize: "13px", color: "#f87171" }}>{error}</p>
+              )}
 
-            {/* Real AI insights as tags */}
-            {brief && !loading && (
-              <div className="flex flex-wrap gap-2">
-                {brief.insights.map((insight, i) => (
-                  <span
-                    key={i}
-                    className="px-2 py-1 rounded-md text-[10px] border font-medium tracking-tight"
-                    style={{
-                      background: "rgba(124, 106, 240, 0.08)",
-                      color: "#7c6af0",
-                      borderColor: "rgba(124, 106, 240, 0.2)",
-                    }}
-                  >
-                    {insight.toUpperCase()}
-                  </span>
-                ))}
-              </div>
-            )}
+              {brief && !loading && (
+                <div className="flex flex-wrap gap-2">
+                  {brief.insights.map((insight, i) => (
+                    <span
+                      key={i}
+                      className="px-2 py-1 rounded-md text-[10px] border font-medium tracking-tight"
+                      style={{
+                        background: "rgba(124, 106, 240, 0.08)",
+                        color: "#7c6af0",
+                        borderColor: "rgba(124, 106, 240, 0.2)",
+                      }}
+                    >
+                      {insight.toUpperCase()}
+                    </span>
+                  ))}
+                </div>
+              )}
 
-            {/* Prompt to generate if not yet triggered */}
-            {!brief && !loading && !error && (
-              <p style={{ fontSize: "13px", color: "#555", lineHeight: 1.7 }}>
-                Your AI morning brief will appear here. Hit the button below to
-                generate it.
-              </p>
-            )}
-          </div>
+              {!brief && !loading && !error && (
+                <p style={{ fontSize: "13px", color: "#555", lineHeight: 1.7 }}>
+                  Your AI morning brief will appear here. Hit the button below to generate it.
+                </p>
+              )}
+            </div>
+          ) : (
+            <p style={{ fontSize: "13px", color: "#555", lineHeight: 1.7 }}>
+              Your AI morning brief will appear here once you&apos;ve added tasks,
+              habits, and goals. Start by creating your first task.
+            </p>
+          )
         ) : (
           <p style={{ fontSize: "13px", color: "#555", lineHeight: 1.7 }}>
-            Your AI morning brief will appear here once you&apos;ve added tasks,
-            habits, and goals. Start by creating your first task.
+            Sign in to analyze your productivity, get daily insights, and let AI
+            organize your schedule for maximum energy.
           </p>
         )}
       </div>
 
       {/* CTAs */}
       <div className="flex items-center gap-3 mt-6">
-        {hasData ? (
-          <>
-            {/* Generate brief button - only shown if there's an error on initial load */}
-            {!brief && error && (
-              <button
-                onClick={handleGenerate}
-                disabled={loading}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-                style={{
-                  background: "linear-gradient(135deg, #7c6af0, #5a4fd4)",
-                  boxShadow: "0 10px 20px -10px rgba(124, 106, 240, 0.4)",
-                  color: "#fff",
-                  fontSize: "14px",
-                }}
-              >
-                {loading ? "Generating..." : "Retry Brief"}
-                {!loading && <SparkleIcon />}
-              </button>
-            )}
+        {user ? (
+          hasData ? (
+            <>
+              {!brief && error && (
+                <button
+                  onClick={handleGenerate}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                  style={{
+                    background: "linear-gradient(135deg, #7c6af0, #5a4fd4)",
+                    boxShadow: "0 10px 20px -10px rgba(124, 106, 240, 0.4)",
+                    color: "#fff",
+                    fontSize: "14px",
+                  }}
+                >
+                  {loading ? "Generating..." : "Retry Brief"}
+                  {!loading && <SparkleIcon />}
+                </button>
+              )}
 
-            {/* Once brief is ready, show Plan My Day */}
-            {brief && (
+              {brief && (
+                <Link
+                  href="/planner"
+                  className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  style={{
+                    background: "linear-gradient(135deg, #7c6af0, #5a4fd4)",
+                    boxShadow: "0 10px 20px -10px rgba(124, 106, 240, 0.4)",
+                    color: "#fff",
+                    fontSize: "14px",
+                    textDecoration: "none",
+                  }}
+                >
+                  Plan My Day
+                  <ArrowRightIcon />
+                </Link>
+              )}
+
+              {brief && !loading && (
+                <button
+                  onClick={handleGenerate}
+                  className="px-4 py-3 rounded-xl font-medium transition-opacity hover:opacity-70"
+                  style={{
+                    background: "transparent",
+                    border: "1px solid #2a2a2a",
+                    color: "#555",
+                    fontSize: "13px",
+                  }}
+                >
+                  Regenerate
+                </button>
+              )}
+            </>
+          ) : (
+            <>
               <Link
-                href="/planner"
-                className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+                href="/tasks"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-opacity hover:opacity-90"
                 style={{
-                  background: "linear-gradient(135deg, #7c6af0, #5a4fd4)",
-                  boxShadow: "0 10px 20px -10px rgba(124, 106, 240, 0.4)",
-                  color: "#fff",
-                  fontSize: "14px",
+                  background: "linear-gradient(135deg, #2e2e2e, #1e1e1e)",
+                  border: "1px solid #3a3a3a",
+                  color: "#f0f0f0",
+                  fontSize: "13px",
                   textDecoration: "none",
                 }}
               >
-                Plan My Day
+                Create first task
                 <ArrowRightIcon />
               </Link>
-            )}
-
-            {/* Regenerate option once brief is shown */}
-            {brief && !loading && (
-              <button
-                onClick={handleGenerate}
-                className="px-4 py-3 rounded-xl font-medium transition-opacity hover:opacity-70"
+              <Link
+                href="/habits"
+                className="px-5 py-2.5 rounded-lg font-medium transition-opacity hover:opacity-70"
                 style={{
                   background: "transparent",
                   border: "1px solid #2a2a2a",
-                  color: "#555",
+                  color: "#666",
                   fontSize: "13px",
+                  textDecoration: "none",
                 }}
               >
-                Regenerate
-              </button>
-            )}
-          </>
+                Set up habits
+              </Link>
+            </>
+          )
         ) : (
-          <>
-            <Link
-              href="/tasks"
-              className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-opacity hover:opacity-90"
-              style={{
-                background: "linear-gradient(135deg, #2e2e2e, #1e1e1e)",
-                border: "1px solid #3a3a3a",
-                color: "#f0f0f0",
-                fontSize: "13px",
-                textDecoration: "none",
-              }}
-            >
-              Create first task
-              <ArrowRightIcon />
-            </Link>
-            <Link
-              href="/habits"
-              className="px-5 py-2.5 rounded-lg font-medium transition-opacity hover:opacity-70"
-              style={{
-                background: "transparent",
-                border: "1px solid #2a2a2a",
-                color: "#666",
-                fontSize: "13px",
-                textDecoration: "none",
-              }}
-            >
-              Set up habits
-            </Link>
-          </>
+          <Link
+            href="/auth/signin"
+            className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+            style={{
+              background: "linear-gradient(135deg, #7c6af0, #5a4fd4)",
+              boxShadow: "0 10px 20px -10px rgba(124, 106, 240, 0.4)",
+              color: "#fff",
+              fontSize: "14px",
+              textDecoration: "none",
+            }}
+          >
+            Sign In to Unlock
+            <ArrowRightIcon />
+          </Link>
         )}
       </div>
     </div>

@@ -5,6 +5,8 @@ import { GoogleGenAI } from "@google/genai";
 import { useLebenStore } from "@/store/useStore";
 import { SparkleIcon } from "../../constants/Icons";
 import { executeWithRateLimit, generateOpenAiRateLimitError } from "@/lib/ai/withRateLimit";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 interface Suggestion {
   task: string;
@@ -20,15 +22,25 @@ const ai = new GoogleGenAI({
 
 export default function SmartSuggestion() {
   const tasks = useLebenStore((s) => s.tasks);
+  const router = useRouter();
+
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
   const [loading, setLoading] = useState(false);
   const [waitCountdown, setWaitCountdown] = useState<number | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [dots, setDots] = useState(".");
   const dotsRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const pendingTasks = tasks.filter((t) => !t.completed);
   const hasTasks = pendingTasks.length > 0;
 
+  // Detect auth state
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+  }, []);
+
+  // Countdown ticker
   useEffect(() => {
     if (waitCountdown !== null && waitCountdown > 0) {
       const timer = setTimeout(() => setWaitCountdown(waitCountdown - 1), 1000);
@@ -39,6 +51,11 @@ export default function SmartSuggestion() {
   }, [waitCountdown]);
 
   const fetchSuggestion = async () => {
+    // Guest guard — redirect to sign in instead of calling AI
+    if (!user) {
+      router.push("/auth/signin");
+      return;
+    }
     if (!hasTasks || loading) return;
 
     setLoading(true);
@@ -107,11 +124,12 @@ export default function SmartSuggestion() {
         return JSON.parse(clean);
       };
 
-      const result = await executeWithRateLimit(geminiCall, openAiCall, (sec) => setWaitCountdown(sec));
+      const result = await executeWithRateLimit(geminiCall, openAiCall, (sec) =>
+        setWaitCountdown(sec)
+      );
       setSuggestion(result);
     } catch (err) {
       console.error("AI Error:", err);
-      // Fallback UI handled by null suggestion
       setSuggestion(null);
     } finally {
       if (dotsRef.current) clearInterval(dotsRef.current);
@@ -151,6 +169,7 @@ export default function SmartSuggestion() {
           {loading && waitCountdown === null ? `Prioritizing${dots}` : "Priority Insight"}
         </p>
 
+        {/* Loading skeleton */}
         {loading && waitCountdown === null && (
           <div className="space-y-2 animate-pulse">
             <div style={{ height: "12px", borderRadius: "4px", backgroundColor: "rgba(255,255,255,0.07)", width: "100%" }} />
@@ -159,6 +178,7 @@ export default function SmartSuggestion() {
           </div>
         )}
 
+        {/* Suggestion result */}
         {!loading && suggestion && (
           <div className="space-y-3">
             <p className="font-bold text-white leading-tight" style={{ fontSize: "14px" }}>
@@ -176,23 +196,31 @@ export default function SmartSuggestion() {
           </div>
         )}
 
+        {/* Rate-limit countdown */}
         {waitCountdown !== null && waitCountdown > 0 && (
-          <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 animate-pulse mt-2" style={{ fontSize: "10px", fontWeight: 600 }}>
-             Retrying in {waitCountdown}s...
+          <div
+            className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 animate-pulse mt-2"
+            style={{ fontSize: "10px", fontWeight: 600 }}
+          >
+            Retrying in {waitCountdown}s...
           </div>
         )}
 
+        {/* Idle / guest copy */}
         {!loading && !suggestion && waitCountdown === null && (
           <p style={{ fontSize: "12px", color: "rgba(200,190,255,0.4)", lineHeight: 1.5 }}>
-            {hasTasks
+            {!user
+              ? "Sign in to get AI-powered task prioritization."
+              : hasTasks
               ? "Analysis required to find your high-impact task."
               : "No pending tasks found. Add some to get a strategy."}
           </p>
         )}
       </div>
 
+      {/* CTA */}
       <div className="mt-4">
-        {suggestion && !loading ? (
+        {suggestion && !loading && user ? (
           <button
             onClick={fetchSuggestion}
             className="w-full flex items-center justify-between group"
@@ -204,18 +232,36 @@ export default function SmartSuggestion() {
         ) : (
           <button
             onClick={fetchSuggestion}
-            disabled={!hasTasks || loading}
+            disabled={!!user && (!hasTasks || loading)}
             className="w-full flex items-center justify-center gap-1.5 rounded-lg py-2.5 font-bold transition-all active:scale-95"
             style={{
               fontSize: "11px",
               letterSpacing: "0.02em",
-              backgroundColor: hasTasks && !loading && waitCountdown === null ? "#7c6af0" : "rgba(255,255,255,0.04)",
-              color: hasTasks && !loading && waitCountdown === null ? "#ffffff" : "rgba(200,190,255,0.25)",
-              cursor: hasTasks && !loading && waitCountdown === null ? "pointer" : "not-allowed",
-              boxShadow: hasTasks && !loading && waitCountdown === null ? "0 4px 12px rgba(124,106,240,0.3)" : "none",
+              backgroundColor: !user
+                ? "#1a1a1a"
+                : hasTasks && !loading && waitCountdown === null
+                ? "#7c6af0"
+                : "rgba(255,255,255,0.04)",
+              color: !user
+                ? "#7c6af0"
+                : hasTasks && !loading && waitCountdown === null
+                ? "#ffffff"
+                : "rgba(200,190,255,0.25)",
+              cursor: !user || (hasTasks && !loading && waitCountdown === null) ? "pointer" : "not-allowed",
+              boxShadow:
+                user && hasTasks && !loading && waitCountdown === null
+                  ? "0 4px 12px rgba(124,106,240,0.3)"
+                  : "none",
+              border: !user ? "1px solid rgba(124,106,240,0.25)" : "none",
             }}
           >
-            {waitCountdown !== null ? "Waiting bounds..." : loading ? "Calculating..." : "Identify Priority"}
+            {!user
+              ? "Sign in to prioritize"
+              : waitCountdown !== null
+              ? "Waiting bounds..."
+              : loading
+              ? "Calculating..."
+              : "Identify Priority"}
           </button>
         )}
       </div>

@@ -12,18 +12,21 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+  
+  // Public routes that unauthenticated users CAN access
   const isAuthRoute = pathname.startsWith("/auth");
-  // Everything is protected EXCEPT auth routes (and static files matched out below)
-  const isProtectedRoute = !isAuthRoute;
+  const isTasksRoute = pathname.startsWith("/tasks");
+  const isHomePage = pathname === "/";
+  
+  const isPublicRoute = isAuthRoute || isTasksRoute || isHomePage;
 
-  // If user is NOT logged in and tries to access protected route
-  if (!user && isProtectedRoute) {
+  // If user is NOT logged in and tries to access a non-public route
+  if (!user && !isPublicRoute) {
     return NextResponse.redirect(new URL("/auth/signin", request.url));
   }
 
-  // If user IS logged in and tries to access auth pages (no point going back to login)
+  // If user IS logged in and tries to access auth pages, send them to home
   if (user && isAuthRoute) {
-    // Redirecting to /planner as it is the main dashboard for the app
     return NextResponse.redirect(new URL("/", request.url));
   }
 
