@@ -178,7 +178,11 @@ export default function GoalProgress() {
                         color: "#666",
                       }}
                     >
-                      {g.milestones.length - 1} more
+                      {g.milestones.length - g.milestones.slice(0, 3).length ===
+                      0
+                        ? ""
+                        : g.milestones.length -
+                          g.milestones.slice(0, 3).length}{" "}
                     </span>
                   </button>
                 </div>
