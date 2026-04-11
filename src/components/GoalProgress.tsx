@@ -27,6 +27,9 @@ export default function GoalProgress() {
         border: "1px solid #1e1e1e",
         minHeight: "200px",
       }}
+      role="button"
+      aria-roledescription="go to task"
+      onClick={() => router.push("/goals")}
     >
       <h3
         className="font-semibold text-white mb-5"

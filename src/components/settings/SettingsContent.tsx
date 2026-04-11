@@ -70,7 +70,7 @@ export default function SettingsContent() {
   };
 
   const displayName = user?.user_metadata?.full_name || "Leben User";
-  const displayEmail = user?.email || "Loading...";
+  const displayEmail = user?.email || "---";
 
   return (
     <main
@@ -128,7 +128,7 @@ export default function SettingsContent() {
               className="font-black text-white"
               style={{ fontSize: "26px", letterSpacing: "-0.02em" }}
             >
-              {user ? displayName : "Loading Context..."}
+              {user ? displayName : "Guest"}
             </h1>
           </div>
           <p style={{ fontSize: "13px", color: "#555" }}>{displayEmail}</p>
@@ -144,9 +144,7 @@ export default function SettingsContent() {
           { label: "DISPLAY NAME", val: displayName },
           {
             label: "WORKSPACE ID",
-            val: user
-              ? `OS-${user.id.substring(0, 8).toUpperCase()}`
-              : "SYNCING...",
+            val: user ? `OS-${user.id.substring(0, 8).toUpperCase()}` : "--",
           },
         ].map(({ label, val }) => (
           <div
@@ -263,11 +261,11 @@ export default function SettingsContent() {
         className="flex items-center justify-between mt-6"
         style={{ paddingTop: "16px", borderTop: "1px solid #161616" }}
       >
-        <span
+        {/* <span
           style={{ fontSize: "10px", color: "#2a2a2a", letterSpacing: "0.1em" }}
         >
           LIVE SYNC: ACTIVE • DB SECURE
-        </span>
+        </span> */}
         <span
           style={{ fontSize: "10px", color: "#2a2a2a", letterSpacing: "0.1em" }}
         >

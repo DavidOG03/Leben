@@ -117,11 +117,22 @@ export default function AppSidebar() {
           const active =
             pathname === item.href ||
             (item.href !== "/" && pathname.startsWith(item.href));
+          const isLocked =
+            !isAuthenticated &&
+            item.href !== "/" &&
+            item.href !== "/tasks" &&
+            item.href !== "/settings";
+
           return (
             <Link
               key={item.label}
-              href={item.href}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors group"
+              href={isLocked ? "#" : item.href}
+              onClick={(e) => {
+                if (isLocked) e.preventDefault();
+              }}
+              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors group ${
+                isLocked ? "cursor-not-allowed opacity-75" : ""
+              }`}
               style={{
                 backgroundColor: active ? "#1e1e1e" : "transparent",
                 color: active ? "#f0f0f0" : "#555",
@@ -134,32 +145,30 @@ export default function AppSidebar() {
                 {item.icon}
               </span>
               {item.label}
-              {!isAuthenticated &&
-                item.href !== "/tasks" &&
-                item.href !== "/" && (
-                  <span className="ml-auto opacity-20 group-hover:opacity-100 transition-opacity">
-                    <svg
-                      width="10"
-                      height="10"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <rect
-                        x="3"
-                        y="11"
-                        width="18"
-                        height="11"
-                        rx="2"
-                        ry="2"
-                      ></rect>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                    </svg>
-                  </span>
-                )}
+              {isLocked && (
+                <span className="ml-auto opacity-20 group-hover:opacity-100 transition-opacity">
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect
+                      x="3"
+                      y="11"
+                      width="18"
+                      height="11"
+                      rx="2"
+                      ry="2"
+                    ></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </span>
+              )}
             </Link>
           );
         })}

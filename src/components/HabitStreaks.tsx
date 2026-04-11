@@ -3,11 +3,13 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useLebenStore, Habit } from "@/store/useStore";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function HabitStreaks() {
   const habits = useLebenStore((s: any) => s.habits) as Habit[];
   const toggleHabit = useLebenStore((s: any) => s.toggleHabit);
   const [user, setUser] = useState<any>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const supabase = createClient();
@@ -22,6 +24,9 @@ export default function HabitStreaks() {
         border: "1px solid #1e1e1e",
         minHeight: "200px",
       }}
+      role="button"
+      aria-roledescription="go to task"
+      onClick={() => router.push("/habits")}
     >
       <h3
         className="font-semibold text-white mb-5"

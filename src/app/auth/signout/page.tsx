@@ -9,11 +9,6 @@ export const metadata = {
 export default function SignedOutPage() {
   return (
     <main className="signout-layout">
-      <div className="signout-bg" aria-hidden="true">
-        <div className="bg-shape shape-1" />
-        <div className="bg-shape shape-2" />
-      </div>
-
       <div className="signout-container">
         <div className="signout-icon" aria-hidden="true">
           <svg
