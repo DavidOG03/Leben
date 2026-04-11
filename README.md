@@ -14,7 +14,7 @@
 
 _Leben (German for "life") is a modular productivity app that combines task management, habit tracking, goal setting, and AI-powered planning into one unified system._
 
-![Leben Dashboard](./public/Leben.mp4)
+![Leben Dashboard](./public/Leben.gif)
 
 [Live Demo](https://leben-os.vercel.app) · [Report a Bug](https://github.com/DavidOG03/Leben/issues) · [Request a Feature](https://github.com/DavidOG03/Leben/issues)
 
