@@ -1,14 +1,49 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Book } from "@/store/bookSlice";
 import { Habit } from "@/store/useStore";
-import type { ConsistencyScoreProps } from "../../utils/habits.types";
+
+interface ConsistencyScoreProps {
+  habits: Habit[];
+  books: Book[];
+}
 
 const ConsistencyScore: React.FC<ConsistencyScoreProps> = ({
   habits,
-  consistencyScore,
-  checkedCount,
   books,
 }) => {
+  const { score, checkedToday, bestStreak } = useMemo(() => {
+    if (habits.length === 0)
+      return { score: 0, checkedToday: 0, bestStreak: 0 };
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const checked = habits.filter((h) =>
+      h.completedDates?.includes(todayStr),
+    ).length;
+
+    // Calculate total consistency across all habits for the last 30 days
+    const last30 = Array.from({ length: 30 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      return d.toISOString().slice(0, 10);
+    });
+
+    const totalCompletions = habits.reduce(
+      (sum, h) =>
+        sum + (h.completedDates ?? []).filter((d) => last30.includes(d)).length,
+      0,
+    );
+    const totalExpected = habits.length * 30;
+    const avgScore = Math.round((totalCompletions / totalExpected) * 100);
+
+    const maxStreak = Math.max(0, ...habits.map((h) => h.streak || 0));
+
+    return {
+      score: avgScore,
+      checkedToday: checked,
+      bestStreak: maxStreak,
+    };
+  }, [habits]);
+
   return (
     <>
       {/* Consistency Score */}
@@ -53,7 +88,7 @@ const ConsistencyScore: React.FC<ConsistencyScoreProps> = ({
                 lineHeight: 1,
               }}
             >
-              {consistencyScore}%
+              {score}%
             </p>
             <div className="flex items-center gap-2 my-3">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -72,7 +107,7 @@ const ConsistencyScore: React.FC<ConsistencyScoreProps> = ({
                 />
               </svg>
               <span style={{ fontSize: "12px", color: "#7c6af0" }}>
-                {checkedCount}/{habits.length} habits done today
+                {checkedToday}/{habits.length} habits done today
               </span>
             </div>
             <div
@@ -82,7 +117,7 @@ const ConsistencyScore: React.FC<ConsistencyScoreProps> = ({
               <div
                 className="h-full rounded-full transition-all duration-500"
                 style={{
-                  width: `${consistencyScore}%`,
+                  width: `${score}%`,
                   background: "linear-gradient(90deg,#5a4fd4,#9d8ff5)",
                 }}
               />

@@ -1,5 +1,5 @@
-import TasksHeader from "@/components/activeTasks/TasksHeader";
-import TasksViewPanel from "@/components/tasks/TasksViewPanel";
+import TasksHeader from "@/components/tasks/TasksHeader";
+// import TasksViewPanel from "@/components/tasks/TasksViewPanel";
 import TasksMainPanel from "@/components/tasks/TasksMainPanel";
 import AppSidebar from "@/components/shared/AppSidebar";
 
@@ -19,7 +19,7 @@ export default function TasksPage() {
 
         {/* Body: views panel + main content */}
         <div className="flex flex-1 overflow-hidden">
-          <TasksViewPanel />
+          {/* <TasksViewPanel /> */}
           <TasksMainPanel />
         </div>
       </div>

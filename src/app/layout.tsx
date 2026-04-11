@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import UserDataProvider from "@/components/UserDataProvider";
+import DesktopOnly from "@/components/shared/DesktopOnly";
 
 export const metadata: Metadata = {
   title: "Leben",
@@ -15,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
+        <DesktopOnly />
         <UserDataProvider />
         {children}
       </body>

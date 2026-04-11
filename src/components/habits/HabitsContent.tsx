@@ -31,9 +31,6 @@ export default function HabitsContent() {
   };
 
   /* derived */
-  const checkedCount = habits.filter((h: Habit) => h.checked).length;
-  const consistencyScore =
-    habits.length > 0 ? Math.round((checkedCount / habits.length) * 100) : 0;
   const activeHabit =
     habits.find((h: Habit) => h.id === selectedHabitId) ??
     habits[0] ??
@@ -69,8 +66,6 @@ export default function HabitsContent() {
       >
         <ConsistencyScore
           habits={habits}
-          consistencyScore={consistencyScore}
-          checkedCount={checkedCount}
           books={books}
         />
         <WeeklyProgress habits={habits} />

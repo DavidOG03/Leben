@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import TaskList from "./TaskList";
+import KanbanView from "./KanbanView";
 import WeeklyProductivity from "./WeeklyProductivity";
 import SmartSuggestion from "./SmartSuggestion";
 import { useLebenStore } from "@/store/useStore";
@@ -9,6 +10,9 @@ import { useLebenStore } from "@/store/useStore";
 export default function TasksMainPanel() {
   const [view, setView] = useState<"list" | "kanban">("list");
   const [task, setTask] = useState("");
+  const [tag, setTag] = useState<"WORK" | "PERSONAL">("WORK");
+  const [priority, setPriority] = useState<"high" | "medium" | "low">("medium");
+
   const addTask = useLebenStore((s) => s.addTask);
 
   const handleAddTask = () => {
@@ -18,7 +22,8 @@ export default function TasksMainPanel() {
       id: crypto.randomUUID(),
       title: trimmed,
       completed: false,
-      tag: "PERSONAL",
+      tag: tag,
+      priority: priority,
       date: new Date().toISOString().slice(0, 10),
       createdAt: new Date().toISOString(),
     });
@@ -32,19 +37,23 @@ export default function TasksMainPanel() {
   return (
     <main
       className="flex-1 overflow-y-auto"
-      style={{ backgroundColor: "#0f0f0f", padding: "28px 28px 28px 28px" }}
+      style={{ backgroundColor: "#0f0f0f", padding: "28px" }}
     >
       {/* Page title row */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-8">
         <div>
           <h1
             className="text-white font-bold"
-            style={{ fontSize: "32px", letterSpacing: "-0.025em", lineHeight: 1.1 }}
+            style={{
+              fontSize: "32px",
+              letterSpacing: "-0.025em",
+              lineHeight: 1.1,
+            }}
           >
             Daily Tasks
           </h1>
           <p style={{ fontSize: "13px", color: "#555", marginTop: "5px" }}>
-            Add your first task to get started.
+            Focused execution for today&apos;s intentions.
           </p>
         </div>
 
@@ -67,12 +76,33 @@ export default function TasksMainPanel() {
             >
               {v === "list" ? (
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M1 3h10M1 6h10M1 9h10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                  <path
+                    d="M1 3h10M1 6h10M1 9h10"
+                    stroke="currentColor"
+                    strokeWidth="1.3"
+                    strokeLinecap="round"
+                  />
                 </svg>
               ) : (
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <rect x="1" y="1" width="4" height="10" rx="1" stroke="currentColor" strokeWidth="1.3" />
-                  <rect x="7" y="1" width="4" height="10" rx="1" stroke="currentColor" strokeWidth="1.3" />
+                  <rect
+                    x="1"
+                    y="1"
+                    width="4"
+                    height="10"
+                    rx="1"
+                    stroke="currentColor"
+                    strokeWidth="1.3"
+                  />
+                  <rect
+                    x="7"
+                    y="1"
+                    width="4"
+                    height="10"
+                    rx="1"
+                    stroke="currentColor"
+                    strokeWidth="1.3"
+                  />
                 </svg>
               )}
               {v === "list" ? "List" : "Kanban"}
@@ -81,41 +111,129 @@ export default function TasksMainPanel() {
         </div>
       </div>
 
-      {/* Add task input */}
-      <div className="relative flex items-center gap-4 mb-4">
-        <input
-          type="text"
-          value={task}
-          onChange={(e) => setTask(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Add a new task..."
-          className="flex-1 px-4 py-3 rounded-xl placeholder:text-gray-500 text-white outline-none"
-          style={{
-            backgroundColor: "#141414",
-            border: "1px solid #1e1e1e",
-            fontSize: "13px",
-            paddingRight: "48px",
-          }}
-        />
-        <button
-          onClick={handleAddTask}
-          className="flex items-center justify-center rounded-lg transition-colors hover:bg-white/10 absolute right-2 top-1/2 -translate-y-1/2"
-          style={{
-            width: "30px",
-            height: "30px",
-            backgroundColor: "#1e1e1e",
-            border: "1px solid #2a2a2a",
-            color: "#888",
-          }}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </button>
+      {/* Add task area */}
+      <div
+        className="rounded-2xl p-4 mb-6"
+        style={{ backgroundColor: "#141414", border: "1px solid #1e1e1e" }}
+      >
+        <div className="relative flex items-center mb-4">
+          <input
+            type="text"
+            value={task}
+            onChange={(e) => setTask(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="What needs to be done?"
+            className="flex-1 px-4 py-3 rounded-xl placeholder:text-gray-600 text-white outline-none"
+            style={{
+              backgroundColor: "transparent",
+              fontSize: "15px",
+            }}
+          />
+        </div>
+
+        <div className="flex items-center justify-between border-t border-[#1e1e1e] pt-4 mt-2">
+          <div className="flex items-center gap-4">
+            {/* Tag selector */}
+            <div
+              className="flex items-center gap-1.5 p-1 rounded-lg"
+              style={{
+                backgroundColor: "#0a0a0a",
+                border: "1px solid #1e1e1e",
+              }}
+            >
+              {(["WORK", "PERSONAL"] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTag(t)}
+                  className="px-2 py-1 rounded-md text-[10px] uppercase font-bold tracking-wider transition-all"
+                  style={{
+                    backgroundColor:
+                      tag === t
+                        ? t === "WORK"
+                          ? "#1a1f2e"
+                          : "#1e1a2a"
+                        : "transparent",
+                    color:
+                      tag === t
+                        ? t === "WORK"
+                          ? "#4a7abf"
+                          : "#8a5abf"
+                        : "#444",
+                    boxShadow: tag === t ? "0 2px 4px rgba(0,0,0,0.2)" : "none",
+                  }}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+
+            {/* Priority selector
+            <div
+              className="flex items-center gap-1.5 p-1 rounded-lg"
+              style={{
+                backgroundColor: "#0a0a0a",
+                border: "1px solid #1e1e1e",
+              }}
+            >
+              {(["high", "medium", "low"] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPriority(p)}
+                  className="px-2 py-1 rounded-md text-[10px] uppercase font-bold tracking-wider transition-all"
+                  style={{
+                    backgroundColor:
+                      priority === p
+                        ? p === "high"
+                          ? "#2a1a1a"
+                          : p === "medium"
+                            ? "#2a221a"
+                            : "#1a2a1a"
+                        : "transparent",
+                    color:
+                      priority === p
+                        ? p === "high"
+                          ? "#e85555"
+                          : p === "medium"
+                            ? "#e8a855"
+                            : "#55e855"
+                        : "#444",
+                  }}
+                >
+                  {p}
+                </button>
+              ))}
+            </div> */}
+          </div>
+
+          <button
+            onClick={handleAddTask}
+            disabled={!task.trim()}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-semibold"
+            style={{
+              fontSize: "12px",
+              backgroundColor: task.trim() ? "#25256e" : "#1a1a1a",
+              color: task.trim() ? "#9d8ff5" : "#444",
+              border: task.trim() ? "1px solid #3a3a9e" : "1px solid #222",
+              boxShadow: task.trim()
+                ? "0 4px 12px rgba(90, 79, 212, 0.2)"
+                : "none",
+            }}
+          >
+            <span>Add Task</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M6 1v10M1 6h10"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        </div>
       </div>
 
-      {/* Task list */}
-      <TaskList />
+      {/* Task visualization */}
+      {view === "list" ? <TaskList /> : <KanbanView />}
 
       {/* Bottom row: chart + smart suggestion */}
       <div className="flex gap-4 mt-4">

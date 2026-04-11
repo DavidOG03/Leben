@@ -1,12 +1,129 @@
 // lib/supabase/db.ts
-// All database read/write operations live here.
-// Store actions call these functions - they never call Supabase directly.
-
 import { createClient } from "@/lib/supabase/client";
 import type { Task, Habit } from "@/store/useStore";
+import type { Goal } from "@/utils/goals.types";
+import type { Book } from "@/store/bookSlice";
 
-// We use the browser client because these run in client components
 const supabase = createClient();
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function mapTaskFromDB(row: any): Task {
+  return {
+    id: row.id,
+    title: row.title,
+    completed: row.completed,
+    tag: row.tag,
+    date: row.date,
+    createdAt: row.created_at,
+    completedAt: row.completed_at,
+    priority: row.priority,
+    category: row.category,
+  };
+}
+
+function mapTaskToDB(task: Partial<Task>) {
+  const row: any = {};
+  if (task.id) row.id = task.id;
+  if (task.title !== undefined) row.title = task.title;
+  if (task.completed !== undefined) row.completed = task.completed;
+  if (task.tag !== undefined) row.tag = task.tag;
+  if (task.date !== undefined) row.date = task.date;
+  if (task.createdAt) row.created_at = task.createdAt;
+  if (task.completedAt !== undefined) row.completed_at = task.completedAt;
+  if (task.priority !== undefined) row.priority = task.priority;
+  if (task.category !== undefined) row.category = task.category;
+  return row;
+}
+
+function mapHabitFromDB(row: any): Habit {
+  return {
+    id: row.id,
+    name: row.name,
+    label: row.label ?? "",
+    sub: row.sub ?? "",
+    icon: row.icon ?? "",
+    streak: row.streak ?? 0,
+    longestStreak: row.longest_streak ?? 0,
+    checked: row.checked ?? false,
+    color: row.color ?? "#7c6af0",
+    pct: row.pct ?? 0,
+    completedDates: row.completed_dates ?? [],
+  };
+}
+
+function mapHabitToDB(habit: Partial<Habit>) {
+  const row: any = {};
+  if (habit.id) row.id = habit.id;
+  if (habit.name !== undefined) row.name = habit.name;
+  if (habit.streak !== undefined) row.streak = habit.streak;
+  if (habit.longestStreak !== undefined) row.longest_streak = habit.longestStreak;
+  if (habit.checked !== undefined) row.checked = habit.checked;
+  if (habit.color !== undefined) row.color = habit.color;
+  if (habit.completedDates) row.completed_dates = habit.completedDates;
+  if (habit.label !== undefined) row.label = habit.label;
+  if (habit.sub !== undefined) row.sub = habit.sub;
+  if (habit.icon !== undefined) row.icon = habit.icon;
+  if (habit.pct !== undefined) row.pct = habit.pct;
+  return row;
+}
+
+function mapGoalFromDB(row: any): Goal {
+  return {
+    id: row.id,
+    title: row.title,
+    name: row.title,
+    deadline: row.deadline,
+    icon: row.icon,
+    milestones: row.milestones ?? [],
+    tasksLinked: row.tasks_linked ?? 0,
+    createdAt: row.created_at,
+    color: row.color,
+    targetValue: row.target_value ?? 0,
+    currentValue: row.current_value ?? 0,
+  };
+}
+
+function mapGoalToDB(goal: Partial<Goal>) {
+  const row: any = {};
+  if (goal.id) row.id = goal.id;
+  if (goal.title !== undefined) row.title = goal.title;
+  if (goal.deadline !== undefined) row.deadline = goal.deadline;
+  if (goal.icon !== undefined) row.icon = goal.icon;
+  if (goal.milestones !== undefined) row.milestones = goal.milestones;
+  if (goal.tasksLinked !== undefined) row.tasks_linked = goal.tasksLinked;
+  if (goal.createdAt !== undefined) row.created_at = goal.createdAt;
+  if (goal.color !== undefined) row.color = goal.color;
+  if (goal.targetValue !== undefined) row.target_value = goal.targetValue;
+  if (goal.currentValue !== undefined) row.current_value = goal.currentValue;
+  return row;
+}
+
+function mapBookFromDB(row: any): Book {
+  return {
+    id: row.id,
+    title: row.title,
+    author: row.author,
+    currentPage: row.current_page ?? 0,
+    totalPages: row.total_pages ?? 0,
+    coverColor: row.cover_color ?? "#555",
+    status: row.status ?? "reading",
+    addedAt: row.added_at ?? Date.now(),
+  };
+}
+
+function mapBookToDB(book: Partial<Book>) {
+  const row: any = {};
+  if (book.id) row.id = book.id;
+  if (book.title !== undefined) row.title = book.title;
+  if (book.author !== undefined) row.author = book.author;
+  if (book.currentPage !== undefined) row.current_page = book.currentPage;
+  if (book.totalPages !== undefined) row.total_pages = book.totalPages;
+  if (book.coverColor !== undefined) row.cover_color = book.coverColor;
+  if (book.status !== undefined) row.status = book.status;
+  if (book.addedAt !== undefined) row.added_at = book.addedAt;
+  return row;
+}
 
 // ─── Tasks ────────────────────────────────────────────────────────────────────
 
@@ -20,35 +137,25 @@ export async function fetchTasks(): Promise<Task[]> {
     console.error("fetchTasks:", error.message);
     return [];
   }
-  return data ?? [];
+  return (data ?? []).map(mapTaskFromDB);
 }
 
 export async function insertTask(task: Task): Promise<void> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
-
-  const { error } = await supabase.from("tasks").insert({
-    ...task,
-    user_id: user.id, // attach the logged-in user's ID to every row
-  });
-
+  const dbRow = mapTaskToDB(task);
+  const { error } = await supabase.from("tasks").insert({ ...dbRow, user_id: user.id });
   if (error) console.error("insertTask:", error.message);
 }
 
-export async function updateTask(
-  id: string,
-  updates: Partial<Task>,
-): Promise<void> {
-  const { error } = await supabase.from("tasks").update(updates).eq("id", id);
-
+export async function updateTask(id: string, updates: Partial<Task>): Promise<void> {
+  const dbRow = mapTaskToDB(updates);
+  const { error } = await supabase.from("tasks").update(dbRow).eq("id", id);
   if (error) console.error("updateTask:", error.message);
 }
 
 export async function deleteTask(id: string): Promise<void> {
   const { error } = await supabase.from("tasks").delete().eq("id", id);
-
   if (error) console.error("deleteTask:", error.message);
 }
 
@@ -56,98 +163,106 @@ export async function deleteTask(id: string): Promise<void> {
 
 export async function fetchHabits(): Promise<Habit[]> {
   const { data, error } = await supabase.from("habits").select("*");
-
   if (error) {
     console.error("fetchHabits:", error.message);
     return [];
   }
-  return data ?? [];
+  return (data ?? []).map(mapHabitFromDB);
 }
 
 export async function insertHabit(habit: Habit): Promise<void> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
-
-  const { error } = await supabase.from("habits").insert({
-    ...habit,
-    user_id: user.id,
-  });
-
+  const dbRow = mapHabitToDB(habit);
+  const { error } = await supabase.from("habits").insert({ ...dbRow, user_id: user.id });
   if (error) console.error("insertHabit:", error.message);
 }
 
-export async function updateHabit(
-  id: string,
-  updates: Partial<Habit>,
-): Promise<void> {
-  const { error } = await supabase.from("habits").update(updates).eq("id", id);
-
+export async function updateHabit(id: string, updates: Partial<Habit>): Promise<void> {
+  const dbRow = mapHabitToDB(updates);
+  const { error } = await supabase.from("habits").update(dbRow).eq("id", id);
   if (error) console.error("updateHabit:", error.message);
 }
 
 export async function removeHabit(id: string): Promise<void> {
   const { error } = await supabase.from("habits").delete().eq("id", id);
-
   if (error) console.error("removeHabit:", error.message);
 }
 
 // ─── Goals ────────────────────────────────────────────────────────────────────
 
-// Your Goal type comes from goalSlice - import it from there
-export async function fetchGoals(): Promise<object[]> {
+export async function fetchGoals(): Promise<Goal[]> {
   const { data, error } = await supabase
     .from("goals")
     .select("*")
     .order("created_at", { ascending: false });
-
   if (error) {
     console.error("fetchGoals:", error.message);
     return [];
   }
-  return data ?? [];
+  return (data ?? []).map(mapGoalFromDB);
 }
 
-export async function insertGoal(goal: object & { id: string }): Promise<void> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export async function insertGoal(goal: Goal): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
-
-  const { error } = await supabase.from("goals").insert({
-    ...goal,
-    user_id: user.id,
-  });
-
+  const dbRow = mapGoalToDB(goal);
+  const { error } = await supabase.from("goals").insert({ ...dbRow, user_id: user.id });
   if (error) console.error("insertGoal:", error.message);
 }
 
-export async function updateGoal(id: string, updates: object): Promise<void> {
-  const { error } = await supabase.from("goals").update(updates).eq("id", id);
-
+export async function updateGoal(id: string, updates: Partial<Goal>): Promise<void> {
+  const dbRow = mapGoalToDB(updates);
+  const { error } = await supabase.from("goals").update(dbRow).eq("id", id);
   if (error) console.error("updateGoal:", error.message);
 }
 
 export async function deleteGoal(id: string): Promise<void> {
   const { error } = await supabase.from("goals").delete().eq("id", id);
-
   if (error) console.error("deleteGoal:", error.message);
 }
 
-// ─── System / Dangerous Actions ───────────────────────────────────────────────
+// ─── Books ────────────────────────────────────────────────────────────────────
+
+export async function fetchBooks(): Promise<Book[]> {
+  const { data, error } = await supabase
+    .from("books")
+    .select("*")
+    .order("added_at", { ascending: false });
+  if (error) {
+    console.error("fetchBooks:", error.message);
+    return [];
+  }
+  return (data ?? []).map(mapBookFromDB);
+}
+
+export async function insertBook(book: Book): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  const dbRow = mapBookToDB(book);
+  const { error } = await supabase.from("books").insert({ ...dbRow, user_id: user.id });
+  if (error) console.error("insertBook:", error.message);
+}
+
+export async function updateBook(id: string, updates: Partial<Book>): Promise<void> {
+  const dbRow = mapBookToDB(updates);
+  const { error } = await supabase.from("books").update(dbRow).eq("id", id);
+  if (error) console.error("updateBook:", error.message);
+}
+
+export async function deleteBook(id: string): Promise<void> {
+  const { error } = await supabase.from("books").delete().eq("id", id);
+  if (error) console.error("deleteBook:", error.message);
+}
+
+// ─── System ───────────────────────────────────────────────────────────────────
 
 export async function purgeAllData(): Promise<void> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
-
   const tables = ["tasks", "habits", "goals", "books"];
   for (const table of tables) {
     const { error } = await supabase.from(table).delete().eq("user_id", user.id);
-    if (error) {
-       console.error(`Failed to purge ${table}:`, error.message);
-    }
+    if (error) console.error(`Failed to purge ${table}:`, error.message);
   }
 }

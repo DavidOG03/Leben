@@ -9,11 +9,20 @@ function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
     <button
       onClick={onChange}
       className="relative flex-shrink-0 rounded-full transition-colors"
-      style={{ width: "42px", height: "24px", backgroundColor: on ? "#7c6af0" : "#2a2a2a", padding: "2px" }}
+      style={{
+        width: "42px",
+        height: "24px",
+        backgroundColor: on ? "#7c6af0" : "#2a2a2a",
+        padding: "2px",
+      }}
     >
       <div
         className="rounded-full bg-white transition-transform"
-        style={{ width: "20px", height: "20px", transform: on ? "translateX(18px)" : "translateX(0)" }}
+        style={{
+          width: "20px",
+          height: "20px",
+          transform: on ? "translateX(18px)" : "translateX(0)",
+        }}
       />
     </button>
   );
@@ -21,7 +30,10 @@ function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
 
 function SectionLabel({ text }: { text: string }) {
   return (
-    <p className="uppercase tracking-widest mb-4" style={{ fontSize: "10px", color: "#3a3a3a", letterSpacing: "0.16em" }}>
+    <p
+      className="uppercase tracking-widest mb-4"
+      style={{ fontSize: "10px", color: "#3a3a3a", letterSpacing: "0.16em" }}
+    >
       {text}
     </p>
   );
@@ -29,7 +41,11 @@ function SectionLabel({ text }: { text: string }) {
 
 export default function SettingsContent() {
   const [theme, setTheme] = useState<"Dark" | "Light">("Dark");
-  const [notifs, setNotifs] = useState({ audio: true, email: false, push: true });
+  const [notifs, setNotifs] = useState({
+    audio: true,
+    email: false,
+    push: true,
+  });
   const [user, setUser] = useState<any>(null);
 
   const purgeAll = useLebenStore((s) => s.purgeAll);
@@ -45,7 +61,7 @@ export default function SettingsContent() {
 
   const handlePurge = () => {
     const confirmed = window.confirm(
-      "CRITICAL WARNING:\n\nThis will permanently delete all tasks, habits, goals, and books from the server. This action is irreversible. \n\nAre you absolutely sure?"
+      "CRITICAL WARNING:\n\nThis will permanently delete all tasks, habits, goals, and books from the server. This action is irreversible. \n\nAre you absolutely sure?",
     );
     if (confirmed) {
       purgeAll();
@@ -57,28 +73,61 @@ export default function SettingsContent() {
   const displayEmail = user?.email || "Loading...";
 
   return (
-    <main className="flex-1 overflow-y-auto" style={{ padding: "32px 40px", backgroundColor: "#0a0a0a" }}>
+    <main
+      className="flex-1 overflow-y-auto"
+      style={{ padding: "32px 40px", backgroundColor: "#0a0a0a" }}
+    >
       {/* Profile section */}
       <div className="flex items-start gap-6 mb-8">
         {/* Avatar */}
         <div className="relative flex-shrink-0">
-          <div className="rounded-2xl overflow-hidden" style={{ width: "88px", height: "88px", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-            <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg,#2a2a3a,#1a1a28)" }}>
-              <svg width="44" height="44" viewBox="0 0 44 44" fill="none"><circle cx="22" cy="17" r="8" fill="#666" /><path d="M5 40c0-9.4 7.6-17 17-17s17 7.6 17 17" fill="#666" /></svg>
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{
+              width: "88px",
+              height: "88px",
+              backgroundColor: "#1a1a1a",
+              border: "1px solid #2a2a2a",
+            }}
+          >
+            <div
+              className="w-full h-full flex items-center justify-center"
+              style={{ background: "linear-gradient(135deg,#2a2a3a,#1a1a28)" }}
+            >
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+                <circle cx="22" cy="17" r="8" fill="#666" />
+                <path d="M5 40c0-9.4 7.6-17 17-17s17 7.6 17 17" fill="#666" />
+              </svg>
             </div>
           </div>
           <button
             className="absolute bottom-1.5 right-1.5 flex items-center justify-center rounded-full"
-            style={{ width: "22px", height: "22px", backgroundColor: "#1e1e1e", border: "1px solid #333" }}
+            style={{
+              width: "22px",
+              height: "22px",
+              backgroundColor: "#1e1e1e",
+              border: "1px solid #333",
+            }}
           >
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M7 1L9 3M1 9l.5-2L7 1 9 3l-5.5 5.5L1 9z" stroke="#888" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path
+                d="M7 1L9 3M1 9l.5-2L7 1 9 3l-5.5 5.5L1 9z"
+                stroke="#888"
+                strokeWidth="1"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </button>
         </div>
 
         {/* Name / badge */}
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>
+            <h1
+              className="font-black text-white"
+              style={{ fontSize: "26px", letterSpacing: "-0.02em" }}
+            >
               {user ? displayName : "Loading Context..."}
             </h1>
           </div>
@@ -87,22 +136,46 @@ export default function SettingsContent() {
       </div>
 
       {/* Display name + Workspace ID */}
-      <div className="grid gap-4 mb-8" style={{ gridTemplateColumns: "1fr 1fr" }}>
+      <div
+        className="grid gap-4 mb-8"
+        style={{ gridTemplateColumns: "1fr 1fr" }}
+      >
         {[
           { label: "DISPLAY NAME", val: displayName },
-          { label: "WORKSPACE ID", val: user ? `OS-${user.id.substring(0, 8).toUpperCase()}` : "SYNCING..." },
+          {
+            label: "WORKSPACE ID",
+            val: user
+              ? `OS-${user.id.substring(0, 8).toUpperCase()}`
+              : "SYNCING...",
+          },
         ].map(({ label, val }) => (
-          <div key={label} className="rounded-xl p-4" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e" }}>
-            <p style={{ fontSize: "9px", color: "#555", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "6px" }}>{label}</p>
-            <p className="font-medium text-white" style={{ fontSize: "15px" }}>{val}</p>
+          <div
+            key={label}
+            className="rounded-xl p-4"
+            style={{ backgroundColor: "#111", border: "1px solid #1e1e1e" }}
+          >
+            <p
+              style={{
+                fontSize: "9px",
+                color: "#555",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                marginBottom: "6px",
+              }}
+            >
+              {label}
+            </p>
+            <p className="font-medium text-white" style={{ fontSize: "15px" }}>
+              {val}
+            </p>
           </div>
         ))}
       </div>
 
-      {/* System Preferences */}
+      {/* System Preferences
       <SectionLabel text="System Preferences" />
       <div className="space-y-3 mb-8">
-        {/* Visual Theme */}
+        {/* Visual Theme 
         <div className="rounded-xl p-5" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e" }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -127,9 +200,9 @@ export default function SettingsContent() {
               ))}
             </div>
           </div>
-        </div>
+        </div> */}
 
-        {/* Notification Channels */}
+      {/* Notification Channels
         <div className="rounded-xl p-5" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e" }}>
           <div className="flex items-center gap-3 mb-4">
             <div className="flex items-center justify-center rounded-lg" style={{ width: "34px", height: "34px", backgroundColor: "#1a1a1a", border: "1px solid #222" }}>
@@ -153,29 +226,53 @@ export default function SettingsContent() {
             ))}
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Danger zone */}
-      <div className="flex items-center justify-between rounded-xl px-6 py-5 mt-8" style={{ backgroundColor: "#110a0a", border: "1px solid #2a1515" }}>
+      <div
+        className="flex items-center justify-between rounded-xl px-6 py-5 mt-8"
+        style={{ backgroundColor: "#110a0a", border: "1px solid #2a1515" }}
+      >
         <div>
-          <p className="font-bold mb-1" style={{ fontSize: "15px", color: "#e85555" }}>Workspace Termination</p>
+          <p
+            className="font-bold mb-1"
+            style={{ fontSize: "15px", color: "#e85555" }}
+          >
+            Workspace Termination
+          </p>
           <p style={{ fontSize: "12px", color: "#666", maxWidth: "480px" }}>
-            Permanently delete all tasks, habits, goals, and books spanning your workspace. This action is irreversible.
+            Permanently delete all tasks, habits, goals, and books spanning your
+            workspace. This action is irreversible.
           </p>
         </div>
-        <button 
+        <button
           onClick={handlePurge}
-          className="px-5 py-2.5 rounded-xl font-semibold transition-opacity hover:opacity-90" 
-          style={{ backgroundColor: "#e85555", color: "white", fontSize: "13px" }}
+          className="px-5 py-2.5 rounded-xl font-semibold transition-opacity hover:opacity-90"
+          style={{
+            backgroundColor: "#e85555",
+            color: "white",
+            fontSize: "13px",
+          }}
         >
           Purge Core
         </button>
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between mt-6" style={{ paddingTop: "16px", borderTop: "1px solid #161616" }}>
-        <span style={{ fontSize: "10px", color: "#2a2a2a", letterSpacing: "0.1em" }}>LIVE SYNC: ACTIVE • DB SECURE</span>
-        <span style={{ fontSize: "10px", color: "#2a2a2a", letterSpacing: "0.1em" }}>Leben V4.0.2</span>
+      <div
+        className="flex items-center justify-between mt-6"
+        style={{ paddingTop: "16px", borderTop: "1px solid #161616" }}
+      >
+        <span
+          style={{ fontSize: "10px", color: "#2a2a2a", letterSpacing: "0.1em" }}
+        >
+          LIVE SYNC: ACTIVE • DB SECURE
+        </span>
+        <span
+          style={{ fontSize: "10px", color: "#2a2a2a", letterSpacing: "0.1em" }}
+        >
+          Leben V1.0
+        </span>
       </div>
     </main>
   );

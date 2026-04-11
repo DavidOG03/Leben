@@ -3,11 +3,11 @@
 
 import { useEffect } from "react";
 import { useLebenStore } from "@/store/useStore";
-import { fetchTasks, fetchHabits, fetchGoals } from "@/lib/supabase/db";
+import { fetchTasks, fetchHabits, fetchGoals, fetchBooks } from "@/lib/supabase/db";
 import { createClient } from "@/lib/supabase/client";
 
 export function useLoadUserData() {
-  const setTasks = useLebenStore((s) => s.setTasks); // add these setters to your store
+  const setTasks = useLebenStore((s) => s.setTasks);
   const setHabits = useLebenStore((s) => s.setHabits);
   const setGoals = useLebenStore((s) => s.setGoals);
 
@@ -20,18 +20,19 @@ export function useLoadUserData() {
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch all three in parallel - faster than sequential awaits
-      const [tasks, habits, goals] = await Promise.all([
+      const [tasks, habits, goals, books] = await Promise.all([
         fetchTasks(),
         fetchHabits(),
         fetchGoals(),
+        fetchBooks(),
       ]);
 
       setTasks(tasks);
-      setHabits(habits as any);
-      setGoals(goals as any);
+      setHabits(habits);
+      setGoals(goals);
+      useLebenStore.setState({ books });
     };
 
     load();
-  }, [setTasks,setHabits,setGoals]);
+  }, [setTasks, setHabits, setGoals]);
 }

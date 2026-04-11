@@ -24,6 +24,8 @@ export function AuthSocialButtons() {
         // After OAuth completes, Supabase redirects here.
         // The callback route exchanges the code for a session.
         redirectTo: `${window.location.origin}/auth/callback`,
+        // Specifically requesting scopes help map users correctly in Supabase
+        scopes: provider === "github" ? "read:user user:email" : undefined,
       },
     });
 
@@ -31,7 +33,7 @@ export function AuthSocialButtons() {
       console.error(`${provider} OAuth error:`, error.message);
       setLoadingProvider(null);
     }
-    // If successful, the browser will redirect - no need to clear loading state
+    // If successful, the browser will redirect automatically
   };
 
   return (

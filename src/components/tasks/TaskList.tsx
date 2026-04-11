@@ -1,16 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLebenStore } from "@/store/useStore";
-import { CheckIcon, EmptyIcon, TrashIcon } from "../../constants/Icons";
-
-
+import { CheckIcon, EmptyIcon, TrashIcon, EditIcon } from "../../constants/Icons";
 
 export default function TaskList() {
   const tasks = useLebenStore((s) => s.tasks);
   const toggleTask = useLebenStore((s) => s.toggleTask);
   const deleteTask = useLebenStore((s) => s.deleteTask);
+  const updateTask = useLebenStore((s) => s.updateTask);
+  
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editingId && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [editingId]);
+
+  const startEditing = (task: any) => {
+    setEditingId(task.id);
+    setEditTitle(task.title);
+  };
+
+  const saveEdit = () => {
+    if (editingId && editTitle.trim()) {
+      updateTask(editingId, { title: editTitle.trim() });
+    }
+    setEditingId(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+  };
 
   return (
     <div
@@ -69,22 +94,48 @@ export default function TaskList() {
               {task.completed && <CheckIcon />}
             </button>
 
-            {/* Title */}
-            <span
-              className="flex-1 transition-all"
-              style={{
-                fontSize: "13px",
-                color: task.completed ? "#444" : "#ccc",
-                textDecoration: task.completed ? "line-through" : "none",
-                lineHeight: 1.4,
-              }}
-            >
-              {task.title}
-            </span>
+            {/* Title & Priority */}
+            <div className="flex-1 flex items-center gap-3 overflow-hidden">
+              <div 
+                className="w-1.5 h-1.5 rounded-full shrink-0" 
+                style={{ 
+                  backgroundColor: task.priority === "high" ? "#e85555" : task.priority === "low" ? "#55e855" : "#e8a855",
+                  boxShadow: `0 0 6px ${task.priority === "high" ? "#e85555" : task.priority === "low" ? "#55e855" : "#e8a855"}44`
+                }} 
+              />
+              
+              {editingId === task.id ? (
+                <input
+                  ref={inputRef}
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  onBlur={saveEdit}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveEdit();
+                    if (e.key === "Escape") cancelEdit();
+                  }}
+                  className="flex-1 bg-transparent text-[#ccc] outline-none"
+                  style={{ fontSize: "13px", borderBottom: "1px solid #3a3a9e" }}
+                />
+              ) : (
+                <span
+                  onDoubleClick={() => startEditing(task)}
+                  className="flex-1 transition-all overflow-hidden text-ellipsis whitespace-nowrap cursor-text"
+                  style={{
+                    fontSize: "13px",
+                    color: task.completed ? "#444" : "#ccc",
+                    textDecoration: task.completed ? "line-through" : "none",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {task.title}
+                </span>
+              )}
+            </div>
 
             {/* Tag badge */}
             <span
-              className="rounded px-2 py-0.5"
+              className="rounded px-2 py-0.5 shrink-0"
               style={{
                 fontSize: "10px",
                 fontWeight: 500,
@@ -98,44 +149,30 @@ export default function TaskList() {
             </span>
 
             {/* Date */}
-            <span style={{ fontSize: "11px", color: "#333", whiteSpace: "nowrap" }}>
+            <span className="shrink-0" style={{ fontSize: "11px", color: "#333", whiteSpace: "nowrap" }}>
               {task.date}
             </span>
 
-            {/* Delete button */}
-            <button
-              onClick={() => deleteTask(task.id)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "26px",
-                height: "26px",
-                borderRadius: "6px",
-                border: "1px solid transparent",
-                backgroundColor: "transparent",
-                color: "#444",
-                cursor: "pointer",
-                flexShrink: 0,
-                opacity: hoveredId === task.id ? 1 : 0,
-                transition: "opacity 0.15s, color 0.15s, background-color 0.15s, border-color 0.15s",
-              }}
-              onMouseEnter={(e) => {
-                const btn = e.currentTarget;
-                btn.style.color = "#e85555";
-                btn.style.backgroundColor = "rgba(232,85,85,0.1)";
-                btn.style.borderColor = "rgba(232,85,85,0.2)";
-              }}
-              onMouseLeave={(e) => {
-                const btn = e.currentTarget;
-                btn.style.color = "#444";
-                btn.style.backgroundColor = "transparent";
-                btn.style.borderColor = "transparent";
-              }}
-              aria-label="Delete task"
-            >
-              <TrashIcon />
-            </button>
+            {/* Actions */}
+            <div className="flex items-center gap-1 shrink-0" style={{ opacity: hoveredId === task.id ? 1 : 0 }}>
+              {/* Edit button */}
+              <button
+                onClick={() => startEditing(task)}
+                className="flex items-center justify-center w-[26px] h-[26px] rounded-lg transition-all hover:bg-white/5 hover:text-[#7c6af0] text-[#444]"
+                aria-label="Edit task"
+              >
+                <EditIcon />
+              </button>
+
+              {/* Delete button */}
+              <button
+                onClick={() => deleteTask(task.id)}
+                className="flex items-center justify-center w-[26px] h-[26px] rounded-lg transition-all hover:bg-red-500/10 hover:text-red-500 text-[#444]"
+                aria-label="Delete task"
+              >
+                <TrashIcon />
+              </button>
+            </div>
           </div>
         ))
       )}

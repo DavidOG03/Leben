@@ -45,13 +45,52 @@ export function buildAllHabitsMatrix(habits: Habit[]): number[][] {
 
 /** Calculates the current daily streak from a history array. */
 export function calcStreak(history: string[]): number {
+  if (!history || history.length === 0) return 0;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const dates = new Set(history);
   let streak = 0;
-  const sorted = [...history].sort().reverse();
-  for (let i = 0; i < sorted.length; i++) {
-    const expected = new Date();
-    expected.setDate(expected.getDate() - i);
-    if (sorted[i] === expected.toISOString().slice(0, 10)) streak++;
-    else break;
+  let checkDate = new Date(today);
+
+  // If not done today, start checking from yesterday
+  if (!dates.has(today.toISOString().slice(0, 10))) {
+    checkDate = yesterday;
   }
+
+  while (dates.has(checkDate.toISOString().slice(0, 10))) {
+    streak++;
+    checkDate.setDate(checkDate.getDate() - 1);
+  }
+
   return streak;
+}
+
+/** Calculates the longest all-time streak from a history array. */
+export function calcLongestStreak(history: string[]): number {
+  if (!history || history.length === 0) return 0;
+
+  const sorted = Array.from(new Set(history)).sort();
+  let maxStreak = 0;
+  let currentStreak = 1;
+
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = new Date(sorted[i - 1]);
+    const curr = new Date(sorted[i]);
+    
+    const diff = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diff === 1) {
+      currentStreak++;
+    } else if (diff > 1) {
+      if (currentStreak > maxStreak) maxStreak = currentStreak;
+      currentStreak = 1;
+    }
+  }
+
+  return Math.max(maxStreak, currentStreak);
 }
