@@ -200,6 +200,20 @@ create table goals (
   created_at timestamp with time zone default now()
 );
 
+-- Books
+create table books (
+  id            text primary key,
+  user_id       uuid references auth.users(id) on delete cascade not null,
+  title         text not null,
+  author        text not null,
+  current_page  integer default 0,
+  total_pages   integer not null,
+  cover_color   text,
+  status        text check (status in ('reading', 'completed', 'paused')) default 'reading',
+  added_at      bigint not null
+);
+
+
 -- Enable RLS
 alter table tasks  enable row level security;
 alter table habits enable row level security;
