@@ -3,11 +3,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useLebenStore } from "@/store/useStore";
-import { GoogleGenAI } from "@google/genai";
-import {
-  executeWithRateLimit,
-  generateOpenAiRateLimitError,
-} from "@/lib/ai/withRateLimit";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ArrowRightIcon, SparkleIcon } from "@/constants/Icons";
@@ -19,76 +14,32 @@ interface BriefData {
   insights: string[];
 }
 
-// ─── Data fetcher ─────────────────────────────────────────────────────────────
+// ─── Data fetcher (calls secure server-side API route) ───────────────────────
 
 async function fetchMorningBrief(
   tasks: object[],
   habits: object[],
   goals: object[],
-  onWait?: (sec: number) => void,
+  forceRefresh = false,
 ): Promise<BriefData> {
-  const prompt = `
-You are an AI productivity assistant for an app called Leben.
+  const res = await fetch("/api/ai/brief", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tasks, habits, goals, forceRefresh }),
+  });
 
-Given the user's current tasks, habits, and goals, write a short morning brief.
+  if (res.status === 429) {
+    const { error } = await res.json();
+    throw new Error(error ?? "Daily AI limit reached.");
+  }
+  if (!res.ok) {
+    const { error } = await res.json().catch(() => ({}));
+    throw new Error(error ?? "Failed to generate brief.");
+  }
 
-Respond ONLY with valid JSON. No markdown, no backticks, no explanation.
-
-{
-  "summary": "One sentence describing the day ahead based on their actual tasks",
-  "insights": [
-    "Insight 1 - specific to their data, max 12 words",
-    "Insight 2 - specific to their data, max 12 words"
-  ]
-}
-
-User data:
-Tasks: ${JSON.stringify(tasks)}
-Habits: ${JSON.stringify(habits)}
-Goals: ${JSON.stringify(goals)}
-`;
-
-  const geminiCall = async () => {
-    const ai = new GoogleGenAI({
-      apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY!,
-    });
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-    });
-    const raw = response.text ?? "";
-    const clean = raw.replace(/```json|```/g, "").trim();
-    return JSON.parse(clean) as BriefData;
-  };
-
-  const openAiCall = async () => {
-    const openAiResponse = await fetch(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          response_format: { type: "json_object" },
-          messages: [{ role: "user", content: prompt }],
-        }),
-      },
-    );
-
-    if (!openAiResponse.ok) {
-      throw generateOpenAiRateLimitError(openAiResponse);
-    }
-
-    const data = await openAiResponse.json();
-    const raw = data.choices[0].message.content ?? "";
-    const clean = raw.replace(/```json|```/g, "").trim();
-    return JSON.parse(clean) as BriefData;
-  };
-
-  return executeWithRateLimit(geminiCall, openAiCall, onWait);
+  const { text } = await res.json();
+  const clean = text.replace(/```json|```/g, "").trim();
+  return JSON.parse(clean) as BriefData;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -100,7 +51,6 @@ export default function AIMorningBrief() {
   const [brief, setBrief] = useState<BriefData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [waitCountdown, setWaitCountdown] = useState<number | null>(null);
   const [user, setUser] = useState<any>(null);
 
   const hasData = tasks.length > 0 || habits.length > 0 || goals.length > 0;
@@ -111,17 +61,9 @@ export default function AIMorningBrief() {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
   }, []);
 
-  // Countdown ticker
-  useEffect(() => {
-    if (waitCountdown !== null && waitCountdown > 0) {
-      const timer = setTimeout(() => setWaitCountdown(waitCountdown - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (waitCountdown === 0) {
-      setWaitCountdown(null);
-    }
-  }, [waitCountdown]);
+  // Countdown ticker removed — rate limiting now handled server-side
 
-  const handleGenerate = useCallback(async () => {
+  const handleGenerate = useCallback(async (forceRefresh = false) => {
     // Guest guard
     if (!user) {
       router.push("/auth/signin");
@@ -129,16 +71,13 @@ export default function AIMorningBrief() {
     }
     setLoading(true);
     setError(null);
-    setWaitCountdown(null);
 
     try {
-      const result = await fetchMorningBrief(tasks, habits, goals, (sec) =>
-        setWaitCountdown(sec),
-      );
+      const result = await fetchMorningBrief(tasks, habits, goals, forceRefresh);
       setBrief(result);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Morning brief failed:", err);
-      setError("Couldn't generate brief. Try again.");
+      setError(err?.message ?? "Couldn't generate brief. Try again.");
     } finally {
       setLoading(false);
     }
@@ -227,21 +166,7 @@ export default function AIMorningBrief() {
         {user ? (
           hasData ? (
             <div className="space-y-4">
-              {waitCountdown !== null && waitCountdown > 0 && (
-                <div
-                  className="px-3 py-2 text-[12px] font-medium border rounded-lg animate-pulse"
-                  style={{
-                    color: "#d97706",
-                    backgroundColor: "rgba(245, 158, 11, 0.05)",
-                    borderColor: "rgba(245, 158, 11, 0.2)",
-                  }}
-                >
-                  Quota exceeded. Analyzing gently... retrying in{" "}
-                  {waitCountdown}s.
-                </div>
-              )}
-
-              {loading && waitCountdown === null && (
+              {loading && (
                 <div className="space-y-2 animate-pulse">
                   <div className="h-3 rounded bg-white/5 w-3/4" />
                   <div className="h-3 rounded bg-white/5 w-1/2" />
@@ -298,7 +223,7 @@ export default function AIMorningBrief() {
             <>
               {!brief && error && (
                 <button
-                  onClick={handleGenerate}
+                  onClick={() => handleGenerate(true)}
                   disabled={loading}
                   className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
                   style={{
@@ -332,7 +257,7 @@ export default function AIMorningBrief() {
 
               {brief && !loading && (
                 <button
-                  onClick={handleGenerate}
+                  onClick={() => handleGenerate(true)}
                   className="px-4 py-3 rounded-xl font-medium transition-opacity hover:opacity-70"
                   style={{
                     background: "transparent",

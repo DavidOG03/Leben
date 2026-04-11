@@ -45,16 +45,16 @@ export function PlannerRoot() {
     }
   }, [waitCountdown]);
 
-  // Auto-generate on first load if schedule is empty
+  // Auto-generate on first load if schedule is empty (uses cache if available)
   useEffect(() => {
     if (isAlive && schedule.length === 0 && !isRegenerating) {
-      handleRegenerate();
+      handleRegenerate(false); // false = use cache if available
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAlive]);
 
   // ─── Regenerate: calls Gemini with your real tasks ────────────────────────
-  const handleRegenerate = async () => {
+  const handleRegenerate = async (forceRefresh = true) => {
     if (!isAlive) return;
 
     setIsRegenerating(true);
@@ -62,19 +62,16 @@ export function PlannerRoot() {
     setWaitCountdown(null);
 
     try {
-      // generateDayPlan calls Gemini
       const {
         schedule: newSchedule,
         insights,
         mainFocus: newMainFocus,
-      } = await generateDayPlan({ tasks, habits, goals }, (sec) =>
-        setWaitCountdown(sec),
-      );
+      } = await generateDayPlan({ tasks, habits, goals }, undefined, forceRefresh);
 
       setSchedule(newSchedule);
       setAiInsights(insights);
       if (newMainFocus) setMainFocus(newMainFocus);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Planner AI failed:", err);
     } finally {
       setIsRegenerating(false);
@@ -121,8 +118,8 @@ export function PlannerRoot() {
         </div>
 
         <button
-          onClick={handleRegenerate}
-          disabled={isRegenerating && waitCountdown === null} // Don't strictly disable if it's counting down, though it's nice to prevent double clicks
+          onClick={() => handleRegenerate(true)}
+          disabled={isRegenerating && waitCountdown === null}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
           style={{
             background: "#161616",
