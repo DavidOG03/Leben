@@ -4,9 +4,13 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useLebenStore } from "@/store/useStore";
 import { GoogleGenAI } from "@google/genai";
-import { executeWithRateLimit, generateOpenAiRateLimitError } from "@/lib/ai/withRateLimit";
+import {
+  executeWithRateLimit,
+  generateOpenAiRateLimitError,
+} from "@/lib/ai/withRateLimit";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { ArrowRightIcon, SparkleIcon } from "@/constants/Icons";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -15,39 +19,13 @@ interface BriefData {
   insights: string[];
 }
 
-// ─── Icons ────────────────────────────────────────────────────────────────────
-
-const SparkleIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-    <path
-      d="M7 1l1.5 4.5L13 7l-4.5 1.5L7 13l-1.5-4.5L1 7l4.5-1.5L7 1z"
-      stroke="#7c6af0"
-      strokeWidth="1.2"
-      strokeLinejoin="round"
-      fill="none"
-    />
-  </svg>
-);
-
-const ArrowRightIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-    <path
-      d="M2 7h10M8 3l4 4-4 4"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
 // ─── Data fetcher ─────────────────────────────────────────────────────────────
 
 async function fetchMorningBrief(
   tasks: object[],
   habits: object[],
   goals: object[],
-  onWait?: (sec: number) => void
+  onWait?: (sec: number) => void,
 ): Promise<BriefData> {
   const prompt = `
 You are an AI productivity assistant for an app called Leben.
@@ -155,7 +133,7 @@ export default function AIMorningBrief() {
 
     try {
       const result = await fetchMorningBrief(tasks, habits, goals, (sec) =>
-        setWaitCountdown(sec)
+        setWaitCountdown(sec),
       );
       setBrief(result);
     } catch (err) {
@@ -168,6 +146,7 @@ export default function AIMorningBrief() {
 
   const currentDataStr = JSON.stringify({ tasks, habits, goals });
   const isFirstRun = useRef(true);
+  const prevTasksCount = useRef(tasks.length);
 
   useEffect(() => {
     if (!hasData || !user) {
@@ -177,14 +156,18 @@ export default function AIMorningBrief() {
 
     if (isFirstRun.current) {
       isFirstRun.current = false;
+      prevTasksCount.current = tasks.length;
       handleGenerate();
     } else {
-      const timeoutId = setTimeout(() => {
-        handleGenerate();
-      }, 2000);
-      return () => clearTimeout(timeoutId);
+      if (tasks.length !== prevTasksCount.current) {
+        prevTasksCount.current = tasks.length;
+        const timeoutId = setTimeout(() => {
+          handleGenerate();
+        }, 2000);
+        return () => clearTimeout(timeoutId);
+      }
     }
-  }, [currentDataStr, hasData, handleGenerate, user]);
+  }, [currentDataStr, hasData, handleGenerate, user, tasks.length]);
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -223,12 +206,20 @@ export default function AIMorningBrief() {
         >
           {user ? (
             hasData ? (
-              brief ? brief.summary : "Ready to plan your day?"
+              brief ? (
+                brief.summary
+              ) : (
+                "Ready to plan your day?"
+              )
             ) : (
-              <>Welcome to <span style={{ color: "#7c6af0" }}>Leben.</span></>
+              <>
+                Welcome to <span style={{ color: "#7c6af0" }}>Leben.</span>
+              </>
             )
           ) : (
-            <>Unlock AI <span style={{ color: "#7c6af0" }}>Insights.</span></>
+            <>
+              Unlock AI <span style={{ color: "#7c6af0" }}>Insights.</span>
+            </>
           )}
         </h2>
 
@@ -242,10 +233,11 @@ export default function AIMorningBrief() {
                   style={{
                     color: "#d97706",
                     backgroundColor: "rgba(245, 158, 11, 0.05)",
-                    borderColor: "rgba(245, 158, 11, 0.2)"
+                    borderColor: "rgba(245, 158, 11, 0.2)",
                   }}
                 >
-                  Quota exceeded. Analyzing gently... retrying in {waitCountdown}s.
+                  Quota exceeded. Analyzing gently... retrying in{" "}
+                  {waitCountdown}s.
                 </div>
               )}
 
@@ -280,14 +272,15 @@ export default function AIMorningBrief() {
 
               {!brief && !loading && !error && (
                 <p style={{ fontSize: "13px", color: "#555", lineHeight: 1.7 }}>
-                  Your AI morning brief will appear here. Hit the button below to generate it.
+                  Your AI morning brief will appear here. Hit the button below
+                  to generate it.
                 </p>
               )}
             </div>
           ) : (
             <p style={{ fontSize: "13px", color: "#555", lineHeight: 1.7 }}>
-              Your AI morning brief will appear here once you&apos;ve added tasks,
-              habits, and goals. Start by creating your first task.
+              Your AI morning brief will appear here once you&apos;ve added
+              tasks, habits, and goals. Start by creating your first task.
             </p>
           )
         ) : (

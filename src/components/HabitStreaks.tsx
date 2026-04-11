@@ -106,7 +106,7 @@ export default function HabitStreaks() {
                     {h.label}
                   </div>
                   <div style={{ fontSize: "11px", color: "#666" }}>
-                    🔥 {h.streak} day streak
+                    🔥 {h.longestStreak} day streak
                   </div>
                 </div>
               </div>
