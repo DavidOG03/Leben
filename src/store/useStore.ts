@@ -69,6 +69,8 @@ interface TasksHabitsSlice {
   schedule: ScheduleItem[];
   setSchedule: (schedule: ScheduleItem[]) => void;
   toggleScheduleItem: (id: string) => void;
+  isSidebarOpen: boolean;
+  toggleSidebar: (isOpen?: boolean) => void;
   purgeAll: () => void;
 }
 
@@ -80,6 +82,11 @@ export const useLebenStore = create<LebenState>()(
       // --- Tasks & Habits slice ---
       tasks: [],
       habits: [],
+      isSidebarOpen: false,
+      toggleSidebar: (isOpen) =>
+        set((state) => ({
+          isSidebarOpen: isOpen !== undefined ? isOpen : !state.isSidebarOpen,
+        })),
       setTasks: (tasks) => set({ tasks }),
       setHabits: (habits) => {
         const today = new Date().toISOString().split("T")[0];

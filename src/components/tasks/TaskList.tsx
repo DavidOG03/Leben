@@ -154,7 +154,7 @@ export default function TaskList() {
             </span>
 
             {/* Actions */}
-            <div className="flex items-center gap-1 shrink-0" style={{ opacity: hoveredId === task.id ? 1 : 0 }}>
+            <div className="flex items-center gap-1 shrink-0">
               {/* Edit button */}
               <button
                 onClick={() => startEditing(task)}

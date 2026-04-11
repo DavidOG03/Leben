@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { BellIcon, GearIcon, SearchIcon } from "../constants/Icons";
+import { useLebenStore } from "@/store/useStore";
 
 interface HeaderProps {
   title?: React.ReactNode;
@@ -11,6 +12,7 @@ interface HeaderProps {
 
 export default function Header({ title, subtitle }: HeaderProps) {
   const [firstName, setFirstName] = useState("Guest");
+  const toggleSidebar = useLebenStore((s: any) => s.toggleSidebar);
 
   useEffect(() => {
     async function fetchUser() {
@@ -45,8 +47,21 @@ export default function Header({ title, subtitle }: HeaderProps) {
         height: "72px",
       }}
     >
-      {/* Left: Greeting or Custom Title */}
-      <div>
+      <div className="flex items-center gap-3">
+        {/* Hamburger Menu (Mobile Only) */}
+        <button
+          className="md:hidden flex items-center justify-center p-2 rounded-md text-white hover:bg-white/10"
+          onClick={() => toggleSidebar(true)}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+
+        {/* Left: Greeting or Custom Title */}
+        <div>
         {title ? (
           <div className="flex flex-col">
             <h1
@@ -96,6 +111,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
             </p>
           </>
         )}
+      </div>
       </div>
 
       {/* Right: Search + icons */}

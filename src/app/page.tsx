@@ -22,30 +22,23 @@ export default function Dashboard() {
 
         {/* Content area */}
         <main
-          className="flex-1 overflow-y-auto"
-          style={{ padding: "28px 32px" }}
+          className="flex-1 overflow-y-auto p-4 md:px-8 md:py-7"
         >
           {/* Top row: AI Brief (2/3) + Efficiency Score (1/3) */}
-          <div
-            className="grid gap-5 mb-5"
-            style={{ gridTemplateColumns: "1fr 1fr 1fr" }}
-          >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
             {/* AI Brief spans 2 columns */}
-            <div style={{ gridColumn: "1 / 3" }}>
+            <div className="md:col-span-2">
               <AIMorningBrief />
             </div>
 
             {/* Efficiency Score */}
-            <div style={{ gridColumn: "3 / 4" }}>
+            <div className="md:col-span-1">
               <EfficiencyScore />
             </div>
           </div>
 
           {/* Bottom row: Focus + Habits + Goals (equal thirds) */}
-          <div
-            className="grid gap-5"
-            style={{ gridTemplateColumns: "1fr 1fr 1fr" }}
-          >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <TodaysFocus />
             <HabitStreaks />
             <GoalProgress />

@@ -38,14 +38,14 @@ export default function AnalyticsContent() {
 
   return (
     <main
-      className="flex-1 overflow-y-auto"
-      style={{ padding: "28px 32px", backgroundColor: "#0a0a0a" }}
+      className="flex-1 overflow-y-auto p-4 md:px-8 md:py-7"
+      style={{ backgroundColor: "#0a0a0a" }}
     >
       {/* Row 1: stat summary cards */}
       <StatCards cards={analytics.statCards} />
 
       {/* Row 2: activity chart + productivity score */}
-      <div className="grid gap-5 mb-5" style={{ gridTemplateColumns: "1fr 1fr" }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
         <WeeklyActivityChart
           data={analytics.weekActivity}
           hasData={analytics.hasTaskData}
@@ -57,7 +57,7 @@ export default function AnalyticsContent() {
       </div>
 
       {/* Row 3: habits + goals + AI insights */}
-      <div className="grid gap-5" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         <HabitBreakdown
           habits={analytics.topHabits}
           hasData={analytics.hasHabitData}

@@ -9,14 +9,15 @@ export function Timeline() {
   return (
     <div className="relative pl-2">
       {/* Vertical line connector */}
-      <div 
-        className="absolute left-6 top-6 bottom-6 w-px"
-        style={{ 
-          background: "linear-gradient(to bottom, #222 0%, #1a1a1a 50%, #111 100%)",
-          zIndex: 0
+      <div
+        className="absolute left-8 top-6 bottom-6 w-px"
+        style={{
+          background:
+            "linear-gradient(to bottom, #222 0%, #1a1a1a 50%, #111 100%)",
+          zIndex: 0,
         }}
       />
-      
+
       <div className="flex flex-col">
         {schedule.length === 0 ? (
           <div className="py-20 text-center">
@@ -26,9 +27,9 @@ export function Timeline() {
           </div>
         ) : (
           schedule.map((item, index) => (
-            <TimelineItem 
-              key={item.id} 
-              item={item} 
+            <TimelineItem
+              key={item.id}
+              item={item}
               isCurrent={index === 1} // Mocking current item for now
             />
           ))

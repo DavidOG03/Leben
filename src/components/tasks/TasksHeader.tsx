@@ -2,18 +2,35 @@
 
 import { BellIcon, SearchIcon, SparkleIcon } from "@/constants/Icons";
 import { useRouter } from "next/navigation";
+import { useLebenStore } from "@/store/useStore";
 
 export default function TasksHeader() {
   const router = useRouter();
+  const toggleSidebar = useLebenStore((s: any) => s.toggleSidebar);
   return (
     <header
-      className="flex items-center justify-end px-6 flex-shrink-0"
+      className="flex items-center justify-between px-6 flex-shrink-0 w-full"
       style={{
         height: "56px",
         backgroundColor: "#0a0a0a",
         borderBottom: "1px solid #161616",
       }}
     >
+      {/* Mobile Hamburger Menu */}
+      <button
+        className="md:hidden flex items-center justify-center p-2 rounded-md text-white hover:bg-white/10"
+        onClick={() => toggleSidebar(true)}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+
+      {/* Spacer for desktop to keep items aligned right */}
+      <div className="hidden md:block flex-1" />
+
       {/* Search bar — centred in design */}
       {/* <div className="flex-1 flex justify-center">
         <div

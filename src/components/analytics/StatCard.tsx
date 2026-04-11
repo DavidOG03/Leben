@@ -8,14 +8,11 @@ interface StatCardsProps {
 
 export default function StatCards({ cards }: StatCardsProps) {
   return (
-    <div
-      className="grid gap-4 mb-6"
-      style={{ gridTemplateColumns: "repeat(4,1fr)" }}
-    >
+    <div className="flex gap-4 mb-6 overflow-x-auto md:grid md:grid-cols-4">
       {cards.map((s) => (
         <div
           key={s.label}
-          className="rounded-2xl p-5"
+          className="rounded-2xl p-5 min-w-[200px]"
           style={{ backgroundColor: "#111", border: "1px solid #1e1e1e" }}
         >
           <p style={{ fontSize: "11px", color: "#555", marginBottom: "8px" }}>

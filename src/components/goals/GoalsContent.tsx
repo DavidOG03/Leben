@@ -75,9 +75,9 @@ function FinancialGoalSkeleton() {
       className="rounded-2xl overflow-hidden"
       style={{ border: "1px solid #1e1e1e", backgroundColor: "#111" }}
     >
-      <div className="grid" style={{ gridTemplateColumns: "180px 1fr" }}>
+      <div className="flex flex-col sm:flex-row">
         <div
-          className="flex flex-col items-center justify-center p-5 gap-3"
+          className="flex flex-col items-center justify-center p-5 gap-3 sm:w-[180px] shrink-0"
           style={{ background: "#0e0e0e", borderRight: "1px solid #1a1a1a" }}
         >
           <div
@@ -97,7 +97,7 @@ function FinancialGoalSkeleton() {
             }}
           />
         </div>
-        <div className="p-5 flex flex-col gap-3">
+        <div className="p-5 flex flex-col gap-3 flex-1">
           <div
             className="rounded"
             style={{ width: "60%", height: "22px", backgroundColor: "#1a1a1a" }}
@@ -215,9 +215,9 @@ export default function GoalsContent() {
   const hasGoals = goals.length > 0;
 
   return (
-    <main className="flex-1 overflow-y-auto" style={{ padding: "32px 32px" }}>
+    <main className="flex-1 overflow-y-auto p-4 md:p-8">
       {/* Hero */}
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex flex-col md:flex-row items-start justify-between gap-4 mb-8">
         <div>
           <h1
             className="font-black text-white mb-2"
@@ -264,26 +264,23 @@ export default function GoalsContent() {
       </div>
 
       {/* Top 3 goal cards */}
-      <div
-        className="grid gap-5 mb-6"
-        style={{ gridTemplateColumns: "1fr 1fr 1fr" }}
-      >
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
         {!hasGoals
           ? [0, 1, 2].map((i) => <GoalCardSkeleton key={i} />)
           : topGoals.map((g) => <GoalCard key={g.id} goal={g} />)}
       </div>
 
       {/* Bottom row */}
-      <div className="grid gap-5" style={{ gridTemplateColumns: "1fr 1fr" }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Financial goal */}
         {financialGoal ? (
           <div
             className="rounded-2xl overflow-hidden"
             style={{ border: "1px solid #1e1e1e", backgroundColor: "#111" }}
           >
-            <div className="grid" style={{ gridTemplateColumns: "180px 1fr" }}>
+            <div className="flex flex-col sm:flex-row">
               <div
-                className="flex flex-col items-center justify-center p-5"
+                className="flex flex-col items-center justify-center p-5 sm:w-[180px] shrink-0"
                 style={{
                   background: "linear-gradient(135deg,#141414,#0e0e0e)",
                   borderRight: "1px solid #1a1a1a",
@@ -312,7 +309,7 @@ export default function GoalsContent() {
                   {financialGoal.title}
                 </p>
               </div>
-              <div className="p-5">
+              <div className="p-5 flex-1">
                 {(() => {
                   const { progress } = deriveGoalStats(financialGoal);
                   return (

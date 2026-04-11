@@ -1,18 +1,32 @@
 "use client";
 
+import { useLebenStore } from "@/store/useStore";
+
 const ranges = ["7D", "30D", "90D", "1Y"];
 
 export default function AnalyticsHeader() {
+  const toggleSidebar = useLebenStore((s: any) => s.toggleSidebar);
   return (
     <header
-      className="flex items-center justify-between px-7 flex-shrink-0"
+      className="flex items-center justify-between px-4 md:px-7 flex-shrink-0"
       style={{
         height: "58px",
         borderBottom: "1px solid #161616",
         backgroundColor: "#0a0a0a",
       }}
     >
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-3 md:gap-6">
+        {/* Mobile Hamburger Menu */}
+        <button
+          className="md:hidden flex items-center justify-center p-2 rounded-md text-white hover:bg-white/10"
+          onClick={() => toggleSidebar(true)}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
         <span className="font-bold text-white" style={{ fontSize: "15px" }}>
           Analytics
         </span>

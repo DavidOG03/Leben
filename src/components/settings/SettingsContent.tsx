@@ -74,8 +74,8 @@ export default function SettingsContent() {
 
   return (
     <main
-      className="flex-1 overflow-y-auto"
-      style={{ padding: "32px 40px", backgroundColor: "#0a0a0a" }}
+      className="flex-1 overflow-y-auto p-4 md:px-10 md:py-8"
+      style={{ backgroundColor: "#0a0a0a" }}
     >
       {/* Profile section */}
       <div className="flex items-start gap-6 mb-8">
@@ -137,8 +137,7 @@ export default function SettingsContent() {
 
       {/* Display name + Workspace ID */}
       <div
-        className="grid gap-4 mb-8"
-        style={{ gridTemplateColumns: "1fr 1fr" }}
+        className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8"
       >
         {[
           { label: "DISPLAY NAME", val: displayName },
@@ -228,7 +227,7 @@ export default function SettingsContent() {
 
       {/* Danger zone */}
       <div
-        className="flex items-center justify-between rounded-xl px-6 py-5 mt-8"
+        className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-xl px-4 py-5 md:px-6 md:py-5 mt-8"
         style={{ backgroundColor: "#110a0a", border: "1px solid #2a1515" }}
       >
         <div>

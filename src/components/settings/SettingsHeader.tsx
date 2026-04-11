@@ -1,19 +1,33 @@
 "use client";
 
+import { useLebenStore } from "@/store/useStore";
+
 // const tabs = ["Profile", "Security", "Billing"];
 const tabs = ["Profile"];
 
 export default function SettingsHeader() {
+  const toggleSidebar = useLebenStore((s: any) => s.toggleSidebar);
   return (
     <header
-      className="flex items-center justify-between px-7 flex-shrink-0"
+      className="flex items-center justify-between px-4 md:px-7 flex-shrink-0"
       style={{
         height: "58px",
         borderBottom: "1px solid #161616",
         backgroundColor: "#0a0a0a",
       }}
     >
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-3 md:gap-6">
+        {/* Mobile Hamburger Menu */}
+        <button
+          className="md:hidden flex items-center justify-center p-2 rounded-md text-white hover:bg-white/10"
+          onClick={() => toggleSidebar(true)}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
         <span className="font-bold text-white" style={{ fontSize: "15px" }}>
           Settings
         </span>
@@ -29,7 +43,7 @@ export default function SettingsHeader() {
           ))}
         </nav>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="hidden md:flex items-center gap-3">
         {/* <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#141414", border: "1px solid #1e1e1e", width: "180px" }}>
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="5.5" cy="5.5" r="4" stroke="#444" strokeWidth="1.2" /><path d="M9 9l2.5 2.5" stroke="#444" strokeWidth="1.2" strokeLinecap="round" /></svg>
           <span style={{ fontSize: "12px", color: "#3a3a3a" }}>Search parameters...</span>

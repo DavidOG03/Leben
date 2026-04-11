@@ -18,6 +18,7 @@ import {
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useLebenStore } from "@/store/useStore";
 
 const navItems = [
   { label: "Dashboard", icon: <GridIcon />, href: "/" },
@@ -44,9 +45,23 @@ export default function AppSidebar() {
   const userRole = user ? "Premium Curator" : "Preview Mode";
   const isAuthenticated = !!user;
 
+  const isSidebarOpen = useLebenStore((s: any) => s.isSidebarOpen);
+  const toggleSidebar = useLebenStore((s: any) => s.toggleSidebar);
+
   return (
-    <aside
-      className="flex flex-col h-full flex-shrink-0"
+    <>
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+          onClick={() => toggleSidebar(false)}
+        />
+      )}
+
+      <aside
+        className={`fixed top-0 left-0 z-50 h-full flex flex-col flex-shrink-0 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       style={{
         width: "190px",
         backgroundColor: "#0d0d0d",
@@ -109,6 +124,16 @@ export default function AppSidebar() {
         >
           Leben
         </span>
+
+        {/* Mobile Close Button */}
+        <button
+          className="ml-auto flex items-center justify-center w-6 h-6 rounded-md text-[#555] hover:text-white hover:bg-white/10 md:hidden"
+          onClick={() => toggleSidebar(false)}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
 
       {/* Nav */}
@@ -128,7 +153,11 @@ export default function AppSidebar() {
               key={item.label}
               href={isLocked ? "#" : item.href}
               onClick={(e) => {
-                if (isLocked) e.preventDefault();
+                if (isLocked) {
+                  e.preventDefault();
+                } else if (window.innerWidth < 768) {
+                  toggleSidebar(false);
+                }
               }}
               className={`flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors group ${
                 isLocked ? "cursor-not-allowed opacity-75" : ""
@@ -240,5 +269,6 @@ export default function AppSidebar() {
         </div>
       </div>
     </aside>
+    </>
   );
 }

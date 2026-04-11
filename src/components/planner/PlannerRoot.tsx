@@ -89,7 +89,7 @@ export function PlannerRoot() {
   return (
     <div className="flex flex-col gap-10 animate-in fade-in duration-700">
       {/* Page Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col md:flex-row items-start justify-between gap-6">
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-3">
             <span className="px-2 py-0.5 rounded bg-[#7c6af01a] text-[#7c6af0] font-bold text-[9px] tracking-widest border border-[#7c6af033]">
@@ -178,10 +178,10 @@ export function PlannerRoot() {
 
       {/* Bottom Actions */}
       <div className="flex flex-col gap-8 mb-12">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <button
             onClick={() => router.push("/tasks")}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[#111] border border-[#1e1e1e] text-[#666] font-bold text-[13px] hover:bg-white/[0.02]"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#111] border border-[#1e1e1e] text-[#666] font-bold text-[13px] hover:bg-white/[0.02]"
           >
             <PlusIcon /> Add Task
           </button>
@@ -190,7 +190,7 @@ export function PlannerRoot() {
           </button> */}
           <button
             onClick={() => setSchedule([])}
-            className="ml-auto flex items-center gap-2 px-5 py-3 rounded-xl hover:text-red-400 text-[#444] font-bold text-[13px]"
+            className="w-full sm:w-auto sm:ml-auto flex items-center justify-center gap-2 px-5 py-3 rounded-xl hover:text-red-400 text-[#444] font-bold text-[13px]"
           >
             <TrashIcon /> Clear Schedule
           </button>

@@ -43,8 +43,8 @@ export default function HabitsContent() {
 
   return (
     <main
-      className="flex-1 overflow-y-auto"
-      style={{ padding: "24px 32px", backgroundColor: "#0a0a0a" }}
+      className="flex-1 overflow-y-auto p-4 md:p-8"
+      style={{ backgroundColor: "#0a0a0a" }}
     >
       {showAddHabit && (
         <AddHabitModal
@@ -60,10 +60,7 @@ export default function HabitsContent() {
       )}
 
       {/* Stats row */}
-      <div
-        className="grid gap-4 mb-6"
-        style={{ gridTemplateColumns: "1fr 1fr" }}
-      >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <ConsistencyScore
           habits={habits}
           books={books}
@@ -85,7 +82,7 @@ export default function HabitsContent() {
 
       {/* Footer quote */}
       <div
-        className="flex items-center justify-between rounded-2xl p-8"
+        className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 rounded-2xl p-6 md:p-8"
         style={{ backgroundColor: "#0e0e0e", border: "1px solid #161616" }}
       >
         <div style={{ maxWidth: "380px" }}>
@@ -108,7 +105,7 @@ export default function HabitsContent() {
             <span style={{ fontSize: "12px", color: "#555" }}>Aristotle</span>
           </div>
         </div>
-        <div className="text-right">
+        <div className="text-left md:text-right">
           <p
             style={{
               fontSize: "9px",
