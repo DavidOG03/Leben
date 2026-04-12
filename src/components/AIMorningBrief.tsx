@@ -63,25 +63,33 @@ export default function AIMorningBrief() {
 
   // Countdown ticker removed — rate limiting now handled server-side
 
-  const handleGenerate = useCallback(async (forceRefresh = false) => {
-    // Guest guard
-    if (!user) {
-      router.push("/auth/signin");
-      return;
-    }
-    setLoading(true);
-    setError(null);
+  const handleGenerate = useCallback(
+    async (forceRefresh = false) => {
+      // Guest guard
+      if (!user) {
+        router.push("/auth/signin");
+        return;
+      }
+      setLoading(true);
+      setError(null);
 
-    try {
-      const result = await fetchMorningBrief(tasks, habits, goals, forceRefresh);
-      setBrief(result);
-    } catch (err: any) {
-      console.error("Morning brief failed:", err);
-      setError(err?.message ?? "Couldn't generate brief. Try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, [tasks, habits, goals, user, router]);
+      try {
+        const result = await fetchMorningBrief(
+          tasks,
+          habits,
+          goals,
+          forceRefresh,
+        );
+        setBrief(result);
+      } catch (err: any) {
+        console.error("Morning brief failed:", err);
+        setError(err?.message ?? "Couldn't generate brief. Try again.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [tasks, habits, goals, user, router],
+  );
 
   const currentDataStr = JSON.stringify({ tasks, habits, goals });
   const isFirstRun = useRef(true);
@@ -121,7 +129,7 @@ export default function AIMorningBrief() {
     >
       <div>
         <div className="flex items-center gap-2 mb-5">
-          {/* <SparkleIcon /> */}
+          <SparkleIcon />
           <span
             className="uppercase tracking-widest font-medium"
             style={{
@@ -130,7 +138,7 @@ export default function AIMorningBrief() {
               letterSpacing: "0.14em",
             }}
           >
-            Welcome to Leben
+            AI MORNING BRIEF
           </span>
         </div>
 

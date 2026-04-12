@@ -118,7 +118,13 @@ export default function Header({ title, subtitle }: HeaderProps) {
                   letterSpacing: "0.12em",
                 }}
               >
-                Tuesday, Oct 24
+                {new Date()
+                  .toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "short",
+                    day: "numeric",
+                  })
+                  .toUpperCase()}
               </p>
             </>
           )}
