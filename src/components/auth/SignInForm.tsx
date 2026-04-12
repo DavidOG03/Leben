@@ -7,10 +7,12 @@
 import { useState } from "react";
 import { signInWithEmail } from "@/lib/supabase/authActions";
 import { AuthSocialButtons } from "./AuthSocialButtons";
+import { EyeIcon, EyeOffIcon } from "@/constants/Icons";
 
 export function SignInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -74,16 +76,26 @@ export function SignInForm() {
               Forgot password?
             </a>
           </div>
-          <input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="auth-input"
-            autoComplete="current-password"
-            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-          />
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="auth-input pr-10"
+              autoComplete="current-password"
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+            </button>
+          </div>
         </div>
       </div>
 
