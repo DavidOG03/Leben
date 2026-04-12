@@ -16,6 +16,8 @@ import {
 } from "@/constants/Icons";
 import { generateDayPlan } from "@/lib/ai/aiPlanner";
 import { useRouter } from "next/navigation";
+import AITokenUsage from "../AITokenUsage";
+import LimitModal from "../LimitModal";
 
 export function PlannerRoot() {
   const tasks = useLebenStore((s) => s.tasks);
@@ -33,6 +35,7 @@ export function PlannerRoot() {
     reason: string;
   } | null>(null);
   const [waitCountdown, setWaitCountdown] = useState<number | null>(null);
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
   const isAlive = tasks.length > 2;
 
@@ -73,6 +76,9 @@ export function PlannerRoot() {
       if (newMainFocus) setMainFocus(newMainFocus);
     } catch (err: any) {
       console.error("Planner AI failed:", err);
+      if (err?.message?.includes("limit reached")) {
+        setShowLimitModal(true);
+      }
     } finally {
       setIsRegenerating(false);
       setInsightsLoading(false);
@@ -85,6 +91,11 @@ export function PlannerRoot() {
 
   return (
     <div className="flex flex-col gap-10 animate-in fade-in duration-700">
+      <LimitModal
+        isOpen={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+      />
+
       {/* Page Header */}
       <div className="flex flex-col md:flex-row items-start justify-between gap-6">
         <div className="flex flex-col gap-3">
@@ -92,9 +103,7 @@ export function PlannerRoot() {
             <span className="px-2 py-0.5 rounded bg-[#7c6af01a] text-[#7c6af0] font-bold text-[9px] tracking-widest border border-[#7c6af033]">
               AI GENERATED
             </span>
-            <span className="text-[#444] text-[11px] font-medium">
-              Last synced 2m ago
-            </span>
+            <AITokenUsage />
           </div>
           <h1
             className="text-white font-bold"

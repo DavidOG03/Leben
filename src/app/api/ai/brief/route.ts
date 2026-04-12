@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
-const DAILY_LIMIT = 15;
+const DAILY_TOKEN_LIMIT = 25000;
 
 export async function POST(request: NextRequest) {
   const cookieStore = await cookies();
@@ -38,16 +38,18 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // ── 3. Rate limit check ────────────────────────────────────────────────────
-  const { count } = await supabase
+  // ── 3. Token-based rate limit check ────────────────────────────────────────
+  const { data: usage } = await supabase
     .from("ai_usage")
-    .select("*", { count: "exact", head: true })
+    .select("tokens")
     .eq("user_id", user.id)
     .eq("date", today);
 
-  if ((count ?? 0) >= DAILY_LIMIT) {
+  const totalTokensUsed = usage?.reduce((acc, curr) => acc + curr.tokens, 0) ?? 0;
+
+  if (totalTokensUsed >= DAILY_TOKEN_LIMIT) {
     return NextResponse.json(
-      { error: "Daily AI limit reached. Try again tomorrow." },
+      { error: "Daily AI token limit reached. Try again tomorrow." },
       { status: 429 }
     );
   }
@@ -76,13 +78,14 @@ Goals: ${JSON.stringify(goals)}
 
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-    const response = await ai.models.generateContent({
+    const result = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: prompt,
     });
 
-    const raw = response.text ?? "";
+    const raw = result.text ?? "";
     const clean = raw.replace(/```json|```/g, "").trim();
+    const tokenCount = result.usageMetadata?.totalTokenCount ?? 0;
 
     // ── 5. Log usage + write cache ───────────────────────────────────────────
     await Promise.all([
@@ -90,6 +93,7 @@ Goals: ${JSON.stringify(goals)}
         user_id: user.id,
         date: today,
         feature: "morning_brief",
+        tokens: tokenCount,
       }),
       supabase.from("ai_cache").upsert(
         {
