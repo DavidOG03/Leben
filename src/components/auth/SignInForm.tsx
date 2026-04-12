@@ -28,7 +28,7 @@ export function SignInForm() {
     const result = await signInWithEmail(email, password);
 
     if (result?.error) {
-      setError(result.error);
+      setError(result.error || "This user does not exist");
       setLoading(false);
     }
     // If no error, the server action redirects - no need to do anything here

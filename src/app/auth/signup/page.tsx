@@ -15,10 +15,10 @@ const SIGNUP_FEATURES = [
     label: "EFFICIENCY",
     description: "Automated workflows for your daily digital life.",
   },
-  {
-    label: "PRIVACY",
-    description: "Local-first data processing with end-to-end security.",
-  },
+  // {
+  //   label: "PRIVACY",
+  //   description: "Local-first data processing with end-to-end security.",
+  // },
 ];
 
 export default async function SignUpPage() {
@@ -61,9 +61,9 @@ export default async function SignUpPage() {
       </section>
 
       <footer className="auth-footer">
-        <a href="/privacy">PRIVACY POLICY</a>
+        {/* <a href="/privacy">PRIVACY POLICY</a>
         <a href="/terms">TERMS OF SERVICE</a>
-        <a href="/support">SUPPORT</a>
+        <a href="/support">SUPPORT</a> */}
         <span>© 2026 LEBEN. ALL RIGHTS RESERVED.</span>
       </footer>
     </main>

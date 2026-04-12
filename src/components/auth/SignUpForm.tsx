@@ -26,7 +26,7 @@ export function SignUpForm() {
     if (!email.trim()) return "Please enter your email.";
     if (password.length < 8) return "Password must be at least 8 characters.";
     if (password !== confirmPassword) return "Passwords do not match.";
-    if (!agreedToTerms) return "Please agree to the terms to continue.";
+    // if (!agreedToTerms) return "Please agree to the terms to continue.";
 
     const { score } = getPasswordStrength(password);
     if (score < 2) return "Please choose a stronger password.";
@@ -129,7 +129,7 @@ export function SignUpForm() {
             autoComplete="new-password"
           />
         </div>
-
+        {/* 
         <label className="terms-row">
           <input
             type="checkbox"
@@ -148,7 +148,7 @@ export function SignUpForm() {
             </a>
             .
           </span>
-        </label>
+        </label> */}
       </div>
 
       <button

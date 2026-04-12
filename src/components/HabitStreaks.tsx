@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useLebenStore, Habit } from "@/store/useStore";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { PlusIcon } from "@/constants/Icons";
 
 export default function HabitStreaks() {
   const habits = useLebenStore((s: any) => s.habits) as Habit[];
@@ -65,7 +66,8 @@ export default function HabitStreaks() {
         </div>
       ) : habits.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center py-4 gap-3">
-          <p style={{ fontSize: "11px", color: "#333", marginTop: "8px" }}>
+          <PlusIcon />
+          <p style={{ fontSize: "11px", color: "#333" }}>
             No habits tracked yet
           </p>
           <Link

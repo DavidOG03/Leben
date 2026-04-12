@@ -38,8 +38,6 @@ export async function signInWithEmail(
   redirect("/");
 }
 
-// ─── Sign Up ──────────────────────────────────────────────────────────────────
-
 export async function signUpWithEmail(data: SignUpData): Promise<AuthResult> {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
@@ -48,15 +46,13 @@ export async function signUpWithEmail(data: SignUpData): Promise<AuthResult> {
     email: data.email,
     password: data.password,
     options: {
-      // This stores the user's full name in their Supabase profile metadata
       data: { full_name: data.fullName },
     },
   });
 
   if (error) return { error: error.message };
 
-  // After signup, Supabase sends a confirmation email.
-  // We redirect to a "check your email" page.
+  // No email confirmation - go straight to dashboard
   redirect("/");
 }
 

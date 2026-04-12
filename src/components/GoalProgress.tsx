@@ -6,6 +6,7 @@ import { useLebenStore } from "@/store/useStore";
 import { deriveGoalStats, Goal, Milestone } from "@/utils/goals.types";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { PlusIcon } from "@/constants/Icons";
 
 export default function GoalProgress() {
   const goals = useLebenStore((s: any) => s.goals) as Goal[];
@@ -67,7 +68,8 @@ export default function GoalProgress() {
           </Link>
         </div>
       ) : goals.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 mt-auto pt-2">
+        <div className="flex flex-col items-center gap-2 my-auto pt-2">
+          <PlusIcon />
           <p style={{ fontSize: "11px", color: "#333" }}>No goals added yet</p>
           <Link
             href="/goals"

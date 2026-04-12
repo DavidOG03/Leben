@@ -58,20 +58,6 @@ export default function TodaysFocus() {
               Add your first task
             </Link>
           </div>
-
-          {/* Empty progress bar */}
-          <div
-            className="rounded-full overflow-hidden mt-4"
-            style={{ height: "3px", backgroundColor: "#1a1a1a" }}
-          >
-            <div
-              className="h-full rounded-full"
-              style={{
-                width: "0%",
-                background: "linear-gradient(90deg, #5a4fd4, #9d8ff5)",
-              }}
-            />
-          </div>
         </>
       ) : (
         tasks.map((task, i) => (

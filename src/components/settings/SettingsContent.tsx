@@ -125,7 +125,7 @@ export default function SettingsContent() {
         <div>
           <div className="flex items-center gap-3 mb-1">
             <h1
-              className="font-black text-white"
+              className="font-black text-white capitalize"
               style={{ fontSize: "26px", letterSpacing: "-0.02em" }}
             >
               {user ? displayName : "Guest"}
@@ -136,9 +136,7 @@ export default function SettingsContent() {
       </div>
 
       {/* Display name + Workspace ID */}
-      <div
-        className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8"
-      >
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
         {[
           { label: "DISPLAY NAME", val: displayName },
           {
@@ -162,7 +160,10 @@ export default function SettingsContent() {
             >
               {label}
             </p>
-            <p className="font-medium text-white" style={{ fontSize: "15px" }}>
+            <p
+              className="font-medium text-white capitalize"
+              style={{ fontSize: "15px" }}
+            >
               {val}
             </p>
           </div>

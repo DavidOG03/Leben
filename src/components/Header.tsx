@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { BellIcon, GearIcon, SearchIcon } from "../constants/Icons";
 import { useLebenStore } from "@/store/useStore";
+import { useRouter } from "next/navigation";
 
 interface HeaderProps {
   title?: React.ReactNode;
@@ -13,6 +14,7 @@ interface HeaderProps {
 export default function Header({ title, subtitle }: HeaderProps) {
   const [firstName, setFirstName] = useState("Guest");
   const toggleSidebar = useLebenStore((s: any) => s.toggleSidebar);
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchUser() {
@@ -53,7 +55,16 @@ export default function Header({ title, subtitle }: HeaderProps) {
           className="md:hidden flex items-center justify-center p-2 rounded-md text-white hover:bg-white/10"
           onClick={() => toggleSidebar(true)}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <line x1="3" y1="12" x2="21" y2="12"></line>
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -62,56 +73,56 @@ export default function Header({ title, subtitle }: HeaderProps) {
 
         {/* Left: Greeting or Custom Title */}
         <div>
-        {title ? (
-          <div className="flex flex-col">
-            <h1
-              className="text-white font-semibold"
-              style={{
-                fontSize: "18px",
-                letterSpacing: "-0.01em",
-                lineHeight: 1.2,
-              }}
-            >
-              {title}
-            </h1>
-            {subtitle && (
+          {title ? (
+            <div className="flex flex-col">
+              <h1
+                className="text-white font-semibold"
+                style={{
+                  fontSize: "18px",
+                  letterSpacing: "-0.01em",
+                  lineHeight: 1.2,
+                }}
+              >
+                {title}
+              </h1>
+              {subtitle && (
+                <p
+                  className="uppercase tracking-widest mt-0.5"
+                  style={{
+                    fontSize: "9px",
+                    color: "#555555",
+                    letterSpacing: "0.12em",
+                  }}
+                >
+                  {subtitle}
+                </p>
+              )}
+            </div>
+          ) : (
+            <>
+              <h1
+                className="text-white font-semibold capitalize"
+                style={{
+                  fontSize: "20px",
+                  letterSpacing: "-0.01em",
+                  lineHeight: 1.2,
+                }}
+              >
+                {getGreeting()}, {firstName}
+              </h1>
               <p
                 className="uppercase tracking-widest mt-0.5"
                 style={{
-                  fontSize: "9px",
+                  fontSize: "10px",
                   color: "#555555",
                   letterSpacing: "0.12em",
                 }}
               >
-                {subtitle}
+                Tuesday, Oct 24
               </p>
-            )}
-          </div>
-        ) : (
-          <>
-            <h1
-              className="text-white font-semibold"
-              style={{
-                fontSize: "20px",
-                letterSpacing: "-0.01em",
-                lineHeight: 1.2,
-              }}
-            >
-              {getGreeting()}, {firstName}
-            </h1>
-            <p
-              className="uppercase tracking-widest mt-0.5"
-              style={{
-                fontSize: "10px",
-                color: "#555555",
-                letterSpacing: "0.12em",
-              }}
-            >
-              Tuesday, Oct 24
-            </p>
-          </>
-        )}
-      </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Right: Search + icons */}
@@ -132,21 +143,19 @@ export default function Header({ title, subtitle }: HeaderProps) {
             Search tasks...
           </span>
         </div> */}
-
-        {/* Icon buttons */}
+        {/* Icon buttons
         <button
           className="flex items-center justify-center rounded-lg transition-colors hover:bg-white/5"
           style={{ width: "36px", height: "36px", color: "#666666" }}
         >
           <BellIcon />
-        </button>
+        </button> */}
         {/* <button
           className="flex items-center justify-center rounded-lg transition-colors hover:bg-white/5"
           style={{ width: "36px", height: "36px", color: "#666666" }}
         >
           <GearIcon />
         </button> */}
-
         {/* Avatar */}
         <div
           className="rounded-full flex items-center justify-center overflow-hidden"
@@ -156,6 +165,9 @@ export default function Header({ title, subtitle }: HeaderProps) {
             background: "linear-gradient(135deg, #3a3a4a, #1e1e2e)",
             border: "1.5px solid #333",
           }}
+          role="button"
+          aria-roledescription="Go to profile"
+          onClick={() => router.push("/settings")}
         >
           <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
             <circle cx="11" cy="8" r="4" fill="#888" />
