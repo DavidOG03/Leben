@@ -12,9 +12,13 @@ export default function HabitStreaks() {
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
 
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      setLoading(false);
+    });
   }, []);
 
   return (

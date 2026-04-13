@@ -12,12 +12,15 @@ export default function GoalProgress() {
   const goals = useLebenStore((s: any) => s.goals) as Goal[];
   const toggleMilestone = useLebenStore((s: any) => s.toggleMilestone);
   const [user, setUser] = useState<any>(null);
-
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      setLoading(false);
+    });
   }, []);
 
   return (
@@ -39,7 +42,26 @@ export default function GoalProgress() {
         Goal Progress
       </h3>
 
-      {!user ? (
+      {loading ? (
+        <div className="space-y-6 flex-1 animate-pulse">
+          {[1, 2].map((i) => (
+            <div key={i}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-white/5" />
+                  <div className="w-24 h-3 rounded bg-white/5" />
+                </div>
+                <div className="w-8 h-2 rounded bg-white/5" />
+              </div>
+              <div className="w-full h-[3px] rounded bg-white/5 mb-3" />
+              <div className="space-y-2">
+                <div className="w-full h-2 rounded bg-white/5 opacity-60" />
+                <div className="w-3/4 h-2 rounded bg-white/5 opacity-40" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : !user ? (
         <div className="flex-1 flex flex-col items-center justify-center py-4 gap-3">
           <p
             style={{

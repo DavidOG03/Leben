@@ -10,9 +10,14 @@ export default function EfficiencyScore() {
   const tasks = useLebenStore((s) => s.tasks);
   const habits = useLebenStore((s) => s.habits);
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      setLoading(false);
+    });
   }, []);
 
   const analytics = useMemo(() => {
@@ -79,7 +84,18 @@ export default function EfficiencyScore() {
         Efficiency Score
       </p>
 
-      {!user ? (
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-4 gap-4 w-full animate-pulse">
+           <div className="relative flex items-center justify-center">
+            <svg width="100" height="100" viewBox="0 0 140 140">
+              <circle cx="70" cy="70" r="54" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="6" />
+            </svg>
+            <div className="absolute w-10 h-10 rounded-full bg-white/5" />
+          </div>
+          <div className="w-24 h-3 rounded bg-white/5" />
+          <div className="w-20 h-8 rounded-lg bg-white/5" />
+        </div>
+      ) : !user ? (
         <div className="flex flex-col items-center justify-center py-4 gap-4 w-full">
            <div className="relative flex items-center justify-center">
             <svg width="100" height="100" viewBox="0 0 140 140">

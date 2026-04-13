@@ -3,7 +3,7 @@
 import { useLebenStore } from "@/store/useStore";
 import Link from "next/link";
 import { CheckIcon, PlusIcon, TrashIcon } from "../constants/Icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function TodaysFocus() {
@@ -11,7 +11,15 @@ export default function TodaysFocus() {
   const toggleTask = useLebenStore((s) => s.toggleTask);
   const deleteTask = useLebenStore((s) => s.deleteTask);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  useEffect(() => {
+    // Small delay to simulate session check and match other components
+    const timer = setTimeout(() => setLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div
       className="rounded-2xl p-6 flex flex-col"
@@ -30,7 +38,17 @@ export default function TodaysFocus() {
         </h3>
       </div>
 
-      {tasks.length === 0 ? (
+      {loading ? (
+        <div className="flex-1 flex flex-col gap-4 animate-pulse px-5 py-4">
+          {[1, 2].map((i) => (
+            <div key={i} className="flex items-center gap-4">
+              <div className="w-[18px] h-[18px] rounded-[5px] bg-white/5" />
+              <div className="flex-1 h-3 rounded bg-white/5" />
+              <div className="w-10 h-4 rounded bg-white/5" />
+            </div>
+          ))}
+        </div>
+      ) : tasks.length === 0 ? (
         <>
           {/* Empty state */}
           <div className="flex-1 flex flex-col items-center justify-center py-4 gap-3">

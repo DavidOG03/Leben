@@ -1,10 +1,16 @@
 "use client";
+import { useState, useEffect } from "react";
 
 import AppSidebar from "@/components/shared/AppSidebar";
 import Header from "@/components/Header";
 import { PlannerRoot } from "@/components/planner/PlannerRoot";
 
 export default function PlannerPage() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <div
       className="flex h-dvh overflow-hidden"
@@ -18,13 +24,13 @@ export default function PlannerPage() {
         {/* Header */}
         <Header
           title="WORKSPACE - Daily Planner"
-          subtitle={new Date()
+          subtitle={mounted ? new Date()
             .toLocaleDateString("en-US", {
               weekday: "long",
               month: "short",
               day: "numeric",
             })
-            .toUpperCase()}
+            .toUpperCase() : ""}
         />
 
         {/* Content area */}

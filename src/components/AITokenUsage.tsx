@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 interface UsageData {
   used: number;
@@ -15,8 +16,17 @@ export default function AITokenUsage() {
 
   useEffect(() => {
     async function fetchUsage() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
       try {
         const res = await fetch("/api/ai/usage");
+        if (res.status === 401) return; // Silently handle
         if (res.ok) {
           const data = await res.json();
           setUsage(data);

@@ -12,11 +12,13 @@ interface HeaderProps {
 }
 
 export default function Header({ title, subtitle }: HeaderProps) {
+  const [mounted, setMounted] = useState(false);
   const [firstName, setFirstName] = useState("Guest");
   const toggleSidebar = useLebenStore((s: any) => s.toggleSidebar);
   const router = useRouter();
 
   useEffect(() => {
+    setMounted(true);
     async function fetchUser() {
       const supabase = createClient();
       const {
@@ -35,6 +37,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
   }, []);
 
   const getGreeting = () => {
+    if (!mounted) return "Hello";
     const hour = new Date().getHours();
     if (hour < 12) return "Good morning";
     if (hour < 18) return "Good afternoon";
@@ -101,14 +104,18 @@ export default function Header({ title, subtitle }: HeaderProps) {
           ) : (
             <>
               <h1
-                className="text-white font-semibold capitalize"
+                className="text-white font-semibold capitalize flex items-center gap-2"
                 style={{
                   fontSize: "20px",
                   letterSpacing: "-0.01em",
                   lineHeight: 1.2,
                 }}
               >
-                {getGreeting()}, {firstName}
+                {!mounted ? (
+                  <div className="w-24 h-6 rounded bg-white/5 animate-pulse" />
+                ) : (
+                  <>{getGreeting()}, {firstName}</>
+                )}
               </h1>
               <p
                 className="uppercase tracking-widest mt-0.5"
@@ -118,13 +125,13 @@ export default function Header({ title, subtitle }: HeaderProps) {
                   letterSpacing: "0.12em",
                 }}
               >
-                {new Date()
+                {mounted ? new Date()
                   .toLocaleDateString("en-US", {
                     weekday: "long",
                     month: "short",
                     day: "numeric",
                   })
-                  .toUpperCase()}
+                  .toUpperCase() : <>&nbsp;</>}
               </p>
             </>
           )}

@@ -7,6 +7,23 @@ interface StatCardsProps {
 }
 
 export default function StatCards({ cards }: StatCardsProps) {
+  if (!cards || cards.length === 0) {
+    return (
+      <div className="gap-4 mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 animate-pulse">
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="rounded-2xl p-5 min-w-[200px]"
+            style={{ backgroundColor: "#111", border: "1px solid #1e1e1e" }}
+          >
+            <div className="w-20 h-3 rounded bg-white/5 mb-3" />
+            <div className="w-24 h-8 rounded bg-white/5 mb-3" />
+            <div className="w-16 h-3 rounded bg-white/5" />
+          </div>
+        ))}
+      </div>
+    );
+  }
   return (
     <div className="flex gap-4 mb-6 overflow-x-auto md:grid md:grid-cols-4">
       {cards.map((s) => (
