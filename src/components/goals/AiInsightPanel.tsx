@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { Goal, deriveGoalStats, Milestone } from "@/utils/goals.types";
 import { Book } from "@/store/bookSlice";
-import { GoogleGenAI } from "@google/genai";
+import { unifiedAiCall } from "@/lib/ai/unifiedClient";
 
 interface AIInsightPanelProps {
   goals: Goal[];
@@ -71,21 +71,12 @@ ${JSON.stringify(bookSnapshot, null, 2)}
     `.trim();
 
     try {
-      const ai = new GoogleGenAI({
-        apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY!,
-        httpOptions: { apiVersion: "v1" },
-      });
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-      });
-
-      const raw = response.text?.trim() ?? "";
+      const raw: string = await unifiedAiCall(prompt, { json: true });
       const cleaned = raw.replace(/```json|```/g, "").trim();
       const parsed: InsightResult = JSON.parse(cleaned);
       setInsight(parsed);
-    } catch (err) {
-      console.error("Gemini insight error:", err);
+    } catch (err: any) {
+      console.error("AI insight error:", err);
       setError("Could not fetch insight. Try again.");
     } finally {
       setLoading(false);

@@ -1,7 +1,7 @@
-import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { unifiedAiCall } from "@/lib/ai/unifiedClient";
 
 const DAILY_TOKEN_LIMIT = 25000;
 
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // ── 4. Gemini call (server-side only — key never touches the browser) ──────
+  // ── 4. Unified AI call (DeepSeek -> Groq -> Gemini) ────────────────────────
   const prompt = `
 You are an AI productivity assistant for an app called Leben.
 
@@ -78,37 +78,11 @@ Goals: ${JSON.stringify(goals)}
 `;
 
   try {
-    const ai = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY!,
-      httpOptions: { apiVersion: "v1" },
-    });
-    const result: any = await ai.models.generateContent({
-      model: "gemini-2.5-flash-lite",
-      contents: prompt,
-    });
-
-    console.log("[/api/ai/brief] Raw Gemini result keys:", Object.keys(result));
-
-    // Attempt multiple ways to extract text based on SDK version
-    let raw = "";
-    if (typeof result.text === "string") {
-      raw = result.text;
-    } else if (typeof result.response?.text === "function") {
-      raw = await result.response.text();
-    } else if (result.response?.candidates?.[0]?.content?.parts?.[0]?.text) {
-      raw = result.response.candidates[0].content.parts[0].text;
-    }
-
-    if (!raw) {
-      console.error("[/api/ai/brief] No text in result:", result);
-      throw new Error("Gemini returned an empty response.");
-    }
-
+    const raw: string = await unifiedAiCall(prompt, { json: true });
     const clean = raw.replace(/```json|```/g, "").trim();
-    const tokenCount =
-      result.usageMetadata?.totalTokenCount ??
-      result.response?.usageMetadata?.totalTokenCount ??
-      0;
+    
+    // Estimate tokens (approx 4 chars per token for variety of providers)
+    const tokenCount = Math.ceil(clean.length / 4);
 
     // ── 5. Log usage + write cache ───────────────────────────────────────────
     await Promise.all([

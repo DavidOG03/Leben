@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { GoogleGenAI } from "@google/genai";
+import { SparkleIcon } from "@/constants/Icons";
+import { unifiedAiCall } from "@/lib/ai/unifiedClient";
 import { useLebenStore } from "@/store/useStore";
-import { SparkleIcon } from "../../constants/Icons";
-import { executeWithRateLimit, generateOpenAiRateLimitError } from "@/lib/ai/withRateLimit";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 interface Suggestion {
   task: string;
@@ -14,11 +13,6 @@ interface Suggestion {
   action: string;
   priorityScore: number;
 }
-
-const ai = new GoogleGenAI({
-  apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY!,
-  httpOptions: { apiVersion: "v1" },
-});
 
 export default function SmartSuggestion() {
   const tasks = useLebenStore((s) => s.tasks);
@@ -40,7 +34,7 @@ export default function SmartSuggestion() {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
   }, []);
 
-  // Countdown ticker
+  // Countdown ticker (not used for errors now, but kept for UI consistency if needed)
   useEffect(() => {
     if (waitCountdown !== null && waitCountdown > 0) {
       const timer = setTimeout(() => setWaitCountdown(waitCountdown - 1), 1000);
@@ -90,43 +84,9 @@ export default function SmartSuggestion() {
         Schema: {"task":"<exact title>","reason":"<coaching insight>","action":"<CTA>","priorityScore":1-100}
       `;
 
-      const geminiCall = async () => {
-        const response = await ai.models.generateContent({
-          model: "gemini-2.5-flash",
-          contents: prompt,
-        });
-        const raw = response.text ?? "";
-        const clean = raw.replace(/```json|```/g, "").trim();
-        return JSON.parse(clean);
-      };
-
-      const openAiCall = async () => {
-        const openAiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
-          },
-          body: JSON.stringify({
-            model: "gpt-4o-mini",
-            response_format: { type: "json_object" },
-            messages: [{ role: "user", content: prompt }],
-          }),
-        });
-
-        if (!openAiResponse.ok) {
-          throw generateOpenAiRateLimitError(openAiResponse);
-        }
-
-        const data = await openAiResponse.json();
-        const raw = data.choices[0].message.content ?? "";
-        const clean = raw.replace(/```json|```/g, "").trim();
-        return JSON.parse(clean);
-      };
-
-      const result = await executeWithRateLimit(geminiCall, openAiCall, (sec) =>
-        setWaitCountdown(sec)
-      );
+      const rawResult: string = await unifiedAiCall(prompt, { json: true });
+      const clean = rawResult.replace(/```json|```/g, "").trim();
+      const result: Suggestion = JSON.parse(clean);
       setSuggestion(result);
     } catch (err) {
       console.error("AI Error:", err);
@@ -152,7 +112,11 @@ export default function SmartSuggestion() {
       <div>
         <div
           className="flex items-center justify-center rounded-lg mb-3"
-          style={{ width: "30px", height: "30px", backgroundColor: "rgba(124, 106, 240, 0.2)" }}
+          style={{
+            width: "30px",
+            height: "30px",
+            backgroundColor: "rgba(124, 106, 240, 0.2)",
+          }}
         >
           <SparkleIcon />
         </div>
@@ -166,29 +130,65 @@ export default function SmartSuggestion() {
             textTransform: "uppercase",
           }}
         >
-          {loading && waitCountdown === null ? `Prioritizing${dots}` : "Priority Insight"}
+          {loading && waitCountdown === null
+            ? `Prioritizing${dots}`
+            : "Priority Insight"}
         </p>
 
         {/* Loading skeleton */}
         {loading && waitCountdown === null && (
           <div className="space-y-2 animate-pulse">
-            <div style={{ height: "12px", borderRadius: "4px", backgroundColor: "rgba(255,255,255,0.07)", width: "100%" }} />
-            <div style={{ height: "12px", borderRadius: "4px", backgroundColor: "rgba(255,255,255,0.05)", width: "80%" }} />
-            <div style={{ height: "12px", borderRadius: "4px", backgroundColor: "rgba(255,255,255,0.03)", width: "60%" }} />
+            <div
+              style={{
+                height: "12px",
+                borderRadius: "4px",
+                backgroundColor: "rgba(255,255,255,0.07)",
+                width: "100%",
+              }}
+            />
+            <div
+              style={{
+                height: "12px",
+                borderRadius: "4px",
+                backgroundColor: "rgba(255,255,255,0.05)",
+                width: "80%",
+              }}
+            />
+            <div
+              style={{
+                height: "12px",
+                borderRadius: "4px",
+                backgroundColor: "rgba(255,255,255,0.03)",
+                width: "60%",
+              }}
+            />
           </div>
         )}
 
         {/* Suggestion result */}
         {!loading && suggestion && (
           <div className="space-y-3">
-            <p className="font-bold text-white leading-tight" style={{ fontSize: "14px" }}>
+            <p
+              className="font-bold text-white leading-tight"
+              style={{ fontSize: "14px" }}
+            >
               {suggestion.task}
             </p>
             <div
               className="p-2 rounded-lg"
-              style={{ backgroundColor: "rgba(0,0,0,0.2)", borderLeft: "2px solid #7c6af0" }}
+              style={{
+                backgroundColor: "rgba(0,0,0,0.2)",
+                borderLeft: "2px solid #7c6af0",
+              }}
             >
-              <p style={{ fontWeight: 400, color: "#c4b8ff", fontSize: "11px", lineHeight: "1.4" }}>
+              <p
+                style={{
+                  fontWeight: 400,
+                  color: "#c4b8ff",
+                  fontSize: "11px",
+                  lineHeight: "1.4",
+                }}
+              >
                 <span className="opacity-50 italic">Reason: </span>
                 {suggestion.reason}
               </p>
@@ -208,12 +208,18 @@ export default function SmartSuggestion() {
 
         {/* Idle / guest copy */}
         {!loading && !suggestion && waitCountdown === null && (
-          <p style={{ fontSize: "12px", color: "rgba(200,190,255,0.4)", lineHeight: 1.5 }}>
+          <p
+            style={{
+              fontSize: "12px",
+              color: "rgba(200,190,255,0.4)",
+              lineHeight: 1.5,
+            }}
+          >
             {!user
               ? "Sign in to get AI-powered task prioritization."
               : hasTasks
-              ? "Analysis required to find your high-impact task."
-              : "No pending tasks found. Add some to get a strategy."}
+                ? "Analysis required to find your high-impact task."
+                : "No pending tasks found. Add some to get a strategy."}
           </p>
         )}
       </div>
@@ -226,7 +232,9 @@ export default function SmartSuggestion() {
             className="w-full flex items-center justify-between group"
             style={{ fontSize: "11px", color: "#a89cf0" }}
           >
-            <span className="font-bold group-hover:underline">{suggestion.action}</span>
+            <span className="font-bold group-hover:underline">
+              {suggestion.action}
+            </span>
             <span className="opacity-40 text-[9px]">Re-analyze</span>
           </button>
         ) : (
@@ -240,14 +248,17 @@ export default function SmartSuggestion() {
               backgroundColor: !user
                 ? "#1a1a1a"
                 : hasTasks && !loading && waitCountdown === null
-                ? "#7c6af0"
-                : "rgba(255,255,255,0.04)",
+                  ? "#7c6af0"
+                  : "rgba(255,255,255,0.04)",
               color: !user
                 ? "#7c6af0"
                 : hasTasks && !loading && waitCountdown === null
-                ? "#ffffff"
-                : "rgba(200,190,255,0.25)",
-              cursor: !user || (hasTasks && !loading && waitCountdown === null) ? "pointer" : "not-allowed",
+                  ? "#ffffff"
+                  : "rgba(200,190,255,0.25)",
+              cursor:
+                !user || (hasTasks && !loading && waitCountdown === null)
+                  ? "pointer"
+                  : "not-allowed",
               boxShadow:
                 user && hasTasks && !loading && waitCountdown === null
                   ? "0 4px 12px rgba(124,106,240,0.3)"
@@ -258,10 +269,10 @@ export default function SmartSuggestion() {
             {!user
               ? "Sign in to prioritize"
               : waitCountdown !== null
-              ? "Waiting bounds..."
-              : loading
-              ? "Calculating..."
-              : "Identify Priority"}
+                ? "Waiting bounds..."
+                : loading
+                  ? "Calculating..."
+                  : "Identify Priority"}
           </button>
         )}
       </div>

@@ -1,7 +1,7 @@
-import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { unifiedAiCall } from "@/lib/ai/unifiedClient";
 
 const DAILY_TOKEN_LIMIT = 25000;
 
@@ -66,10 +66,12 @@ TASKS (incomplete only):
 ${
   pendingTasks.length > 0
     ? pendingTasks
-        .map(
-          (t: any) =>
-            `- id: "${t.id}" | priority: [${t.priority ?? "medium"}] | title: ${t.title}${t.category ? ` (${t.category})` : ""}${t.tag ? ` [${t.tag}]` : ""}`,
-        )
+        .map((t: any) => {
+          const cat = t.category ? ` (${t.category})` : "";
+          const tag = t.tag ? ` [${t.tag}]` : "";
+          const prio = t.priority ?? "medium";
+          return `- id: "${t.id}" | priority: [${prio}] | title: ${t.title}${cat}${tag}`;
+        })
         .join("\n")
     : "No pending tasks"
 }
@@ -80,10 +82,10 @@ ${(habits as any[]).map((h: any) => `- id: "${h.id}" | name: ${h.name}`).join("\
 GOALS:
 ${
   (goals as any[])
-    .map(
-      (g: any) =>
-        `- ${g.title}${g.progress !== undefined ? ` (${g.progress}% complete)` : ""}`,
-    )
+    .map((g: any) => {
+      const progress = g.progress !== undefined ? ` (${g.progress}% complete)` : "";
+      return `- ${g.title}${progress}`;
+    })
     .join("\n") || "None"
 }
 
@@ -124,20 +126,11 @@ Respond ONLY with valid JSON. No markdown, no backticks, no explanation.
 }
 `;
 
-  // ── 5. Gemini call (server-side only — key never touches the browser) ──────
+  // ── 5. Unified AI call (DeepSeek -> Groq -> Gemini) ────────────────────────
   try {
-    const ai = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY!,
-      httpOptions: { apiVersion: "v1" },
-    });
-    const result = await ai.models.generateContent({
-      model: "gemini-2.5-flash-lite",
-      contents: prompt,
-    });
-
-    const raw = result.text ?? "";
+    const raw: string = await unifiedAiCall(prompt, { json: true });
     const clean = raw.replace(/```json|```/g, "").trim();
-    const tokenCount = result.usageMetadata?.totalTokenCount ?? 0;
+    const tokenCount = Math.ceil(clean.length / 4);
 
     // ── 6. Log usage + write cache ───────────────────────────────────────────
     await Promise.all([
