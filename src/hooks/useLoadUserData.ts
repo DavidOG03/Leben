@@ -3,13 +3,19 @@
 
 import { useEffect } from "react";
 import { useLebenStore } from "@/store/useStore";
-import { fetchTasks, fetchHabits, fetchGoals, fetchBooks } from "@/lib/supabase/db";
+import {
+  fetchTasks,
+  fetchHabits,
+  fetchGoals,
+  fetchBooks,
+} from "@/lib/supabase/db";
 import { createClient } from "@/lib/supabase/client";
 
 export function useLoadUserData() {
   const setTasks = useLebenStore((s) => s.setTasks);
   const setHabits = useLebenStore((s) => s.setHabits);
   const setGoals = useLebenStore((s) => s.setGoals);
+  const setBooks = useLebenStore((s) => s.setBooks);
 
   useEffect(() => {
     const supabase = createClient();
@@ -18,7 +24,10 @@ export function useLoadUserData() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        useLebenStore.getState().clearStore();
+        return;
+      }
 
       const [tasks, habits, goals, books] = await Promise.all([
         fetchTasks(),
@@ -30,9 +39,9 @@ export function useLoadUserData() {
       setTasks(tasks);
       setHabits(habits);
       setGoals(goals);
-      useLebenStore.setState({ books });
+      setBooks(books);
     };
 
     load();
-  }, [setTasks, setHabits, setGoals]);
+  }, [setTasks, setHabits, setGoals, setBooks]);
 }

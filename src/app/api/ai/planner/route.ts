@@ -45,7 +45,8 @@ export async function POST(request: NextRequest) {
     .eq("user_id", user.id)
     .eq("date", today);
 
-  const totalTokensUsed = usage?.reduce((acc, curr) => acc + curr.tokens, 0) ?? 0;
+  const totalTokensUsed =
+    usage?.reduce((acc, curr) => acc + curr.tokens, 0) ?? 0;
 
   if (totalTokensUsed >= DAILY_TOKEN_LIMIT) {
     return NextResponse.json(
@@ -125,9 +126,12 @@ Respond ONLY with valid JSON. No markdown, no backticks, no explanation.
 
   // ── 5. Gemini call (server-side only — key never touches the browser) ──────
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const ai = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY!,
+      httpOptions: { apiVersion: "v1" },
+    });
     const result = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-flash-lite",
       contents: prompt,
     });
 

@@ -73,11 +73,11 @@ ${JSON.stringify(bookSnapshot, null, 2)}
     try {
       const ai = new GoogleGenAI({
         apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY!,
+        httpOptions: { apiVersion: "v1" },
       });
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: prompt,
-        config: { httpOptions: { apiVersion: "v1" } },
       });
 
       const raw = response.text?.trim() ?? "";

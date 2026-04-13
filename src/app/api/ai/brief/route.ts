@@ -45,12 +45,13 @@ export async function POST(request: NextRequest) {
     .eq("user_id", user.id)
     .eq("date", today);
 
-  const totalTokensUsed = usage?.reduce((acc, curr) => acc + curr.tokens, 0) ?? 0;
+  const totalTokensUsed =
+    usage?.reduce((acc, curr) => acc + curr.tokens, 0) ?? 0;
 
   if (totalTokensUsed >= DAILY_TOKEN_LIMIT) {
     return NextResponse.json(
       { error: "Daily AI token limit reached. Try again tomorrow." },
-      { status: 429 }
+      { status: 429 },
     );
   }
 
@@ -77,15 +78,37 @@ Goals: ${JSON.stringify(goals)}
 `;
 
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-    const result = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+    const ai = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY!,
+      httpOptions: { apiVersion: "v1" },
+    });
+    const result: any = await ai.models.generateContent({
+      model: "gemini-2.5-flash-lite",
       contents: prompt,
     });
 
-    const raw = result.text ?? "";
+    console.log("[/api/ai/brief] Raw Gemini result keys:", Object.keys(result));
+
+    // Attempt multiple ways to extract text based on SDK version
+    let raw = "";
+    if (typeof result.text === "string") {
+      raw = result.text;
+    } else if (typeof result.response?.text === "function") {
+      raw = await result.response.text();
+    } else if (result.response?.candidates?.[0]?.content?.parts?.[0]?.text) {
+      raw = result.response.candidates[0].content.parts[0].text;
+    }
+
+    if (!raw) {
+      console.error("[/api/ai/brief] No text in result:", result);
+      throw new Error("Gemini returned an empty response.");
+    }
+
     const clean = raw.replace(/```json|```/g, "").trim();
-    const tokenCount = result.usageMetadata?.totalTokenCount ?? 0;
+    const tokenCount =
+      result.usageMetadata?.totalTokenCount ??
+      result.response?.usageMetadata?.totalTokenCount ??
+      0;
 
     // ── 5. Log usage + write cache ───────────────────────────────────────────
     await Promise.all([
@@ -102,16 +125,40 @@ Goals: ${JSON.stringify(goals)}
           date: today,
           result: clean,
         },
-        { onConflict: "user_id,feature,date" }
+        { onConflict: "user_id,feature,date" },
       ),
     ]);
 
     return NextResponse.json({ text: clean, cached: false });
   } catch (err: any) {
-    console.error("[/api/ai/brief] Gemini error:", err);
-    return NextResponse.json(
-      { error: "AI generation failed. Please try again." },
-      { status: 500 }
-    );
+    console.error("[/api/ai/brief] Gemini error:", err.message);
+
+    // Parse the raw error message to return a clean, user-friendly response
+    const msg: string = err.message ?? "";
+    let friendlyError =
+      "Something went wrong generating your brief. Please try again.";
+    let status = 500;
+
+    if (
+      msg.includes("503") ||
+      msg.includes("UNAVAILABLE") ||
+      msg.includes("high demand")
+    ) {
+      friendlyError =
+        "The AI is currently experiencing high demand. Please try again in a moment.";
+      status = 503;
+    } else if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED")) {
+      friendlyError = "Daily AI limit reached. Try again tomorrow.";
+      status = 429;
+    } else if (msg.includes("404") || msg.includes("NOT_FOUND")) {
+      friendlyError = "AI model temporarily unavailable. Please try again.";
+      status = 503;
+    } else if (msg.includes("401") || msg.includes("UNAUTHENTICATED")) {
+      friendlyError =
+        "AI service authentication failed. Please contact support.";
+      status = 500;
+    }
+
+    return NextResponse.json({ error: friendlyError }, { status });
   }
 }

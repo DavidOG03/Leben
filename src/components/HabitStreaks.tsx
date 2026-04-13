@@ -29,16 +29,24 @@ export default function HabitStreaks() {
         border: "1px solid #1e1e1e",
         minHeight: "200px",
       }}
-      role="button"
-      aria-roledescription="go to task"
-      onClick={() => router.push("/habits")}
     >
-      <h3
-        className="font-semibold text-white mb-5"
-        style={{ fontSize: "15px" }}
-      >
-        Habit Streaks
-      </h3>
+      <div className="flex items-center justify-between mb-5">
+        <h3
+          className="font-semibold text-white"
+          style={{ fontSize: "15px" }}
+        >
+          Habit Streaks
+        </h3>
+        {!loading && habits.length > 0 && (
+          <Link
+            href="/habits"
+            className="text-[#7c6af0] hover:underline"
+            style={{ fontSize: "11px", fontWeight: 600 }}
+          >
+            Go to Habits
+          </Link>
+        )}
+      </div>
 
       {!user ? (
         <div className="flex-1 flex flex-col items-center justify-center py-4 gap-3">

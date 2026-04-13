@@ -28,14 +28,20 @@ export default function TodaysFocus() {
         border: "1px solid #1e1e1e",
         minHeight: "200px",
       }}
-      role="button"
-      aria-roledescription="go to task"
-      onClick={() => router.push("/tasks")}
     >
       <div className="flex items-center justify-between mb-5">
         <h3 className="font-semibold text-white" style={{ fontSize: "15px" }}>
           Today&apos;s Focus
         </h3>
+        {!loading && tasks.length > 0 && (
+          <Link
+            href="/tasks"
+            className="text-[#7c6af0] hover:underline"
+            style={{ fontSize: "11px", fontWeight: 600 }}
+          >
+            Go to Tasks
+          </Link>
+        )}
       </div>
 
       {loading ? (

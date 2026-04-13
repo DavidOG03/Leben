@@ -1,7 +1,9 @@
 "use client";
 
-import { EditIcon } from "@/constants/Icons";
+import { EditIcon, BellIcon } from "@/constants/Icons";
 import { useLebenStore, ScheduleItem } from "@/store/useStore";
+import { useState } from "react";
+import ReminderPicker from "../shared/ReminderPicker";
 
 interface TimelineItemProps {
   item: ScheduleItem;
@@ -10,16 +12,27 @@ interface TimelineItemProps {
 
 export function TimelineItem({ item, isCurrent }: TimelineItemProps) {
   const toggleScheduleItem = useLebenStore((s) => s.toggleScheduleItem);
+  const updateScheduleItem = useLebenStore((s) => s.updateScheduleItem);
+  const [isReminderPickerOpen, setIsReminderPickerOpen] = useState(false);
 
   const isDeepWork = item.tag.toLowerCase().includes("work");
   const isRecharge =
     item.tag.toLowerCase().includes("health") ||
     item.tag.toLowerCase().includes("mind");
 
+  const handleSetReminder = (isoDate: string | undefined) => {
+    updateScheduleItem(item.id, { reminderAt: isoDate });
+    setIsReminderPickerOpen(false);
+  };
+
   return (
-    <div className="flex gap-6 mb-12 last:mb-0 relative group">
+    <div
+      className={`flex gap-6 mb-12 last:mb-0 relative group ${
+        isReminderPickerOpen ? "z-[100] isolate" : ""
+      }`}
+    >
       {/* Time label and dot */}
-      <div className="flex flex-col items-center w-12 pt-1">
+      <div className="flex flex-col items-center w-12 pt-1 pb-4">
         <span
           className="text-[#444] font-bold bg-bg-primary"
           style={{ fontSize: "11px" }}
@@ -36,18 +49,25 @@ export function TimelineItem({ item, isCurrent }: TimelineItemProps) {
             border: isCurrent ? "2px solid #000" : "1px solid #333",
             boxShadow: isCurrent ? "0 0 10px #7c6af0" : "none",
           }}
-        />
+        >
+          {item.reminderAt && (
+            <div className="absolute top-full mt-4 left-1/2 -translate-x-1/2 text-[#7c6af0]">
+              <BellIcon />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Card */}
       <div
-        className="flex-1 rounded-2xl p-6 transition-all duration-300 hover:scale-[1.01]"
+        className="flex-1 rounded-2xl p-6 transition-all duration-300 hover:scale-[1.01] relative"
         style={{
           background: isCurrent
             ? "linear-gradient(145deg, #181926 0%, #0d0d12 100%)"
             : "linear-gradient(145deg, #111111 0%, #0a0a0a 100%)",
           border: isCurrent ? "1px solid #7c6af044" : "1px solid #1a1a1a",
           boxShadow: isCurrent ? "0 10px 40px -10px rgba(0,0,0,0.5)" : "none",
+          zIndex: isReminderPickerOpen ? 100 : undefined,
         }}
       >
         <div className="flex items-start justify-between mb-4">
@@ -71,9 +91,15 @@ export function TimelineItem({ item, isCurrent }: TimelineItemProps) {
               >
                 {item.tag}
               </span>
-              <span className="text-[#444]" style={{ fontSize: "10px" }}>
-                {item.description.includes("duration") ? item.description : ""}
-              </span>
+              {item.reminderAt && (
+                <span
+                  className="text-[#7c6af0] font-bold flex items-center gap-1"
+                  style={{ fontSize: "9px" }}
+                >
+                  <BellIcon />
+                  Reminder set
+                </span>
+              )}
             </div>
             <h4
               className="text-white font-bold leading-tight mt-1"
@@ -83,6 +109,13 @@ export function TimelineItem({ item, isCurrent }: TimelineItemProps) {
             </h4>
           </div>
           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={() => setIsReminderPickerOpen(!isReminderPickerOpen)}
+              className={`p-1.5 rounded-md hover:bg-white/5 transition-colors ${item.reminderAt ? "text-[#7c6af0]" : "text-[#444]"}`}
+              title="Set Reminder"
+            >
+              <BellIcon />
+            </button>
             <button className="p-1.5 rounded-md hover:bg-white/5 text-[#444] transition-colors">
               <EditIcon />
             </button>
@@ -100,6 +133,17 @@ export function TimelineItem({ item, isCurrent }: TimelineItemProps) {
             </div>
           </div>
         </div>
+
+        {/* Reminder Picker Popup */}
+        {isReminderPickerOpen && (
+          <div className="absolute right-0 top-4 mt-2 z-[200] shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
+            <ReminderPicker
+              initialValue={item.reminderAt}
+              onSave={handleSetReminder}
+              onClose={() => setIsReminderPickerOpen(false)}
+            />
+          </div>
+        )}
 
         <p
           className="text-[#666] leading-relaxed"

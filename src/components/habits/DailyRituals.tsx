@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { GhostCard } from "./GhostCards";
 import { useLebenStore, Habit } from "@/store/useStore";
 import type { DailyRitualProps } from "../../utils/habits.types";
+import { BellIcon } from "@/constants/Icons";
+import ReminderPicker from "../shared/ReminderPicker";
 
 const DailyRituals: React.FC<DailyRitualProps> = ({
   setShowAddHabit,
@@ -15,6 +17,7 @@ const DailyRituals: React.FC<DailyRitualProps> = ({
   const updateHabit = useLebenStore((s: any) => s.updateHabit);
 
   const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
+  const [reminderEditingId, setReminderEditingId] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState("");
   const [editSub, setEditSub] = useState("");
 
@@ -28,6 +31,11 @@ const DailyRituals: React.FC<DailyRitualProps> = ({
     e.stopPropagation();
     updateHabit(id, { label: editLabel, sub: editSub });
     setEditingHabitId(null);
+  };
+
+  const handleSetReminder = (habitId: string, isoDate: string | undefined) => {
+    updateHabit(habitId, { reminderAt: isoDate });
+    setReminderEditingId(null);
   };
 
   return (
@@ -62,6 +70,7 @@ const DailyRituals: React.FC<DailyRitualProps> = ({
                 stroke="currentColor"
                 strokeWidth="1.4"
                 strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
             Add Habit
@@ -117,7 +126,7 @@ const DailyRituals: React.FC<DailyRitualProps> = ({
               <div
                 key={habit.id}
                 onClick={() => onSelectedHabitId(habit.id)}
-                className="rounded-2xl p-5 cursor-pointer transition-all"
+                className="rounded-2xl p-5 cursor-pointer transition-all relative"
                 style={{
                   backgroundColor: "#111",
                   border:
@@ -142,19 +151,25 @@ const DailyRituals: React.FC<DailyRitualProps> = ({
                   >
                     <span style={{ fontSize: "20px" }}>{habit.icon}</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setReminderEditingId(reminderEditingId === habit.id ? null : habit.id);
+                      }}
+                      className={`hover:opacity-80 flex items-center justify-center w-7 h-7 rounded-lg transition-all ${habit.reminderAt ? 'text-[#7c6af0] bg-[#7c6af0]/10' : 'text-[#555] bg-transparent'}`}
+                      style={{ border: "none" }}
+                      title="Set Reminder"
+                    >
+                      <BellIcon />
+                    </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         startEdit(habit);
                       }}
-                      className="hover:opacity-80"
-                      style={{
-                        color: "#888",
-                        fontSize: "14px",
-                        background: "transparent",
-                        border: "none",
-                      }}
+                      className="hover:opacity-80 flex items-center justify-center w-7 h-7 rounded-lg text-[#555]"
+                      style={{ border: "none" }}
                       title="Edit Habit"
                     >
                       ✏️
@@ -164,34 +179,28 @@ const DailyRituals: React.FC<DailyRitualProps> = ({
                         e.stopPropagation();
                         removeHabit(habit.id);
                       }}
-                      className="hover:opacity-80"
-                      style={{
-                        color: "#888",
-                        fontSize: "14px",
-                        background: "transparent",
-                        border: "none",
-                      }}
+                      className="hover:opacity-80 flex items-center justify-center w-7 h-7 rounded-lg text-[#555]"
+                      style={{ border: "none" }}
                       title="Delete Habit"
                     >
                       🗑️
                     </button>
-                    <div
-                      className="flex items-center gap-1 px-2 py-1 rounded-lg"
-                      style={{
-                        backgroundColor: "rgba(124,106,240,0.08)",
-                        border: "1px solid rgba(124,106,240,0.15)",
-                      }}
-                    >
-                      <span style={{ fontSize: "11px" }}>🔥</span>
-                      <span
-                        className="font-semibold text-white"
-                        style={{ fontSize: "12px" }}
-                      >
-                        {habit.streak}
-                      </span>
-                    </div>
                   </div>
                 </div>
+
+                {/* Reminder Picker Popup */}
+                {reminderEditingId === habit.id && (
+                  <div 
+                    className="absolute right-0 top-full mt-2 z-50 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ReminderPicker 
+                      initialValue={habit.reminderAt}
+                      onSave={(val) => handleSetReminder(habit.id, val)}
+                      onClose={() => setReminderEditingId(null)}
+                    />
+                  </div>
+                )}
 
                 {editingHabitId === habit.id ? (
                   <div

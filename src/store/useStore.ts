@@ -25,6 +25,7 @@ export interface Task {
   // Added for planner + AI
   priority?: "high" | "medium" | "low"; // optional so existing tasks don't break
   category?: string; // optional free-text label e.g. "Engineering"
+  reminderAt?: string; // ISO timestamp
 }
 
 export interface Habit {
@@ -39,6 +40,7 @@ export interface Habit {
   color: string;
   pct: number;
   completedDates: string[];
+  reminderAt?: string; // ISO timestamp
 }
 
 export interface ScheduleItem {
@@ -51,6 +53,7 @@ export interface ScheduleItem {
   tag: string;
   priority: "low" | "medium" | "high";
   status: "pending" | "completed";
+  reminderAt?: string; // ISO timestamp
 }
 
 interface TasksHabitsSlice {
@@ -69,8 +72,10 @@ interface TasksHabitsSlice {
   schedule: ScheduleItem[];
   setSchedule: (schedule: ScheduleItem[]) => void;
   toggleScheduleItem: (id: string) => void;
+  updateScheduleItem: (id: string, updates: Partial<ScheduleItem>) => void;
   isSidebarOpen: boolean;
   toggleSidebar: (isOpen?: boolean) => void;
+  clearStore: () => void;
   purgeAll: () => void;
 }
 
@@ -206,8 +211,18 @@ export const useLebenStore = create<LebenState>()(
           return { schedule: newSchedule, tasks: newTasks };
         }),
 
-      purgeAll: () => {
+      updateScheduleItem: (id, updates) =>
+        set((state) => ({
+          schedule: state.schedule.map((s) =>
+            s.id === id ? { ...s, ...updates } : s,
+          ),
+        })),
+
+      clearStore: () => {
         set({ tasks: [], habits: [], goals: [], books: [], schedule: [] });
+      },
+      purgeAll: () => {
+        get().clearStore();
         purgeAllData();
       },
 

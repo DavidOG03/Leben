@@ -41,7 +41,7 @@ export default function SignedOutPage() {
               Sign back in
             </a>
             <a href="/" className="signout-secondary-btn">
-              Go to homepage
+              Go to dashboard
             </a>
           </div>
 

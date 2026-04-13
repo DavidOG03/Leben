@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   description: "Your personal operating system",
 };
 
+import NotificationManager from "@/components/shared/NotificationManager";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -16,6 +18,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         <UserDataProvider />
+        <NotificationManager />
         {children}
       </body>
     </html>

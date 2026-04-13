@@ -29,18 +29,26 @@ export default function GoalProgress() {
       style={{
         background: "linear-gradient(145deg, #121212 0%, #0e0e0e 100%)",
         border: "1px solid #1e1e1e",
-        minHeight: "200px",
+        minHeight: "260px",
       }}
-      role="button"
-      aria-roledescription="go to task"
-      onClick={() => router.push("/goals")}
     >
-      <h3
-        className="font-semibold text-white mb-5"
-        style={{ fontSize: "15px" }}
-      >
-        Goal Progress
-      </h3>
+      <div className="flex items-center justify-between mb-5">
+        <h3
+          className="font-semibold text-white"
+          style={{ fontSize: "15px" }}
+        >
+          Goal Progress
+        </h3>
+        {!loading && goals.length > 0 && (
+          <Link
+            href="/goals"
+            className="text-[#7c6af0] hover:underline"
+            style={{ fontSize: "11px", fontWeight: 600 }}
+          >
+            Go to Goals
+          </Link>
+        )}
+      </div>
 
       {loading ? (
         <div className="space-y-6 flex-1 animate-pulse">

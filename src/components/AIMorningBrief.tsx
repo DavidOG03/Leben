@@ -34,6 +34,10 @@ async function fetchMorningBrief(
     const { error } = await res.json();
     throw new Error(error ?? "Daily AI limit reached.");
   }
+  if (res.status === 503) {
+    const { error } = await res.json().catch(() => ({}));
+    throw Object.assign(new Error(error ?? "AI is busy. Please try again shortly."), { code: 503 });
+  }
   if (!res.ok) {
     const { error } = await res.json().catch(() => ({}));
     throw new Error(error ?? "Failed to generate brief.");
@@ -53,6 +57,7 @@ export default function AIMorningBrief() {
   const [brief, setBrief] = useState<BriefData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isUnavailable, setIsUnavailable] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
 
@@ -84,10 +89,16 @@ export default function AIMorningBrief() {
           forceRefresh,
         );
         setBrief(result);
+        setIsUnavailable(false);
       } catch (err: any) {
         console.error("Morning brief failed:", err);
         if (err?.message?.includes("limit reached")) {
           setShowLimitModal(true);
+        } else if ((err as any)?.code === 503 || err?.message?.toLowerCase().includes("high demand") || err?.message?.toLowerCase().includes("busy")) {
+          setIsUnavailable(true);
+          setError(null);
+        } else {
+          setIsUnavailable(false);
         }
         setError(err?.message ?? "Couldn't generate brief. Try again.");
       } finally {
@@ -195,8 +206,22 @@ export default function AIMorningBrief() {
                   </div>
                 )}
 
-                {error && !loading && (
+                {error && !loading && !isUnavailable && (
                   <p style={{ fontSize: "13px", color: "#f87171" }}>{error}</p>
+                )}
+
+                {isUnavailable && !loading && (
+                  <div
+                    className="rounded-xl p-4"
+                    style={{
+                      backgroundColor: "rgba(250, 200, 80, 0.06)",
+                      border: "1px solid rgba(250, 200, 80, 0.15)",
+                    }}
+                  >
+                    <p style={{ fontSize: "13px", color: "#facc50", lineHeight: 1.6 }}>
+                      ⏳ The AI is experiencing high demand right now. This is temporary — try again in a moment.
+                    </p>
+                  </div>
                 )}
 
                 {brief && !loading && (
@@ -245,7 +270,7 @@ export default function AIMorningBrief() {
           {user ? (
             hasData ? (
               <>
-                {!brief && error && (
+                {!brief && (error || isUnavailable) && (
                   <button
                     onClick={() => handleGenerate(true)}
                     disabled={loading}

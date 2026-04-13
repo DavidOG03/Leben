@@ -26,6 +26,7 @@ export interface BooksSlice {
     updates: Partial<Book>,
   ) => void;
   removeBook: (id: string) => void;
+  setBooks: (books: Book[]) => void;
 }
 
 // Derived stats -- pure util, no store needed
@@ -100,4 +101,5 @@ export const createBooksSlice: StateCreator<BooksSlice, [], [], BooksSlice> = (
   removeBook: (id) => {
     set((state) => ({ books: state.books.filter((b) => b.id !== id) }));
   },
+  setBooks: (books: Book[]) => set({ books }),
 });

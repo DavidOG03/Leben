@@ -225,7 +225,10 @@ export default function AppSidebar() {
           </button>
           {isAuthenticated ? (
             <button
-              onClick={() => signOut()}
+              onClick={() => {
+                useLebenStore.getState().clearStore();
+                signOut();
+              }}
               className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg"
               style={{ color: "#444", fontSize: "12px" }}
             >
