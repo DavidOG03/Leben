@@ -38,7 +38,7 @@ export default function AnalyticsContent() {
 
   return (
     <main
-      className="flex-1 overflow-y-auto p-4 md:px-8 md:py-7"
+      className="flex-1 overflow-y-auto p-4 pb-24 md:px-8 md:py-7"
       style={{ backgroundColor: "#0a0a0a" }}
     >
       {/* Row 1: stat summary cards */}

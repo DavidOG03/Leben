@@ -6,7 +6,7 @@ import AppSidebar from "@/components/shared/AppSidebar";
 export default function TasksPage() {
   return (
     <div
-      className="flex h-screen overflow-hidden"
+      className="flex h-dvh overflow-hidden"
       style={{ backgroundColor: "#0a0a0a" }}
     >
       {/* Left nav sidebar (shared style) */}

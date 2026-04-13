@@ -5,7 +5,7 @@ import HabitsContent from "@/components/habits/HabitsContent";
 export default function HabitsPage() {
   return (
     <div
-      className="flex h-screen overflow-hidden"
+      className="flex h-dvh overflow-hidden"
       style={{ backgroundColor: "#0a0a0a" }}
     >
       <AppSidebar />

@@ -43,7 +43,7 @@ export default function KanbanView() {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-6 h-full min-h-[400px]">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full min-h-[400px]">
       {columns.map((col) => {
         const colTasks = tasks.filter(col.filter);
         return (

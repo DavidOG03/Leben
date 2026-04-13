@@ -905,6 +905,10 @@ body {
 
 @media (max-width: 1024px) {
   body {
-    overflow: hidden !important;
+    /* overflow: hidden !important; */ /* This was preventing scrolling on mobile */
   }
+}
+
+.h-dvh {
+  height: 100dvh;
 }

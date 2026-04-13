@@ -36,7 +36,7 @@ export default function TasksMainPanel() {
 
   return (
     <main
-      className="flex-1 overflow-y-auto p-4 md:p-7"
+      className="flex-1 overflow-y-auto p-4 pb-24 md:p-7"
       style={{ backgroundColor: "#0f0f0f" }}
     >
       {/* Page title row */}
