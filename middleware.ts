@@ -12,12 +12,12 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  
+
   // Public routes that unauthenticated users CAN access
   const isAuthRoute = pathname.startsWith("/auth");
   const isTasksRoute = pathname.startsWith("/tasks");
   const isHomePage = pathname === "/";
-  
+
   const isPublicRoute = isAuthRoute || isTasksRoute || isHomePage;
 
   // If user is NOT logged in and tries to access a non-public route

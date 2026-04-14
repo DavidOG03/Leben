@@ -36,7 +36,10 @@ async function fetchMorningBrief(
   }
   if (res.status === 503) {
     const { error } = await res.json().catch(() => ({}));
-    throw Object.assign(new Error(error ?? "AI is busy. Please try again shortly."), { code: 503 });
+    throw Object.assign(
+      new Error(error ?? "AI is busy. Please try again shortly."),
+      { code: 503 },
+    );
   }
   if (!res.ok) {
     const { error } = await res.json().catch(() => ({}));
@@ -94,7 +97,11 @@ export default function AIMorningBrief() {
         console.error("Morning brief failed:", err);
         if (err?.message?.includes("limit reached")) {
           setShowLimitModal(true);
-        } else if ((err as any)?.code === 503 || err?.message?.toLowerCase().includes("high demand") || err?.message?.toLowerCase().includes("busy")) {
+        } else if (
+          (err as any)?.code === 503 ||
+          err?.message?.toLowerCase().includes("high demand") ||
+          err?.message?.toLowerCase().includes("busy")
+        ) {
           setIsUnavailable(true);
           setError(null);
         } else {
@@ -142,7 +149,7 @@ export default function AIMorningBrief() {
         onClose={() => setShowLimitModal(false)}
       />
       <div
-        className="rounded-2xl p-7 flex flex-col justify-between"
+        className="rounded-2xl p-7 flex flex-col justify-between h-full"
         style={{
           background: "linear-gradient(145deg, #141420 0%, #0f0f18 100%)",
           border: "1px solid #252535",
@@ -218,8 +225,15 @@ export default function AIMorningBrief() {
                       border: "1px solid rgba(250, 200, 80, 0.15)",
                     }}
                   >
-                    <p style={{ fontSize: "13px", color: "#facc50", lineHeight: 1.6 }}>
-                      ⏳ The AI is experiencing high demand right now. This is temporary — try again in a moment.
+                    <p
+                      style={{
+                        fontSize: "13px",
+                        color: "#facc50",
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      ⏳ The AI is experiencing high demand right now. This is
+                      temporary — try again in a moment.
                     </p>
                   </div>
                 )}

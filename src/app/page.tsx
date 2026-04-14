@@ -23,9 +23,9 @@ export default function Dashboard() {
         {/* Content area */}
         <main className="flex-1 overflow-y-auto p-4 md:px-8 md:py-7">
           {/* Top row: AI Brief (2/3) + Efficiency Score (1/3) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 item-stretch gap-5 mb-5">
             {/* AI Brief spans 2 columns */}
-            <div className="md:col-span-2">
+            <div className="md:col-span-2 ">
               <AIMorningBrief />
             </div>
 
