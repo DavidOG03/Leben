@@ -1,7 +1,6 @@
 "use client";
 
 import { SparkleIcon } from "@/constants/Icons";
-import { unifiedAiCall } from "@/lib/ai/unifiedClient";
 import { useLebenStore } from "@/store/useStore";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -84,7 +83,18 @@ export default function SmartSuggestion() {
         Schema: {"task":"<exact title>","reason":"<coaching insight>","action":"<CTA>","priorityScore":1-100}
       `;
 
-      const rawResult: string = await unifiedAiCall(prompt, { json: true });
+      const response = await fetch("/api/ai/suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const rawResult: string = data.result;
       const clean = rawResult.replace(/```json|```/g, "").trim();
       const result: Suggestion = JSON.parse(clean);
       setSuggestion(result);
