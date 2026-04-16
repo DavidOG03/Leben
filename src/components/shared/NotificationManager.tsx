@@ -4,50 +4,60 @@ import { useEffect, useRef } from "react";
 import { useLebenStore } from "@/store/useStore";
 
 export default function NotificationManager() {
-  const { tasks, habits, schedule } = useLebenStore();
+  const tasks = useLebenStore((state) => state.tasks);
+  const habits = useLebenStore((state) => state.habits);
+  const schedule = useLebenStore((state) => state.schedule);
   const notifiedRef = useRef<Set<string>>(new Set());
 
-  useEffect(() => {
-    // Request permission on mount
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
-    }
-  }, []);
-
+  // Clear old notifications periodically (every hour) to allow re-notifying if reminders are updated
   useEffect(() => {
     const checkReminders = () => {
       const now = new Date();
-      
+
       const allRemindables = [
-        ...tasks.map(t => ({ ...t, type: "Task" })),
-        ...habits.map(h => ({ ...h, type: "Habit", title: h.label })),
-        ...schedule.map(s => ({ ...s, type: "Event" }))
+        ...tasks.map((t: any) => ({ ...t, type: "Task" })),
+        ...habits.map((h: any) => ({ ...h, type: "Habit", title: h.label })),
+        ...schedule.map((s: any) => ({ ...s, type: "Event" })),
       ];
+
+      const itemsWithReminders = allRemindables.filter(
+        (item) => item.reminderAt,
+      );
+      if (itemsWithReminders.length > 0) {
+        console.log(
+          `🔔 Checking ${itemsWithReminders.length} items with reminders at ${now.toLocaleTimeString()}`,
+        );
+      }
 
       allRemindables.forEach((item: any) => {
         if (!item.reminderAt || notifiedRef.current.has(item.id)) return;
 
         const reminderTime = new Date(item.reminderAt);
-        
-        // If reminder time has passed or is within the next minute
-        if (reminderTime <= now && reminderTime > new Date(now.getTime() - 60000)) {
+
+        if (
+          reminderTime <= now &&
+          reminderTime > new Date(now.getTime() - 300000)
+        ) {
           if (Notification.permission === "granted") {
             new Notification(`Leben Reminder: ${item.type}`, {
               body: item.title,
-              icon: "/favicon.ico"
+              icon: "/favicon.svg",
             });
+            console.log(
+              `🔔 NOTIFIED: ${item.type} - ${item.title} (scheduled for ${reminderTime.toLocaleTimeString()})`,
+            );
             notifiedRef.current.add(item.id);
           } else {
-            // Fallback to alert if no permission
-            console.log(`REMINDER: ${item.type} - ${item.title}`);
+            console.log(
+              `🔔 REMINDER: ${item.type} - ${item.title} (at ${reminderTime.toLocaleTimeString()}) - Browser notifications disabled`,
+            );
           }
         }
       });
-    };
+    }; // <-- this was missing
 
-    const interval = setInterval(checkReminders, 30000); // Check every 30 seconds
+    const interval = setInterval(checkReminders, 60000);
+    checkReminders(); // run immediately on mount too
     return () => clearInterval(interval);
   }, [tasks, habits, schedule]);
-
-  return null; // This is a logic-only component
 }

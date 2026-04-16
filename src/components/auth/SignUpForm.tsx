@@ -52,7 +52,11 @@ export function SignUpForm() {
     if (result?.error) {
       setError(result.error);
       setLoading(false);
+      return;
     }
+
+    // Force a full reload after successful sign up so the dashboard loads fresh Supabase data
+    window.location.assign("/");
   };
 
   return (

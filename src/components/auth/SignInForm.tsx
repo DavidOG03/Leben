@@ -26,14 +26,16 @@ export function SignInForm() {
     setError(null);
 
     // signInWithEmail is a server action - it runs on the server.
-    // If successful it redirects, if not it returns { error: string }
     const result = await signInWithEmail(email, password);
 
     if (result?.error) {
       setError(result.error || "This user does not exist");
       setLoading(false);
+      return;
     }
-    // If no error, the server action redirects - no need to do anything here
+
+    // Force a full reload after successful sign in so auth/session state is fully synchronized
+    window.location.assign("/");
   };
 
   return (

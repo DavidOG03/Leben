@@ -34,8 +34,7 @@ export async function signInWithEmail(
 
   if (error) return { error: error.message };
 
-  // redirect() throws internally, so it must be called outside try/catch
-  redirect("/");
+  return { error: null };
 }
 
 export async function signUpWithEmail(data: SignUpData): Promise<AuthResult> {
@@ -52,8 +51,7 @@ export async function signUpWithEmail(data: SignUpData): Promise<AuthResult> {
 
   if (error) return { error: error.message };
 
-  // No email confirmation - go straight to dashboard
-  redirect("/");
+  return { error: null };
 }
 
 // ─── Sign Out ─────────────────────────────────────────────────────────────────
