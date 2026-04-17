@@ -20,18 +20,20 @@ export async function middleware(request: NextRequest) {
   const isGoalsRoute = pathname.startsWith("/goals");
   const isPlannerRoute = pathname.startsWith("/planner");
   const isAnalyticsRoute = pathname.startsWith("/analytics");
+  const isAiRoute = pathname.startsWith("/ai");
   const isHomePage = pathname === "/";
 
-  const isPublicRoute = 
-    isAuthRoute || 
-    isTasksRoute || 
-    isHabitsRoute || 
-    isGoalsRoute || 
-    isPlannerRoute || 
+  const isPublicRoute =
+    isAuthRoute ||
+    isTasksRoute ||
+    isHabitsRoute ||
+    isGoalsRoute ||
+    isPlannerRoute ||
+    isAiRoute ||
     isAnalyticsRoute ||
     isHomePage;
 
-  // If user is NOT logged in and tries to access a non-public route (e.g. /settings)
+  // If user is NOT logged in and tries to access a non-public route (e.g. /settings, /ai)
   if (!user && !isPublicRoute) {
     return NextResponse.redirect(new URL("/auth/signin", request.url));
   }

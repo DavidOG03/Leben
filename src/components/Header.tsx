@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { BellIcon, GearIcon, SearchIcon } from "../constants/Icons";
 import { useLebenStore } from "@/store/useStore";
 import { useRouter } from "next/navigation";
+import NotificationBell from "./shared/NotificationBell";
 
 interface HeaderProps {
   title?: React.ReactNode;
@@ -156,13 +157,9 @@ export default function Header({ title, subtitle }: HeaderProps) {
             Search tasks...
           </span>
         </div> */}
-        {/* Icon buttons
-        <button
-          className="flex items-center justify-center rounded-lg transition-colors hover:bg-white/5"
-          style={{ width: "36px", height: "36px", color: "#666666" }}
-        >
-          <BellIcon />
-        </button> */}
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+        </div>
         {/* <button
           className="flex items-center justify-center rounded-lg transition-colors hover:bg-white/5"
           style={{ width: "36px", height: "36px", color: "#666666" }}

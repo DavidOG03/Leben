@@ -20,7 +20,7 @@ export default function TodaysFocus() {
 
   const handleSetReminder = (taskId: string) => {
     if (!reminderTime) return;
-    
+
     const [hours, minutes] = reminderTime.split(":").map(Number);
     const now = new Date();
     const reminderDate = new Date();
@@ -60,7 +60,7 @@ export default function TodaysFocus() {
         )}
       </div>
 
-      {(loading || isSyncing) ? (
+      {loading || isSyncing ? (
         <div className="flex-1 flex flex-col gap-4 animate-pulse px-5 py-4">
           {[1, 2].map((i) => (
             <div key={i} className="flex items-center gap-4">
@@ -105,7 +105,8 @@ export default function TodaysFocus() {
             <div
               className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-white/[0.02]"
               style={{
-                borderBottom: i < tasks.length - 1 ? "1px solid #181818" : "none",
+                borderBottom:
+                  i < tasks.length - 1 ? "1px solid #181818" : "none",
               }}
               onMouseEnter={() => setHoveredId(task.id)}
               onMouseLeave={() => setHoveredId(null)}
@@ -149,7 +150,8 @@ export default function TodaysFocus() {
                     fontSize: "10px",
                     fontWeight: 500,
                     letterSpacing: "0.05em",
-                    backgroundColor: task.tag === "WORK" ? "#1a1f2e" : "#1e1a2a",
+                    backgroundColor:
+                      task.tag === "WORK" ? "#1a1f2e" : "#1e1a2a",
                     color: task.tag === "WORK" ? "#4a7abf" : "#8a5abf",
                     border: `1px solid ${task.tag === "WORK" ? "#1e2a42" : "#2a1e42"}`,
                   }}
@@ -171,7 +173,9 @@ export default function TodaysFocus() {
 
               {/* Reminder button */}
               <button
-                onClick={() => setReminderTask(reminderTask === task.id ? null : task.id)}
+                onClick={() =>
+                  setReminderTask(reminderTask === task.id ? null : task.id)
+                }
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -179,16 +183,24 @@ export default function TodaysFocus() {
                   width: "26px",
                   height: "26px",
                   borderRadius: "6px",
-                  border: task.reminderAt ? "1px solid #7c6af0" : "1px solid transparent",
-                  backgroundColor: task.reminderAt ? "rgba(124, 106, 240, 0.15)" : "transparent",
+                  border: task.reminderAt
+                    ? "1px solid #7c6af0"
+                    : "1px solid transparent",
+                  backgroundColor: task.reminderAt
+                    ? "rgba(124, 106, 240, 0.15)"
+                    : "transparent",
                   color: task.reminderAt ? "#7c6af0" : "#444",
                   cursor: "pointer",
                   flexShrink: 0,
-                  opacity: hoveredId === task.id ? 1 : 0,
-                  transition: "opacity 0.15s, color 0.15s, background-color 0.15s, border-color 0.15s",
+                  transition:
+                    "opacity 0.15s, color 0.15s, background-color 0.15s, border-color 0.15s",
                   fontSize: "14px",
                 }}
-                title={task.reminderAt ? `Reminder set for ${new Date(task.reminderAt).toLocaleTimeString()}` : "Set reminder"}
+                title={
+                  task.reminderAt
+                    ? `Reminder set for ${new Date(task.reminderAt).toLocaleTimeString()}`
+                    : "Set reminder"
+                }
               >
                 🔔
               </button>
@@ -211,18 +223,6 @@ export default function TodaysFocus() {
                   opacity: hoveredId === task.id ? 1 : 0,
                   transition:
                     "opacity 0.15s, color 0.15s, background-color 0.15s, border-color 0.15s",
-                }}
-                onMouseEnter={(e) => {
-                  const btn = e.currentTarget;
-                  btn.style.color = "#e85555";
-                  btn.style.backgroundColor = "rgba(232,85,85,0.1)";
-                  btn.style.borderColor = "rgba(232,85,85,0.2)";
-                }}
-                onMouseLeave={(e) => {
-                  const btn = e.currentTarget;
-                  btn.style.color = "#444";
-                  btn.style.backgroundColor = "transparent";
-                  btn.style.borderColor = "transparent";
                 }}
                 aria-label="Delete task"
               >
@@ -264,7 +264,9 @@ export default function TodaysFocus() {
                 </button>
                 {task.reminderAt && (
                   <button
-                    onClick={() => updateTask(task.id, { reminderAt: undefined })}
+                    onClick={() =>
+                      updateTask(task.id, { reminderAt: undefined })
+                    }
                     style={{
                       padding: "6px 12px",
                       borderRadius: "4px",

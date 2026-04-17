@@ -13,11 +13,11 @@ export const CheckIcon = () => (
 );
 
 export const SparkleIcon = ({ color = "currentColor", className = "", style = {}, ...props } = {}) => (
-  <svg 
-    width="14" 
-    height="14" 
-    viewBox="0 0 14 14" 
-    fill="none" 
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 14 14"
+    fill="none"
     className={className}
     style={style}
     {...props}
@@ -59,8 +59,8 @@ export const PlusIcon = () => (
   </svg>
 );
 
-export const TrashIcon = () => (
-  <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+export const TrashIcon = (className) => (
+  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" className={className}>
     <path d="M2 3.5h9M5 3.5V2.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1M10.5 3.5l-.6 7a.5.5 0 0 1-.5.5H3.6a.5.5 0 0 1-.5-.5l-.6-7" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
     <path d="M5.5 6v3M7.5 6v3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
   </svg>
@@ -136,8 +136,8 @@ export const GoalIcon = () => (
     <path d="M5.5 13.5h4M7.5 11v2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
   </svg>
 );
-export const AIIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+export const AIIcon = (className) => (
+  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className={className}>
     <path d="M7.5 1.5l1.4 4.2L13.5 7l-4.6 1.3L7.5 13.5l-1.4-5.2L1.5 7l4.6-1.3L7.5 1.5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
   </svg>
 );
@@ -188,10 +188,10 @@ export const EditIcon = () => (
 );
 
 export const ArrowRightIcon = ({ className = "", style = {}, ...props } = {}) => (
-  <svg 
-    width="14" 
-    height="14" 
-    viewBox="0 0 14 14" 
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 14 14"
     fill="none"
     className={className}
     style={style}
@@ -218,5 +218,77 @@ export const EyeOffIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
     <line x1="1" y1="1" x2="23" y2="23" />
+  </svg>
+);
+export const BoltIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+    <path
+      d="M7.5 1L2 7.5h4.5L5 12l6.5-7H7L7.5 1z"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+export const CalIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+    <rect
+      x="1"
+      y="2"
+      width="11"
+      height="9.5"
+      rx="1.3"
+      stroke="currentColor"
+      strokeWidth="1.2"
+    />
+    <path
+      d="M1 5h11M4 1v2M9 1v2"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+export const FocusIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+    <circle cx="6.5" cy="6.5" r="2" stroke="currentColor" strokeWidth="1.2" />
+    <path
+      d="M1 1v3h3M9 1h3v3M1 9v3h3M9 12h3V9"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+export const HistoryIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+    <path
+      d="M1.5 6.5A5 5 0 106.5 1.5"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinecap="round"
+    />
+    <path
+      d="M1.5 2v4.5H6"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M6.5 4v3l2 1"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+export const LockIcon = () => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
   </svg>
 );

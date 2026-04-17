@@ -13,6 +13,14 @@ import {
 } from "@/lib/supabase/db";
 import { calcStreak, calcLongestStreak } from "@/utils/habits";
 
+export interface Notification {
+  id: string;
+  title: string;
+  body: string;
+  date: string;
+  read: boolean;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -77,6 +85,13 @@ interface TasksHabitsSlice {
   toggleSidebar: (isOpen?: boolean) => void;
   isSyncing: boolean;
   setIsSyncing: (isSyncing: boolean) => void;
+  notifications: Notification[];
+  addNotification: (notification: Omit<Notification, "read" | "date">) => void;
+  markNotificationRead: (id: string) => void;
+  markAllNotificationsRead: () => void;
+  deleteNotification: (id: string) => void;
+  isNotificationOpen: boolean;
+  setNotificationOpen: (open: boolean) => void;
   clearStore: () => void;
   purgeAll: () => void;
 }
@@ -92,6 +107,34 @@ export const useLebenStore = create<LebenState>()(
       isSidebarOpen: false,
       isSyncing: false,
       setIsSyncing: (isSyncing) => set({ isSyncing }),
+      notifications: [],
+      isNotificationOpen: false,
+      setNotificationOpen: (isNotificationOpen) => set({ isNotificationOpen }),
+      addNotification: (n) =>
+        set((state) => ({
+          notifications: [
+            {
+              ...n,
+              read: false,
+              date: new Date().toISOString(),
+            },
+            ...state.notifications,
+          ].slice(0, 50), // Keep last 50
+        })),
+      markNotificationRead: (id) =>
+        set((state) => ({
+          notifications: state.notifications.map((n) =>
+            n.id === id ? { ...n, read: true } : n,
+          ),
+        })),
+      markAllNotificationsRead: () =>
+        set((state) => ({
+          notifications: state.notifications.map((n) => ({ ...n, read: true })),
+        })),
+      deleteNotification: (id) =>
+        set((state) => ({
+          notifications: state.notifications.filter((n) => n.id !== id),
+        })),
       toggleSidebar: (isOpen) =>
         set((state) => ({
           isSidebarOpen: isOpen !== undefined ? isOpen : !state.isSidebarOpen,
@@ -116,6 +159,7 @@ export const useLebenStore = create<LebenState>()(
                 ...t,
                 completed: newCompleted,
                 completedAt: newCompleted ? today : undefined,
+                reminderAt: newCompleted ? undefined : t.reminderAt,
               };
             }
             return t;
@@ -126,6 +170,7 @@ export const useLebenStore = create<LebenState>()(
           updateTask(id, {
             completed: task.completed,
             completedAt: task.completedAt,
+            reminderAt: task.reminderAt,
           });
         }
       },
@@ -151,6 +196,7 @@ export const useLebenStore = create<LebenState>()(
               streak: newStreak,
               longestStreak: newLongest,
               completedDates: newDates,
+              reminderAt: !alreadyDone ? undefined : h.reminderAt,
             };
           }),
         }));
@@ -207,12 +253,20 @@ export const useLebenStore = create<LebenState>()(
           if (scheduleItem.taskId) {
             newTasks = state.tasks.map((t) =>
               t.id === scheduleItem.taskId
-                ? { ...t, completed: newStatus === "completed" }
+                ? {
+                    ...t,
+                    completed: newStatus === "completed",
+                    reminderAt:
+                      newStatus === "completed" ? undefined : t.reminderAt,
+                  }
                 : t,
             );
           }
 
-          return { schedule: newSchedule, tasks: newTasks };
+          return { 
+            schedule: newSchedule, 
+            tasks: newTasks 
+          };
         }),
 
       updateScheduleItem: (id, updates) =>
@@ -223,7 +277,14 @@ export const useLebenStore = create<LebenState>()(
         })),
 
       clearStore: () => {
-        set({ tasks: [], habits: [], goals: [], books: [], schedule: [] });
+        set({
+          tasks: [],
+          habits: [],
+          goals: [],
+          books: [],
+          schedule: [],
+          notifications: [],
+        });
       },
       purgeAll: () => {
         get().clearStore();

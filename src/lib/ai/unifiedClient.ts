@@ -8,20 +8,18 @@ interface UnifiedAiOptions {
 
 /**
  * A unified AI client that load-balances and fails over between:
- * 1. DeepSeek (Primary)
- * 2. Groq (Secondary)
- * 3. Gemini (Fallback)
- *
- * This ensures maximum RPM and reliability.
+ * 1. Gemini (Primary - Unified SDK)
+ * 2. DeepSeek (Secondary)
+ * 3. Groq (Tertiary)
  */
 export async function unifiedAiCall(
-  prompt: string,
+  input: string | any[],
   options: UnifiedAiOptions = {},
 ) {
   const providers = [
+    { name: "Gemini", call: callGemini },
     { name: "DeepSeek", call: callDeepSeek },
     { name: "Groq", call: callGroq },
-    { name: "Gemini", call: callGemini },
   ];
 
   let lastError: any = null;
@@ -29,7 +27,7 @@ export async function unifiedAiCall(
   for (const provider of providers) {
     try {
       console.log(`[UnifiedAI] Attempting ${provider.name}...`);
-      const result = await provider.call(prompt, options);
+      const result = await provider.call(input, options);
       if (result) {
         console.log(`[UnifiedAI] Success with ${provider.name}`);
         return result;
@@ -44,10 +42,59 @@ export async function unifiedAiCall(
   throw lastError || new Error("All AI providers failed.");
 }
 
+// --- Gemini (Official @google/genai SDK) ---
+async function callGemini(input: string | any[], options: UnifiedAiOptions) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("Missing Gemini API Key");
+
+  const client = new GoogleGenAI({ apiKey });
+
+  let contents: any[] = [];
+  let systemInstruction: string | undefined = undefined;
+
+  if (Array.isArray(input)) {
+    // Separate system messages for Gemini's specific systemInstruction parameter
+    const systemMessages = input.filter(m => m.role === "system");
+    if (systemMessages.length > 0) {
+      systemInstruction = systemMessages.map(m => m.content).join("\n\n");
+    }
+
+    contents = input
+      .filter(m => m.role !== "system")
+      .map((m: any) => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }],
+      }));
+  } else {
+    contents = [{ role: "user", parts: [{ text: input }] }];
+  }
+
+  const response = await client.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: contents,
+    config: {
+      systemInstruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : undefined,
+      temperature: options.temperature ?? 0.7,
+      responseMimeType: options.json ? "application/json" : "text/plain",
+    },
+  });
+
+  const raw = response.text || "";
+  if (!raw) throw new Error("Gemini SDK returned empty response");
+  return raw;
+}
+
 // --- DeepSeek (OpenAI Compatible) ---
-async function callDeepSeek(prompt: string, options: UnifiedAiOptions) {
+async function callDeepSeek(input: string | any[], options: UnifiedAiOptions) {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) throw new Error("Missing DeepSeek API Key");
+
+  let messages: any[] = [];
+  if (Array.isArray(input)) {
+    messages = input.map(m => ({ role: m.role, content: m.content }));
+  } else {
+    messages = [{ role: "user", content: input }];
+  }
 
   const res = await fetch("https://api.deepseek.com/chat/completions", {
     method: "POST",
@@ -57,7 +104,7 @@ async function callDeepSeek(prompt: string, options: UnifiedAiOptions) {
     },
     body: JSON.stringify({
       model: "deepseek-chat",
-      messages: [{ role: "user", content: prompt }],
+      messages: messages,
       response_format: options.json ? { type: "json_object" } : undefined,
       temperature: options.temperature ?? 0.7,
     }),
@@ -73,9 +120,16 @@ async function callDeepSeek(prompt: string, options: UnifiedAiOptions) {
 }
 
 // --- Groq (OpenAI Compatible) ---
-async function callGroq(prompt: string, options: UnifiedAiOptions) {
+async function callGroq(input: string | any[], options: UnifiedAiOptions) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) throw new Error("Missing Groq API Key");
+
+  let messages: any[] = [];
+  if (Array.isArray(input)) {
+    messages = input.map(m => ({ role: m.role, content: m.content }));
+  } else {
+    messages = [{ role: "user", content: input }];
+  }
 
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -85,7 +139,7 @@ async function callGroq(prompt: string, options: UnifiedAiOptions) {
     },
     body: JSON.stringify({
       model: "llama-3.3-70b-versatile",
-      messages: [{ role: "user", content: prompt }],
+      messages: messages,
       response_format: options.json ? { type: "json_object" } : undefined,
       temperature: options.temperature ?? 0.7,
     }),
@@ -98,32 +152,4 @@ async function callGroq(prompt: string, options: UnifiedAiOptions) {
 
   const data = await res.json();
   return data.choices[0].message.content;
-}
-
-// --- Gemini (Fallback) ---
-async function callGemini(prompt: string, options: UnifiedAiOptions) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("Missing Gemini API Key");
-
-  const ai = new GoogleGenAI({
-    apiKey,
-    httpOptions: { apiVersion: "v1" },
-  });
-
-  const result: any = await ai.models.generateContent({
-    model: "gemini-2.5-flash-lite",
-    contents: prompt,
-  });
-
-  let raw = "";
-  if (typeof result.text === "string") {
-    raw = result.text;
-  } else if (typeof result.response?.text === "function") {
-    raw = await result.response.text();
-  } else if (result.response?.candidates?.[0]?.content?.parts?.[0]?.text) {
-    raw = result.response.candidates[0].content.parts[0].text;
-  }
-
-  if (!raw) throw new Error("Gemini returned empty response");
-  return raw;
 }

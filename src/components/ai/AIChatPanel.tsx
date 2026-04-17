@@ -1,141 +1,301 @@
 "use client";
 
-import { useState } from "react";
-
-interface Message {
-  id: number;
-  role: "assistant" | "user";
-  content: string;
-  time: string;
-  thinking?: boolean;
-}
-
-const initialMessages: Message[] = [
-  {
-    id: 1,
-    role: "assistant",
-    content: "Good morning. I've analyzed your upcoming schedule and previous productivity patterns. Today looks optimal for deep work between 10 AM and 1 PM.",
-    time: "08:30 AM",
-  },
-  {
-    id: 2,
-    role: "user",
-    content: "Yes, please. Also, can you summarize my top 3 objectives for this week based on the project sync notes from yesterday?",
-    time: "08:32 AM",
-  },
-  {
-    id: 3,
-    role: "assistant",
-    content: "",
-    time: "08:30 AM",
-    thinking: true,
-  },
-];
+import { useState, useRef, useEffect } from "react";
+import { useAIStore } from "@/store/useAIStore";
 
 const SparkleIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path d="M8 2l1.5 4L14 8l-4.5 1.5L8 14l-1.5-4.5L2 8l4.5-1.5L8 2z" stroke="white" strokeWidth="1.3" strokeLinejoin="round" />
+    <path
+      d="M8 2l1.5 4L14 8l-4.5 1.5L8 14l-1.5-4.5L2 8l4.5-1.5L8 2z"
+      stroke="white"
+      strokeWidth="1.3"
+      strokeLinejoin="round"
+    />
   </svg>
 );
 
 const suggestions = [
-  { icon: "📊", label: "Analyze my productivity" },
-  { icon: "✦", label: "Generate task list" },
-  { icon: "📅", label: "Optimize my schedule" },
+  { icon: "", label: "Analyze my productivity" },
+  { icon: "", label: "Generate task list" },
+  { icon: "", label: "Optimize my schedule" },
 ];
 
 export default function AIChatPanel() {
-  const [messages] = useState<Message[]>(initialMessages);
+  const { messages, addMessage, isThinking, setThinking } = useAIStore();
   const [input, setInput] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, isThinking]);
+
+  async function sendMessage(text: string) {
+    if (!text.trim() || isThinking) return;
+
+    const userMsg = {
+      id: Date.now().toString(),
+      role: "user" as const,
+      content: text,
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
+
+    addMessage(userMsg);
+    setInput("");
+    setThinking(true);
+
+    try {
+      const res = await fetch("/api/ai/chat", {
+        method: "POST",
+        body: JSON.stringify({ messages: [...messages, userMsg] }),
+      });
+      const data = await res.json();
+
+      if (data.text) {
+        // Simple "streaming" effect
+        const aiMsgId = (Date.now() + 1).toString();
+        const fullContent = data.text;
+
+        addMessage({
+          id: aiMsgId,
+          role: "assistant",
+          content: fullContent, // In a real app we'd stream, here we simulate it
+          time: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        });
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setThinking(false);
+    }
+  }
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden" style={{ borderRight: "1px solid #161616" }}>
+    <div
+      className="flex flex-col flex-1 overflow-hidden"
+      style={{ borderRight: "1px solid #161616" }}
+    >
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-8 py-6 space-y-4">
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto px-8 py-6 space-y-6 scroll-smooth"
+      >
         {messages.map((msg) => (
-          <div key={msg.id} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
+          <div
+            key={msg.id}
+            className={`flex gap-4 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
+          >
             {msg.role === "assistant" && (
-              <div className="flex items-center justify-center rounded-xl flex-shrink-0 self-start mt-1" style={{ width: "32px", height: "32px", background: "linear-gradient(135deg,#4a3fcc,#2d2480)", border: "1px solid rgba(124,106,240,0.3)" }}>
+              <div
+                className="flex items-center justify-center rounded-xl flex-shrink-0 self-start mt-1"
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  background: "linear-gradient(135deg,#4a3fcc,#2d2480)",
+                  border: "1px solid rgba(124,106,240,0.3)",
+                }}
+              >
                 <SparkleIcon />
               </div>
             )}
-            <div className="max-w-md">
-              {msg.thinking ? (
-                <div className="rounded-2xl px-4 py-3" style={{ backgroundColor: "#161616", border: "1px solid #1e1e1e" }}>
-                  <p style={{ fontSize: "11px", color: "#555", marginBottom: "6px" }}>ASSISTANT • {msg.time}</p>
-                  <div className="flex items-center gap-1.5">
-                    {[0, 1, 2].map((i) => (
-                      <div
-                        key={i}
-                        className="rounded-full"
-                        style={{
-                          width: "6px", height: "6px",
-                          backgroundColor: "#7c6af0",
-                          animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
-                        }}
-                      />
-                    ))}
-                    <span style={{ fontSize: "12px", color: "#555", marginLeft: "4px" }}>Leben Assistant is thinking...</span>
-                  </div>
-                </div>
-              ) : msg.role === "assistant" ? (
-                <div className="rounded-2xl px-4 py-3" style={{ backgroundColor: "#161616", border: "1px solid #1e1e1e" }}>
-                  <p style={{ fontSize: "13px", color: "#ccc", lineHeight: 1.6 }}>{msg.content}</p>
+            <div
+              className={`max-w-[85%] ${msg.role === "user" ? "text-right" : ""}`}
+            >
+              {msg.role === "assistant" ? (
+                <div
+                  className="rounded-2xl px-5 py-4"
+                  style={{
+                    backgroundColor: "#161616",
+                    border: "1px solid #1e1e1e",
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+                  }}
+                >
+                  <p className="text-[#ccc] text-[14px] leading-relaxed whitespace-pre-wrap">
+                    {msg.content}
+                  </p>
                 </div>
               ) : (
-                <div className="rounded-2xl px-4 py-3" style={{ backgroundColor: "#1e1a40", border: "1px solid rgba(124,106,240,0.2)" }}>
-                  <p style={{ fontSize: "13px", color: "#e0e0e0", lineHeight: 1.6 }}>{msg.content}</p>
-                  <p style={{ fontSize: "10px", color: "#555", marginTop: "6px", textAlign: "right" }}>YOU • {msg.time}</p>
+                <div
+                  className="rounded-2xl px-5 py-4 text-left"
+                  style={{
+                    backgroundColor: "#1e1a41",
+                    border: "1px solid rgba(124,106,240,0.2)",
+                    boxShadow: "0 4px 20px rgba(124,106,240,0.1)",
+                  }}
+                >
+                  <p className="text-[#e0e0e0] text-[14px] leading-relaxed">
+                    {msg.content}
+                  </p>
+                  <p
+                    style={{
+                      fontSize: "10px",
+                      color: "#6358cc",
+                      marginTop: "8px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    YOU • {msg.time}
+                  </p>
                 </div>
               )}
             </div>
           </div>
         ))}
+
+        {isThinking && (
+          <div className="flex gap-4 animate-in fade-in duration-500">
+            <div
+              className="flex items-center justify-center rounded-xl flex-shrink-0 self-start mt-1"
+              style={{
+                width: "32px",
+                height: "32px",
+                background: "linear-gradient(135deg,#4a3fcc,#2d2480)",
+                border: "1px solid rgba(124,106,240,0.3)",
+              }}
+            >
+              <div className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+            </div>
+            <div
+              className="rounded-2xl px-5 py-4"
+              style={{
+                backgroundColor: "#161616",
+                border: "1px solid #1e1e1e",
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-[12px] text-[#555] font-medium italic">
+                  Neural engine processing...
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Suggestion chips */}
-      <div className="px-8 pb-3 flex flex-wrap gap-2">
+      <div className="px-8 pb-4 flex flex-wrap gap-2">
         {suggestions.map((s) => (
           <button
             key={s.label}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors hover:border-purple-800"
-            style={{ backgroundColor: "#141414", border: "1px solid #222", color: "#aaa", fontSize: "12px" }}
+            onClick={() => sendMessage(s.label)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl transition-all hover:bg-[#1a1a1a] hover:border-[#7c6af0]/50 group"
+            style={{
+              backgroundColor: "#0e0e0e",
+              border: "1px solid #1a1a1a",
+              color: "#888",
+              fontSize: "12px",
+            }}
           >
-            <span style={{ fontSize: "13px" }}>{s.icon}</span>
+            <span className="group-hover:scale-110 transition-transform">
+              {s.icon}
+            </span>
             {s.label}
           </button>
         ))}
       </div>
 
       {/* Input */}
-      <div className="px-8 pb-5 pt-2">
-        <div
-          className="flex items-center gap-3 rounded-xl px-4 py-3"
-          style={{ backgroundColor: "#111", border: "1px solid #1e1e1e" }}
+      <div className="px-8 pb-6 pt-2 border-t border-white/[0.02]">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            sendMessage(input);
+          }}
+          className="flex items-end gap-3 rounded-2xl px-5 py-4 transition-all focus-within:border-[#7c6af0]/40"
+          style={{ backgroundColor: "#0c0c0c", border: "1px solid #1e1e1e" }}
         >
-          <button style={{ color: "#555", flexShrink: 0 }}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v14M1 8h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+          <button
+            type="button"
+            className="mb-1 text-[#444] hover:text-[#7c6af0] transition-colors"
+          >
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M8 1v14M1 8h14"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
           </button>
-          <input
+          <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type a message or ask for an insight..."
-            className="flex-1 bg-transparent outline-none"
-            style={{ fontSize: "13px", color: "#888" }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage(input);
+              }
+            }}
+            placeholder="Ask neural engine..."
+            className="flex-1 bg-transparent outline-none resize-none max-h-32 pt-0.5"
+            style={{ fontSize: "14px", color: "#ccc" }}
+            rows={1}
           />
           <button
-            className="flex items-center justify-center rounded-lg flex-shrink-0 transition-opacity hover:opacity-80"
-            style={{ width: "32px", height: "32px", backgroundColor: "#1e1e1e", border: "1px solid #2a2a2a", color: "#888" }}
+            type="submit"
+            disabled={!input.trim() || isThinking}
+            className="flex items-center justify-center rounded-xl flex-shrink-0 transition-all disabled:opacity-20 hover:scale-105"
+            style={{
+              width: "36px",
+              height: "36px",
+              backgroundColor: input.trim() ? "#2d2480" : "#1a1a1a",
+              border: "1px solid #3a3060",
+              color: "#fff",
+            }}
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M12 7H2M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
+              <path
+                d="M12 7H2M8 3l4 4-4 4"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </button>
+        </form>
+        <div className="flex items-center justify-center gap-2 mt-4 opacity-30">
+          <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-white/20" />
+          <p
+            style={{
+              fontSize: "9px",
+              color: "#888",
+              letterSpacing: "0.15em",
+              fontWeight: 700,
+            }}
+          >
+            NEURAL ENGINE V2.4 • CORE RESPONSIVE
+          </p>
+          <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-white/20" />
         </div>
-        <p style={{ fontSize: "10px", color: "#2a2a2a", textAlign: "center", marginTop: "8px", letterSpacing: "0.06em" }}>
-          NEURAL ENGINE V2.4 • SECURE END-TO-END ENCRYPTED
-        </p>
       </div>
 
-      <style>{`@keyframes pulse { 0%,100%{opacity:0.3;transform:scale(0.8)} 50%{opacity:1;transform:scale(1)} }`}</style>
+      <style jsx global>{`
+        .scroll-smooth {
+          scroll-behavior: smooth;
+        }
+        ::-webkit-scrollbar {
+          width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: #1a1a1a;
+          border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: #222;
+        }
+      `}</style>
     </div>
   );
 }

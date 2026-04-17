@@ -23,6 +23,25 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${dmSans.className} antialiased`}>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              const originalError = console.error;
+              console.error = (...args) => {
+                if (args[0]?.message?.includes('The play() request was interrupted') || 
+                    (typeof args[0] === 'string' && args[0].includes('The play() request was interrupted'))) {
+                  return;
+                }
+                originalError.apply(console, args);
+              };
+              window.addEventListener('unhandledrejection', (event) => {
+                if (event.reason?.name === 'AbortError' && event.reason?.message?.includes('play()')) {
+                  event.preventDefault();
+                }
+              });
+            `,
+          }}
+        />
         <UserDataProvider />
         <NotificationManager />
         {children}

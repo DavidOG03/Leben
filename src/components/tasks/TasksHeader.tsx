@@ -3,6 +3,7 @@
 import { BellIcon, SearchIcon, SparkleIcon } from "@/constants/Icons";
 import { useRouter } from "next/navigation";
 import { useLebenStore } from "@/store/useStore";
+import NotificationBell from "../shared/NotificationBell";
 
 export default function TasksHeader() {
   const router = useRouter();
@@ -52,12 +53,7 @@ export default function TasksHeader() {
 
       {/* Right icons + wordmark */}
       <div className="flex items-center gap-3">
-        <button
-          className="flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors"
-          style={{ width: "32px", height: "32px", color: "#555" }}
-        >
-          <BellIcon />
-        </button>
+        <NotificationBell />
         <button
           className="flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors"
           style={{ width: "32px", height: "32px", color: "#555" }}

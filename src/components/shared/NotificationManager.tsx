@@ -64,6 +64,7 @@ export default function NotificationManager() {
   const schedule = useLebenStore((state) => state.schedule);
   const updateTask = useLebenStore((state) => state.updateTask);
   const updateHabit = useLebenStore((state) => state.updateHabit);
+  const addNotification = useLebenStore((state) => state.addNotification);
 
   const notifiedRef = useRef<Set<string>>(new Set());
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -75,6 +76,7 @@ export default function NotificationManager() {
   const fireNotification = useCallback(
     (id: string, title: string, body: string) => {
       setToasts((prev) => [...prev, { id: `toast-${id}`, title, body }]);
+      addNotification({ id, title, body });
 
       if (
         typeof Notification !== "undefined" &&
@@ -105,50 +107,52 @@ export default function NotificationManager() {
   useEffect(() => {
     const checkReminders = () => {
       const now = new Date();
-      const fiveMinutesFromNow = new Date(now.getTime() + 300000);
 
+      // Combine all triggerable items
       const allRemindables = [
-        ...tasks.map((t: any) => ({ ...t, type: "Task Reminder", itemType: "task" })),
-        ...habits.map((h: any) => ({
-          ...h,
-          type: "Habit Reminder",
-          title: h.label,
-          itemType: "habit",
-        })),
-        ...schedule.map((s: any) => ({ ...s, type: "Planner Reminder", itemType: "schedule" })),
+        ...tasks
+          .filter((t: any) => !t.completed && t.reminderAt)
+          .map((t: any) => ({ ...t, type: "Task Reminder", itemType: "task" })),
+        ...habits
+          .filter((h: any) => !h.checked && h.reminderAt)
+          .map((h: any) => ({
+            ...h,
+            type: "Habit Reminder",
+            title: h.label || h.name,
+            itemType: "habit",
+          })),
+        ...schedule
+          .filter((s: any) => s.status !== "completed" && s.reminderAt)
+          .map((s: any) => ({ ...s, type: "Planner Reminder", itemType: "schedule" })),
       ];
 
       allRemindables.forEach((item: any) => {
-        if (!item.reminderAt || notifiedRef.current.has(item.id)) return;
+        if (notifiedRef.current.has(item.id)) return;
 
         const reminderTime = new Date(item.reminderAt);
 
-        // Check if reminder is upcoming (within next 5 minutes)
-        if (reminderTime >= now && reminderTime <= fiveMinutesFromNow) {
-          fireNotification(item.id, item.type, item.title);
-        }
-        // Check if reminder time has passed (missed reminder)
-        else if (reminderTime < now) {
+        // TRIGGER: If current time is exactly at or past the reminder time
+        // We look for reminders in the last 2 minutes to catch them, but not older ones
+        const twoMinutesAgo = new Date(now.getTime() - 120000);
+
+        if (reminderTime <= now && reminderTime > twoMinutesAgo) {
           fireNotification(
             item.id,
             item.type,
-            `You missed the reminder for "${item.title}"`
+            `Time for: ${item.title || item.name}`
           );
-
-          // Clear the reminder and mark as notified
-          if (item.itemType === "task") {
-            updateTask(item.id, { reminderAt: undefined });
-          } else if (item.itemType === "habit") {
-            updateHabit(item.id, { reminderAt: undefined });
-          }
+        } else if (reminderTime <= twoMinutesAgo) {
+          // It's an old reminder, just mark it as "notified" so we don't bug the user
+          notifiedRef.current.add(item.id);
         }
       });
     };
 
-    const interval = setInterval(checkReminders, 60000);
+    // Check more frequently for precision (every 10 seconds)
+    const interval = setInterval(checkReminders, 10000);
     checkReminders();
     return () => clearInterval(interval);
-  }, [tasks, habits, schedule, fireNotification, updateTask, updateHabit]);
+  }, [tasks, habits, schedule, fireNotification]);
 
   if (toasts.length === 0) return null;
 
