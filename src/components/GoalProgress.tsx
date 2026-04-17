@@ -10,16 +10,16 @@ import { PlusIcon } from "@/constants/Icons";
 
 export default function GoalProgress() {
   const goals = useLebenStore((s: any) => s.goals) as Goal[];
+  const isSyncing = useLebenStore((s: any) => s.isSyncing) as boolean;
   const toggleMilestone = useLebenStore((s: any) => s.toggleMilestone);
   const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
-      setLoading(false);
     });
   }, []);
 
@@ -39,7 +39,7 @@ export default function GoalProgress() {
         >
           Goal Progress
         </h3>
-        {!loading && goals.length > 0 && (
+        {!(loading || isSyncing) && goals.length > 0 && (
           <Link
             href="/goals"
             className="text-[#7c6af0] hover:underline"
@@ -50,7 +50,7 @@ export default function GoalProgress() {
         )}
       </div>
 
-      {loading ? (
+      {(loading || isSyncing) ? (
         <div className="space-y-6 flex-1 animate-pulse">
           {[1, 2].map((i) => (
             <div key={i}>
@@ -69,52 +69,24 @@ export default function GoalProgress() {
             </div>
           ))}
         </div>
-      ) : !user ? (
-        <div className="flex-1 flex flex-col items-center justify-center py-4 gap-3">
-          <p
-            style={{
-              fontSize: "12px",
-              color: "#555",
-              textAlign: "center",
-              lineHeight: 1.6,
-            }}
-          >
-            Vision requires focus.
-            <br />
-            Sign in to track your goals.
-          </p>
-          <Link
-            href="/auth/signin"
-            className="px-4 py-2 rounded-lg transition-colors hover:bg-[#7c6af0]/10"
-            style={{
-              fontSize: "12px",
-              color: "#7c6af0",
-              border: "1px solid #7c6af040",
-              textDecoration: "none",
-              fontWeight: 600,
-            }}
-          >
-            Sign In to Track
-          </Link>
-        </div>
       ) : goals.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 my-auto pt-2">
-          <PlusIcon />
-          <p style={{ fontSize: "11px", color: "#333" }}>No goals added yet</p>
-          <Link
-            href="/goals"
-            className="px-4 py-1.5 rounded-lg transition-opacity hover:opacity-80"
-            style={{
-              fontSize: "11px",
-              color: "#666",
-              border: "1px solid #222",
-              textDecoration: "none",
-            }}
-          >
-            Create a goal
-          </Link>
-        </div>
-      ) : (
+          <div className="flex flex-col items-center gap-2 my-auto pt-2">
+            <PlusIcon />
+            <p style={{ fontSize: "11px", color: "#333" }}>No goals added yet</p>
+            <Link
+              href="/goals"
+              className="px-4 py-1.5 rounded-lg transition-opacity hover:opacity-80"
+              style={{
+                fontSize: "11px",
+                color: "#666",
+                border: "1px solid #222",
+                textDecoration: "none",
+              }}
+            >
+              Create a goal
+            </Link>
+          </div>
+        ) : (
         <div className="space-y-6 flex-1 pr-1">
           {goals.slice(0, 2).map((g) => {
             const { progress } = deriveGoalStats(g);

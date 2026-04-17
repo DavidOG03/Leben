@@ -175,7 +175,8 @@ create table tasks (
   category text,
   date text,
   created_at timestamp with time zone default now(),
-  completed_at timestamp with time zone
+  completed_at timestamp with time zone,
+  reminder_at timestamp with time zone
 );
 
 -- Habits
@@ -187,7 +188,8 @@ create table habits (
   longest_streak integer default 0,
   checked boolean default false,
   color text,
-  completed_dates text[] default '{}'
+  completed_dates text[] default '{}',
+  reminder_at timestamp with time zone
 );
 
 -- Goals

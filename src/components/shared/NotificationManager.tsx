@@ -62,6 +62,8 @@ export default function NotificationManager() {
   const tasks = useLebenStore((state) => state.tasks);
   const habits = useLebenStore((state) => state.habits);
   const schedule = useLebenStore((state) => state.schedule);
+  const updateTask = useLebenStore((state) => state.updateTask);
+  const updateHabit = useLebenStore((state) => state.updateHabit);
 
   const notifiedRef = useRef<Set<string>>(new Set());
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -70,22 +72,32 @@ export default function NotificationManager() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const fireNotification = useCallback((id: string, title: string, body: string) => {
-    setToasts((prev) => [...prev, { id: `toast-${id}`, title, body }]);
+  const fireNotification = useCallback(
+    (id: string, title: string, body: string) => {
+      setToasts((prev) => [...prev, { id: `toast-${id}`, title, body }]);
 
-    if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-      new Notification(title, {
-        body,
-        icon: "/favicon.svg",
-        badge: "/favicon.svg",
-      });
-    }
+      if (
+        typeof Notification !== "undefined" &&
+        Notification.permission === "granted"
+      ) {
+        new Notification(title, {
+          body,
+          icon: "/favicon.svg",
+          badge: "/favicon.svg",
+        });
+      }
 
-    notifiedRef.current.add(id);
-  }, []);
+      notifiedRef.current.add(id);
+    },
+    [],
+  );
 
   useEffect(() => {
-    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+    if (
+      typeof window !== "undefined" &&
+      "Notification" in window &&
+      Notification.permission === "default"
+    ) {
       Notification.requestPermission();
     }
   }, []);
@@ -93,12 +105,17 @@ export default function NotificationManager() {
   useEffect(() => {
     const checkReminders = () => {
       const now = new Date();
-      const fiveMinutesAgo = new Date(now.getTime() - 300000);
+      const fiveMinutesFromNow = new Date(now.getTime() + 300000);
 
       const allRemindables = [
-        ...tasks.map((t: any) => ({ ...t, type: "Task Reminder" })),
-        ...habits.map((h: any) => ({ ...h, type: "Habit Reminder", title: h.label })),
-        ...schedule.map((s: any) => ({ ...s, type: "Planner Reminder" })),
+        ...tasks.map((t: any) => ({ ...t, type: "Task Reminder", itemType: "task" })),
+        ...habits.map((h: any) => ({
+          ...h,
+          type: "Habit Reminder",
+          title: h.label,
+          itemType: "habit",
+        })),
+        ...schedule.map((s: any) => ({ ...s, type: "Planner Reminder", itemType: "schedule" })),
       ];
 
       allRemindables.forEach((item: any) => {
@@ -106,8 +123,24 @@ export default function NotificationManager() {
 
         const reminderTime = new Date(item.reminderAt);
 
-        if (reminderTime <= now && reminderTime > fiveMinutesAgo) {
+        // Check if reminder is upcoming (within next 5 minutes)
+        if (reminderTime >= now && reminderTime <= fiveMinutesFromNow) {
           fireNotification(item.id, item.type, item.title);
+        }
+        // Check if reminder time has passed (missed reminder)
+        else if (reminderTime < now) {
+          fireNotification(
+            item.id,
+            item.type,
+            `You missed the reminder for "${item.title}"`
+          );
+
+          // Clear the reminder and mark as notified
+          if (item.itemType === "task") {
+            updateTask(item.id, { reminderAt: undefined });
+          } else if (item.itemType === "habit") {
+            updateHabit(item.id, { reminderAt: undefined });
+          }
         }
       });
     };
@@ -115,7 +148,7 @@ export default function NotificationManager() {
     const interval = setInterval(checkReminders, 60000);
     checkReminders();
     return () => clearInterval(interval);
-  }, [tasks, habits, schedule, fireNotification]);
+  }, [tasks, habits, schedule, fireNotification, updateTask, updateHabit]);
 
   if (toasts.length === 0) return null;
 

@@ -183,8 +183,7 @@ export default function AIMorningBrief() {
               color: "#f0f0f0",
             }}
           >
-            {user ? (
-              hasData ? (
+            {hasData ? (
                 brief ? (
                   brief.summary
                 ) : (
@@ -194,17 +193,11 @@ export default function AIMorningBrief() {
                 <>
                   Welcome to <span style={{ color: "#7c6af0" }}>Leben.</span>
                 </>
-              )
-            ) : (
-              <>
-                Unlock AI <span style={{ color: "#7c6af0" }}>Insights.</span>
-              </>
-            )}
+              )}
           </h2>
 
           {/* Content area */}
-          {user ? (
-            hasData ? (
+          {hasData ? (
               <div className="space-y-4">
                 {loading && (
                   <div className="space-y-2 animate-pulse">
@@ -212,11 +205,11 @@ export default function AIMorningBrief() {
                     <div className="h-3 rounded bg-white/5 w-1/2" />
                   </div>
                 )}
-
+  
                 {error && !loading && !isUnavailable && (
                   <p style={{ fontSize: "13px", color: "#f87171" }}>{error}</p>
                 )}
-
+  
                 {isUnavailable && !loading && (
                   <div
                     className="rounded-xl p-4"
@@ -237,7 +230,7 @@ export default function AIMorningBrief() {
                     </p>
                   </div>
                 )}
-
+  
                 {brief && !loading && (
                   <div className="flex flex-wrap gap-2">
                     {brief.insights.map((insight, i) => (
@@ -255,7 +248,7 @@ export default function AIMorningBrief() {
                     ))}
                   </div>
                 )}
-
+  
                 {!brief && !loading && !error && (
                   <p
                     style={{ fontSize: "13px", color: "#555", lineHeight: 1.7 }}
@@ -270,115 +263,109 @@ export default function AIMorningBrief() {
                 Your AI morning brief will appear here once you&apos;ve added
                 tasks, habits, and goals. Start by creating your first task.
               </p>
-            )
-          ) : (
-            <p style={{ fontSize: "13px", color: "#555", lineHeight: 1.7 }}>
-              Sign in to analyze your productivity, get daily insights, and let
-              AI organize your schedule for maximum energy.
-            </p>
-          )}
+            )}
         </div>
 
         {/* CTAs */}
         <div className="flex items-center gap-3 mt-6">
-          {user ? (
-            hasData ? (
-              <>
-                {!brief && (error || isUnavailable) && (
-                  <button
-                    onClick={() => handleGenerate(true)}
-                    disabled={loading}
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-                    style={{
-                      background: "linear-gradient(135deg, #7c6af0, #5a4fd4)",
-                      boxShadow: "0 10px 20px -10px rgba(124, 106, 240, 0.4)",
-                      color: "#fff",
-                      fontSize: "14px",
-                    }}
-                  >
-                    {loading ? "Generating..." : "Retry Brief"}
-                    {!loading && <SparkleIcon />}
-                  </button>
-                )}
-
-                {brief && (
-                  <Link
-                    href="/planner"
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
-                    style={{
-                      background: "linear-gradient(135deg, #7c6af0, #5a4fd4)",
-                      boxShadow: "0 10px 20px -10px rgba(124, 106, 240, 0.4)",
-                      color: "#fff",
-                      fontSize: "14px",
-                      textDecoration: "none",
-                    }}
-                  >
-                    Plan My Day
-                    <ArrowRightIcon />
-                  </Link>
-                )}
-
-                {brief && !loading && (
-                  <button
-                    onClick={() => handleGenerate(true)}
-                    className="px-4 py-3 rounded-xl font-medium transition-opacity hover:opacity-70"
-                    style={{
-                      background: "transparent",
-                      border: "1px solid #2a2a2a",
-                      color: "#555",
-                      fontSize: "13px",
-                    }}
-                  >
-                    Regenerate
-                  </button>
-                )}
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/tasks"
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-opacity hover:opacity-90"
+          {hasData ? (
+            <>
+              {!brief && (error || isUnavailable) && (
+                <button
+                  onClick={() => handleGenerate(true)}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
                   style={{
-                    background: "linear-gradient(135deg, #2e2e2e, #1e1e1e)",
-                    border: "1px solid #3a3a3a",
-                    color: "#f0f0f0",
-                    fontSize: "13px",
+                    background: "linear-gradient(135deg, #7c6af0, #5a4fd4)",
+                    boxShadow: "0 10px 20px -10px rgba(124, 106, 240, 0.4)",
+                    color: "#fff",
+                    fontSize: "14px",
+                  }}
+                >
+                  {loading ? "Generating..." : "Retry Brief"}
+                  {!loading && <SparkleIcon />}
+                </button>
+              )}
+
+              {brief && (
+                <Link
+                  href="/planner"
+                  className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  style={{
+                    background: "linear-gradient(135deg, #7c6af0, #5a4fd4)",
+                    boxShadow: "0 10px 20px -10px rgba(124, 106, 240, 0.4)",
+                    color: "#fff",
+                    fontSize: "14px",
                     textDecoration: "none",
                   }}
                 >
-                  Create first task
+                  Plan My Day
                   <ArrowRightIcon />
                 </Link>
-                <Link
-                  href="/habits"
-                  className="px-5 py-2.5 rounded-lg font-medium transition-opacity hover:opacity-70"
+              )}
+
+              {brief && !loading && (
+                <button
+                  onClick={() => handleGenerate(true)}
+                  className="px-4 py-3 rounded-xl font-medium transition-opacity hover:opacity-70"
                   style={{
                     background: "transparent",
                     border: "1px solid #2a2a2a",
-                    color: "#666",
+                    color: "#555",
                     fontSize: "13px",
-                    textDecoration: "none",
                   }}
                 >
-                  Set up habits
-                </Link>
-              </>
-            )
+                  Regenerate
+                </button>
+              )}
+              
+              {!brief && !loading && !error && !isUnavailable && (
+                <button
+                  onClick={() => handleGenerate()}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                  style={{
+                    background: "linear-gradient(135deg, #7c6af0, #5a4fd4)",
+                    boxShadow: "0 10px 20px -10px rgba(124, 106, 240, 0.4)",
+                    color: "#fff",
+                    fontSize: "14px",
+                  }}
+                >
+                  {loading ? "Generating..." : "Generate Brief"}
+                  {!loading && <SparkleIcon />}
+                </button>
+              )}
+            </>
           ) : (
-            <Link
-              href="/auth/signin"
-              className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
-              style={{
-                background: "linear-gradient(135deg, #7c6af0, #5a4fd4)",
-                boxShadow: "0 10px 20px -10px rgba(124, 106, 240, 0.4)",
-                color: "#fff",
-                fontSize: "14px",
-                textDecoration: "none",
-              }}
-            >
-              Sign In to Unlock
-              <ArrowRightIcon />
-            </Link>
+            <>
+              <Link
+                href="/tasks"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-opacity hover:opacity-90"
+                style={{
+                  background: "linear-gradient(135deg, #2e2e2e, #1e1e1e)",
+                  border: "1px solid #3a3a3a",
+                  color: "#f0f0f0",
+                  fontSize: "13px",
+                  textDecoration: "none",
+                }}
+              >
+                Create first task
+                <ArrowRightIcon />
+              </Link>
+              <Link
+                href="/habits"
+                className="px-5 py-2.5 rounded-lg font-medium transition-opacity hover:opacity-70"
+                style={{
+                  background: "transparent",
+                  border: "1px solid #2a2a2a",
+                  color: "#666",
+                  fontSize: "13px",
+                  textDecoration: "none",
+                }}
+              >
+                Set up habits
+              </Link>
+            </>
           )}
         </div>
       </div>

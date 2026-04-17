@@ -12,11 +12,19 @@ export const CheckIcon = () => (
   </svg>
 );
 
-export const SparkleIcon = ({ color = "white" }) => (
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+export const SparkleIcon = ({ color = "currentColor", className = "", style = {}, ...props } = {}) => (
+  <svg 
+    width="14" 
+    height="14" 
+    viewBox="0 0 14 14" 
+    fill="none" 
+    className={className}
+    style={style}
+    {...props}
+  >
     <path
       d="M7 1.5l1.3 4L12.5 7l-4.2 1.5L7 12.5l-1.3-4L1.5 7l4.2-1.5L7 1.5z"
-      stroke={color}
+      stroke={color || "currentColor"}
       strokeWidth="1.2"
       strokeLinejoin="round"
     />
@@ -179,8 +187,16 @@ export const EditIcon = () => (
   </svg>
 );
 
-export const ArrowRightIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+export const ArrowRightIcon = ({ className = "", style = {}, ...props } = {}) => (
+  <svg 
+    width="14" 
+    height="14" 
+    viewBox="0 0 14 14" 
+    fill="none"
+    className={className}
+    style={style}
+    {...props}
+  >
     <path
       d="M2 7h10M8 3l4 4-4 4"
       stroke="currentColor"

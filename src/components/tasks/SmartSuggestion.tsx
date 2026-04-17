@@ -225,9 +225,7 @@ export default function SmartSuggestion() {
               lineHeight: 1.5,
             }}
           >
-            {!user
-              ? "Sign in to get AI-powered task prioritization."
-              : hasTasks
+            {hasTasks
                 ? "Analysis required to find your high-impact task."
                 : "No pending tasks found. Add some to get a strategy."}
           </p>
@@ -250,35 +248,27 @@ export default function SmartSuggestion() {
         ) : (
           <button
             onClick={fetchSuggestion}
-            disabled={!!user && (!hasTasks || loading)}
+            disabled={(!hasTasks || loading) && !!user}
             className="w-full flex items-center justify-center gap-1.5 rounded-lg py-2.5 font-bold transition-all active:scale-95"
             style={{
               fontSize: "11px",
               letterSpacing: "0.02em",
-              backgroundColor: !user
-                ? "#1a1a1a"
-                : hasTasks && !loading && waitCountdown === null
+              backgroundColor: hasTasks && !loading && waitCountdown === null
                   ? "#7c6af0"
                   : "rgba(255,255,255,0.04)",
-              color: !user
-                ? "#7c6af0"
-                : hasTasks && !loading && waitCountdown === null
+              color: hasTasks && !loading && waitCountdown === null
                   ? "#ffffff"
                   : "rgba(200,190,255,0.25)",
-              cursor:
-                !user || (hasTasks && !loading && waitCountdown === null)
+              cursor: hasTasks && !loading && waitCountdown === null
                   ? "pointer"
                   : "not-allowed",
-              boxShadow:
-                user && hasTasks && !loading && waitCountdown === null
+              boxShadow: hasTasks && !loading && waitCountdown === null
                   ? "0 4px 12px rgba(124,106,240,0.3)"
                   : "none",
-              border: !user ? "1px solid rgba(124,106,240,0.25)" : "none",
+              border: !user && hasTasks ? "1px solid rgba(124,106,240,0.25)" : "none",
             }}
           >
-            {!user
-              ? "Sign in to prioritize"
-              : waitCountdown !== null
+            {waitCountdown !== null
                 ? "Waiting bounds..."
                 : loading
                   ? "Calculating..."

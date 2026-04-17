@@ -16,6 +16,7 @@ export function useLoadUserData() {
   const setHabits = useLebenStore((s) => s.setHabits);
   const setGoals = useLebenStore((s) => s.setGoals);
   const setBooks = useLebenStore((s) => s.setBooks);
+  const setIsSyncing = useLebenStore((s) => s.setIsSyncing);
 
   useEffect(() => {
     const supabase = createClient();
@@ -31,6 +32,7 @@ export function useLoadUserData() {
       }
 
       try {
+        setIsSyncing(true);
         const [tasks, habits, goals, books] = await Promise.all([
           fetchTasks(),
           fetchHabits(),
@@ -44,6 +46,8 @@ export function useLoadUserData() {
         setBooks(books);
       } catch (error) {
         console.error("Failed to load user data:", error);
+      } finally {
+        setIsSyncing(false);
       }
     };
 

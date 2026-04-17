@@ -75,6 +75,8 @@ interface TasksHabitsSlice {
   updateScheduleItem: (id: string, updates: Partial<ScheduleItem>) => void;
   isSidebarOpen: boolean;
   toggleSidebar: (isOpen?: boolean) => void;
+  isSyncing: boolean;
+  setIsSyncing: (isSyncing: boolean) => void;
   clearStore: () => void;
   purgeAll: () => void;
 }
@@ -88,6 +90,8 @@ export const useLebenStore = create<LebenState>()(
       tasks: [],
       habits: [],
       isSidebarOpen: false,
+      isSyncing: false,
+      setIsSyncing: (isSyncing) => set({ isSyncing }),
       toggleSidebar: (isOpen) =>
         set((state) => ({
           isSidebarOpen: isOpen !== undefined ? isOpen : !state.isSidebarOpen,

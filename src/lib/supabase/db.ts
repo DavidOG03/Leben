@@ -19,6 +19,7 @@ function mapTaskFromDB(row: any): Task {
     completedAt: row.completed_at,
     priority: row.priority,
     category: row.category,
+    reminderAt: row.reminder_at,
   };
 }
 
@@ -33,6 +34,7 @@ function mapTaskToDB(task: Partial<Task>) {
   if (task.completedAt !== undefined) row.completed_at = task.completedAt;
   if (task.priority !== undefined) row.priority = task.priority;
   if (task.category !== undefined) row.category = task.category;
+  if (task.reminderAt !== undefined) row.reminder_at = task.reminderAt;
   return row;
 }
 
@@ -49,6 +51,7 @@ function mapHabitFromDB(row: any): Habit {
     color: row.color ?? "#7c6af0",
     pct: row.pct ?? 0,
     completedDates: row.completed_dates ?? [],
+    reminderAt: row.reminder_at,
   };
 }
 
@@ -65,6 +68,7 @@ function mapHabitToDB(habit: Partial<Habit>) {
   if (habit.sub !== undefined) row.sub = habit.sub;
   if (habit.icon !== undefined) row.icon = habit.icon;
   if (habit.pct !== undefined) row.pct = habit.pct;
+  if (habit.reminderAt !== undefined) row.reminder_at = habit.reminderAt;
   return row;
 }
 

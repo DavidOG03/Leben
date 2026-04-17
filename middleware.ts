@@ -16,11 +16,22 @@ export async function middleware(request: NextRequest) {
   // Public routes that unauthenticated users CAN access
   const isAuthRoute = pathname.startsWith("/auth");
   const isTasksRoute = pathname.startsWith("/tasks");
+  const isHabitsRoute = pathname.startsWith("/habits");
+  const isGoalsRoute = pathname.startsWith("/goals");
+  const isPlannerRoute = pathname.startsWith("/planner");
+  const isAnalyticsRoute = pathname.startsWith("/analytics");
   const isHomePage = pathname === "/";
 
-  const isPublicRoute = isAuthRoute || isTasksRoute || isHomePage;
+  const isPublicRoute = 
+    isAuthRoute || 
+    isTasksRoute || 
+    isHabitsRoute || 
+    isGoalsRoute || 
+    isPlannerRoute || 
+    isAnalyticsRoute ||
+    isHomePage;
 
-  // If user is NOT logged in and tries to access a non-public route
+  // If user is NOT logged in and tries to access a non-public route (e.g. /settings)
   if (!user && !isPublicRoute) {
     return NextResponse.redirect(new URL("/auth/signin", request.url));
   }

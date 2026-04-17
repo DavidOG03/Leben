@@ -156,9 +156,7 @@ export default function AppSidebar() {
               (item.href !== "/" && pathname.startsWith(item.href));
             const isLocked =
               !isAuthenticated &&
-              item.href !== "/" &&
-              item.href !== "/tasks" &&
-              item.href !== "/settings";
+              (item.href === "/planner" || item.href === "/analytics");
 
             return (
               <Link
