@@ -91,7 +91,7 @@ export default function NotificationManager() {
 
       notifiedRef.current.add(id);
     },
-    [],
+    [addNotification],
   );
 
   useEffect(() => {

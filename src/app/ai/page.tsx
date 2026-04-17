@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import AppSidebar from "@/components/shared/AppSidebar";
 import AILeftPanel from "@/components/ai/AILeftPanel";
 import AIChatPanel from "@/components/ai/AIChatPanel";
-import AIRightPanel from "@/components/ai/AIRightPanel";
+// import AIRightPanel from "@/components/ai/AIRightPanel";
 import AITopBar from "@/components/ai/AITopBar";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
@@ -80,8 +80,8 @@ export default function AIPage() {
                     lineHeight: 1.6,
                   }}
                 >
-                  Access a strictly-bounded AI assistant specifically informed by your
-                  personal goals, habits, and tasks.
+                  Access a strictly-bounded AI assistant specifically informed
+                  by your personal goals, habits, and tasks.
                 </p>
               </div>
 
@@ -103,14 +103,30 @@ export default function AIPage() {
               <div className="flex items-center gap-6 mt-4">
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-1 rounded-full bg-[#7c6af0]" />
-                  <span style={{ fontSize: "11px", color: "#444", fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      color: "#444",
+                      fontWeight: 600,
+                      letterSpacing: "0.05em",
+                      textTransform: "uppercase",
+                    }}
+                  >
                     Personal Context
                   </span>
                 </div>
                 <div className="w-px h-3 bg-white/5" />
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-1 rounded-full bg-[#7c6af0]" />
-                  <span style={{ fontSize: "11px", color: "#444", fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      color: "#444",
+                      fontWeight: 600,
+                      letterSpacing: "0.05em",
+                      textTransform: "uppercase",
+                    }}
+                  >
                     Strict Bounding
                   </span>
                 </div>

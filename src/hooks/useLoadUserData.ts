@@ -97,5 +97,5 @@ export function useLoadUserData() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [setTasks, setHabits, setGoals, setBooks]);
+  }, [setTasks, setHabits, setGoals, setBooks, setIsSyncing]);
 }
