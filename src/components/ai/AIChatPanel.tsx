@@ -272,7 +272,7 @@ export default function AIChatPanel() {
               fontWeight: 700,
             }}
           >
-            NEURAL ENGINE V2.4 • CORE RESPONSIVE
+            NEURAL ENGINE V1.0 • CORE RESPONSIVE
           </p>
           <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-white/20" />
         </div>

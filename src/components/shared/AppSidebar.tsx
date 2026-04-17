@@ -157,26 +157,23 @@ export default function AppSidebar() {
             const active =
               pathname === item.href ||
               (item.href !== "/" && pathname.startsWith(item.href));
-            const isLocked =
-              !isAuthenticated &&
-              (item.href === "/planner" || 
-               item.href === "/analytics" || 
-               item.href === "/ai");
+            // const isLocked =
+            //   !isAuthenticated &&
+            //   (item.href === "/planner" ||
+            //    item.href === "/analytics" ||
+            //    item.href === "/ai");
 
             return (
               <Link
                 key={item.label}
-                href={isLocked ? "#" : item.href}
+                href={item.href}
                 onClick={(e) => {
-                  if (isLocked) {
-                    e.preventDefault();
-                  } else if (window.innerWidth < 768) {
+                  if (window.innerWidth < 768) {
                     toggleSidebar(false);
                   }
                 }}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors group ${
-                  isLocked ? "cursor-not-allowed opacity-75" : ""
-                }`}
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors group
+                "
                 style={{
                   backgroundColor: active ? "#1e1e1e" : "transparent",
                   color: active ? "#f0f0f0" : "#555",
@@ -189,11 +186,11 @@ export default function AppSidebar() {
                   {item.icon}
                 </span>
                 {item.label}
-                {isLocked && (
+                {/* {isLocked && (
                   <span className="ml-auto opacity-20 group-hover:opacity-100 transition-opacity">
                     <LockIcon />
                   </span>
-                )}
+                )} */}
               </Link>
             );
           })}

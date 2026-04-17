@@ -55,39 +55,39 @@ export function useLoadUserData() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(`🔄 Auth state changed: ${event}`, session?.user?.id || 'no user');
+      console.log(
+        `🔄 Auth state changed: ${event}`,
+        session?.user?.id || "no user",
+      );
 
-      if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session?.user) {
-        console.log(`✅ ${event} event detected for user ${session.user.id}`);
+      if (
+        (event === "SIGNED_IN" || event === "INITIAL_SESSION") &&
+        session?.user
+      ) {
         // User is signed in - immediately clear any cached data and show loading state
-        console.log(`🧹 Clearing all cached data for user...`);
         useLebenStore.getState().clearStore();
 
         // Force clear localStorage for this store to prevent stale data
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('leben-storage');
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("leben-storage");
         }
 
         // Small delay to ensure UI updates before loading new data
         setTimeout(async () => {
-          console.log("📥 Loading fresh data from Supabase for user:", session.user.id);
           await loadUserData();
         }, 100);
       } else if (event === "SIGNED_OUT") {
-        console.log("👋 SIGNED_OUT event detected, clearing all data...");
         // User signed out - clear everything
         useLebenStore.getState().clearStore();
 
         // Also clear localStorage
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('leben-storage');
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("leben-storage");
         }
       } else if (event === "TOKEN_REFRESHED") {
-        console.log("🔑 TOKEN_REFRESHED event detected");
         // Token was refreshed, might need to reload data
         const currentUser = useLebenStore.getState().tasks.length > 0; // Simple check if we have data
         if (currentUser) {
-          console.log("🔄 Token refreshed, reloading data to ensure freshness...");
           await loadUserData();
         }
       }
