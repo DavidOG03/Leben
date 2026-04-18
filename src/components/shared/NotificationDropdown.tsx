@@ -2,7 +2,59 @@
 
 import { TrashIcon } from "@/constants/Icons";
 import { useLebenStore } from "@/store/useStore";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+
+/** Shows a one-time banner asking the user to enable push. Must be inside a user gesture. */
+function PushPermissionBanner() {
+  const [permission, setPermission] = useState<NotificationPermission | null>(null);
+
+  useEffect(() => {
+    if (typeof Notification !== "undefined") {
+      setPermission(Notification.permission);
+    }
+  }, []);
+
+  if (!permission || permission === "granted" || permission === "denied") return null;
+
+  return (
+    <div
+      style={{
+        margin: "8px 12px",
+        padding: "10px 14px",
+        borderRadius: "10px",
+        background: "rgba(124,106,240,0.08)",
+        border: "1px solid rgba(124,106,240,0.2)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "10px",
+      }}
+    >
+      <p style={{ fontSize: "12px", color: "#aaa", margin: 0, lineHeight: 1.4 }}>
+        Enable push notifications to receive reminders in real time.
+      </p>
+      <button
+        onClick={async () => {
+          const result = await Notification.requestPermission();
+          setPermission(result);
+        }}
+        style={{
+          fontSize: "11px",
+          fontWeight: 700,
+          color: "#7c6af0",
+          background: "rgba(124,106,240,0.15)",
+          border: "1px solid rgba(124,106,240,0.3)",
+          borderRadius: "6px",
+          padding: "5px 10px",
+          cursor: "pointer",
+          whiteSpace: "nowrap",
+        }}
+      >
+        Enable
+      </button>
+    </div>
+  );
+}
 
 export default function NotificationDropdown() {
   const notifications = useLebenStore((s) => s.notifications);
@@ -59,6 +111,8 @@ export default function NotificationDropdown() {
         </div>
       </div>
 
+      {/* ✅ Browser push permission prompt — only shown when not yet granted */}
+      <PushPermissionBanner />
       {/* List */}
       <div className="max-h-[360px] overflow-y-auto custom-scrollbar">
         {notifications.length === 0 ? (
@@ -110,9 +164,12 @@ export default function NotificationDropdown() {
                   <div className="w-2 h-2 rounded-full bg-[#7c6af0] mt-1" />
                 )}
                 <button
-                  onClick={() => useLebenStore.setState({ notifications: [] })}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    useLebenStore.getState().deleteNotification(n.id);
+                  }}
                   className="flex items-center justify-center w-[26px] h-[26px] rounded-[6px] border border-transparent bg-transparent text-[#444] shrink-0 transition-all duration-150 hover:bg-white/5 hover:text-red-400"
-                  aria-label="Clear All Notifications"
+                  aria-label="Delete notification"
                 >
                   <TrashIcon className="text-[#fff]" />
                 </button>
@@ -131,20 +188,12 @@ export default function NotificationDropdown() {
         </div>
       )}
 
-      <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #1e1e1e;
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #252525;
-        }
+      {/* ✅ Standard style tag — styled-jsx doesn't work in Next.js App Router */}
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e1e1e; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #252525; }
       `}</style>
     </div>
   );

@@ -1,7 +1,8 @@
 "use client";
 
 import { useLebenStore, Task } from "@/store/useStore";
-import { CheckIcon, TrashIcon, EditIcon } from "../../constants/Icons";
+import { BellIcon, CheckIcon, TrashIcon, EditIcon } from "../../constants/Icons";
+import ReminderPicker from "../shared/ReminderPicker";
 import { useState, useRef, useEffect } from "react";
 
 export default function KanbanView() {
@@ -10,15 +11,13 @@ export default function KanbanView() {
   const deleteTask = useLebenStore((s) => s.deleteTask);
   const updateTask = useLebenStore((s) => s.updateTask);
 
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [reminderEditingId, setReminderEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (editingId && inputRef.current) {
-      inputRef.current.focus();
-    }
+    if (editingId && inputRef.current) inputRef.current.focus();
   }, [editingId]);
 
   const startEditing = (task: Task) => {
@@ -27,14 +26,15 @@ export default function KanbanView() {
   };
 
   const saveEdit = () => {
-    if (editingId && editTitle.trim()) {
-      updateTask(editingId, { title: editTitle.trim() });
-    }
+    if (editingId && editTitle.trim()) updateTask(editingId, { title: editTitle.trim() });
     setEditingId(null);
   };
 
-  const cancelEdit = () => {
-    setEditingId(null);
+  const cancelEdit = () => setEditingId(null);
+
+  const handleSetReminder = (taskId: string, isoDate: string | undefined) => {
+    updateTask(taskId, { reminderAt: isoDate });
+    setReminderEditingId(null);
   };
 
   const columns = [
@@ -67,25 +67,17 @@ export default function KanbanView() {
                 colTasks.map((task) => (
                   <div
                     key={task.id}
-                    className="p-4 rounded-xl transition-all group relative"
-                    style={{
-                      backgroundColor: "#161616",
-                      border: "1px solid #222",
-                    }}
-                    onMouseEnter={() => setHoveredId(task.id)}
-                    onMouseLeave={() => setHoveredId(null)}
+                    className="p-4 rounded-xl transition-all relative"
+                    style={{ backgroundColor: "#161616", border: "1px solid #222" }}
                   >
+                    {/* ── Top row: meta + always-visible actions ── */}
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <div
                           className="w-1.5 h-1.5 rounded-full"
                           style={{
                             backgroundColor:
-                              task.priority === "high"
-                                ? "#e85555"
-                                : task.priority === "low"
-                                  ? "#55e855"
-                                  : "#e8a855",
+                              task.priority === "high" ? "#e85555" : task.priority === "low" ? "#55e855" : "#e8a855",
                             boxShadow: `0 0 6px ${task.priority === "high" ? "#e85555" : task.priority === "low" ? "#55e855" : "#e8a855"}44`,
                           }}
                         />
@@ -95,28 +87,37 @@ export default function KanbanView() {
                             fontSize: "9px",
                             fontWeight: 700,
                             letterSpacing: "0.02em",
-                            backgroundColor:
-                              task.tag === "WORK"
-                                ? "rgba(74, 122, 191, 0.1)"
-                                : "rgba(138, 90, 191, 0.1)",
+                            backgroundColor: task.tag === "WORK" ? "rgba(74,122,191,0.1)" : "rgba(138,90,191,0.1)",
                             color: task.tag === "WORK" ? "#4a7abf" : "#8a5abf",
-                            border: `1px solid ${task.tag === "WORK" ? "rgba(74, 122, 191, 0.2)" : "rgba(138, 90, 191, 0.2)"}`,
+                            border: `1px solid ${task.tag === "WORK" ? "rgba(74,122,191,0.2)" : "rgba(138,90,191,0.2)"}`,
                           }}
                         >
                           {task.tag}
                         </span>
                       </div>
 
+                      {/* ── Always-visible action buttons ── */}
                       <div className="flex items-center gap-1">
-                        {/* Edit button (optional hidden, but maybe good for consistency) */}
+                        {/* Reminder — coloured if set */}
+                        <button
+                          onClick={() => setReminderEditingId(reminderEditingId === task.id ? null : task.id)}
+                          className={`flex items-center justify-center p-1.5 rounded-lg transition-all hover:bg-white/5 ${task.reminderAt ? "text-[#7c6af0]" : "text-[#555]"}`}
+                          aria-label="Set reminder"
+                          title={task.reminderAt ? `Reminder: ${new Date(task.reminderAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "Set reminder"}
+                        >
+                          <BellIcon />
+                        </button>
+
+                        {/* Edit */}
                         <button
                           onClick={() => startEditing(task)}
-                          className="flex items-center justify-center p-1.5 rounded-lg transition-all opacity-0 group-hover:opacity-100 hover:bg-white/5 hover:text-[#7c6af0] text-[#333]"
+                          className="flex items-center justify-center p-1.5 rounded-lg transition-all hover:bg-white/5 hover:text-[#7c6af0] text-[#555]"
                           aria-label="Edit task"
                         >
                           <EditIcon />
                         </button>
 
+                        {/* Complete checkbox */}
                         <button
                           onClick={() => toggleTask(task.id)}
                           className="flex items-center justify-center transition-all"
@@ -124,21 +125,18 @@ export default function KanbanView() {
                             width: "16px",
                             height: "16px",
                             borderRadius: "5px",
-                            border: task.completed
-                              ? "1px solid #3a7a4a"
-                              : "1px solid #333",
-                            backgroundColor: task.completed
-                              ? "#1e3d26"
-                              : "#1a1a1a",
+                            border: task.completed ? "1px solid #3a7a4a" : "1px solid #333",
+                            backgroundColor: task.completed ? "#1e3d26" : "#1a1a1a",
                             color: task.completed ? "#4caf70" : "transparent",
                           }}
                         >
                           {task.completed && <CheckIcon />}
                         </button>
 
+                        {/* Delete */}
                         <button
                           onClick={() => deleteTask(task.id)}
-                          className="flex items-center justify-center p-1.5 rounded-lg transition-all opacity-0 group-hover:opacity-100 hover:bg-red-500/10 hover:text-red-500 text-[#333]"
+                          className="flex items-center justify-center p-1.5 rounded-lg transition-all hover:bg-red-500/10 hover:text-red-500 text-[#555]"
                           aria-label="Delete task"
                         >
                           <TrashIcon />
@@ -146,14 +144,13 @@ export default function KanbanView() {
                       </div>
                     </div>
 
+                    {/* ── Title ── */}
                     <p
                       onDoubleClick={() => startEditing(task)}
                       style={{
                         fontSize: "13px",
                         color: task.completed ? "#555" : "#eee",
-                        textDecoration: task.completed
-                          ? "line-through"
-                          : "none",
+                        textDecoration: task.completed ? "line-through" : "none",
                         lineHeight: 1.5,
                         marginBottom: "4px",
                       }}
@@ -175,15 +172,29 @@ export default function KanbanView() {
                       )}
                     </p>
 
-                    <p
-                      style={{
-                        fontSize: "10px",
-                        color: "#333",
-                        marginTop: "8px",
-                      }}
-                    >
-                      {task.date}
-                    </p>
+                    {/* ── Date + Reminder label ── */}
+                    <div className="flex items-center justify-between mt-2">
+                      <p style={{ fontSize: "10px", color: "#333" }}>{task.date}</p>
+                      {task.reminderAt && (
+                        <div className="flex items-center gap-1 text-[#7c6af0]" style={{ fontSize: "9px", fontWeight: 600 }}>
+                          <BellIcon />
+                          <span>
+                            {new Date(task.reminderAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Reminder Picker */}
+                    {reminderEditingId === task.id && (
+                      <div className="absolute right-0 top-full mt-2 z-50 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
+                        <ReminderPicker
+                          initialValue={task.reminderAt}
+                          onSave={(val) => handleSetReminder(task.id, val)}
+                          onClose={() => setReminderEditingId(null)}
+                        />
+                      </div>
+                    )}
                   </div>
                 ))
               )}

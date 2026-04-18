@@ -1,5 +1,3 @@
-"use client";
-
 const navItems = [
   { label: "Quick Prompt", icon: <BoltIcon />, active: true },
   // { label: "Smart Tasks", icon: <CheckIcon /> },
@@ -17,15 +15,17 @@ const prompts = [
 
 import {
   BoltIcon,
-  CalIcon,
-  CheckIcon,
-  FocusIcon,
-  HistoryIcon,
+  // CalIcon,
+  // CheckIcon,
+  // FocusIcon,
+  // HistoryIcon,
 } from "@/constants/Icons";
 import { useAIStore } from "@/store/useAIStore";
+import { useState } from "react";
 
 export default function AILeftPanel() {
   const { addMessage, setThinking, messages } = useAIStore();
+  const [isOpen, setIsOpen] = useState(false);
 
   const handlePrompt = async (title: string) => {
     const userMsg = {
@@ -40,6 +40,7 @@ export default function AILeftPanel() {
 
     addMessage(userMsg);
     setThinking(true);
+    setIsOpen(false); // close panel after selecting a prompt on mobile
 
     try {
       const res = await fetch("/api/ai/chat", {
@@ -47,7 +48,6 @@ export default function AILeftPanel() {
         body: JSON.stringify({ messages: [...messages, userMsg] }),
       });
       const data = await res.json();
-
       if (data.text) {
         addMessage({
           id: (Date.now() + 1).toString(),
@@ -66,16 +66,8 @@ export default function AILeftPanel() {
     }
   };
 
-  return (
-    <aside
-      className="flex flex-col flex-shrink-0 overflow-y-auto"
-      style={{
-        width: "250px",
-        borderRight: "1px solid #161616",
-        backgroundColor: "#0c0c0c",
-        padding: "24px 0",
-      }}
-    >
+  const panelContent = (
+    <>
       {/* AI identity */}
       <div className="flex items-center gap-3 px-5 mb-6">
         <div
@@ -163,19 +155,84 @@ export default function AILeftPanel() {
           ))}
         </div>
       </div>
+    </>
+  );
 
-      {/* Pro upgrade
-      <div 
-        className="mx-4 mt-5 rounded-xl p-4 relative overflow-hidden group transition-all hover:scale-[1.02]" 
-        style={{ backgroundColor: "#121220", border: "1px solid #252535" }}
+  return (
+    <>
+      {/* ── Mobile toggle button (absolutely positioned) ─────────── */}
+      <button
+        className="md:hidden absolute top-[68px] left-3 z-30 flex items-center justify-center rounded-lg transition-colors"
+        style={{
+          width: "30px",
+          height: "30px",
+          background: isOpen ? "rgba(124,106,240,0.15)" : "#161616",
+          border: `1px solid ${isOpen ? "rgba(124,106,240,0.4)" : "#222"}`,
+          color: isOpen ? "#7c6af0" : "#555",
+        }}
+        onClick={() => setIsOpen(!isOpen)}
+        aria-label="Toggle prompts panel"
+        title="Quick Prompts"
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        <p className="font-semibold mb-1" style={{ fontSize: "11px", color: "#7c6af0", letterSpacing: "0.06em", textTransform: "uppercase" }}>Pro Upgrade</p>
-        <p style={{ fontSize: "11px", color: "#666", lineHeight: 1.5, marginBottom: "12px" }}>Unlock advanced neural processing for faster insights.</p>
-        <button className="w-full py-2 rounded-lg font-semibold transition-all hover:shadow-[0_0_20px_rgba(124,106,240,0.3)] relative z-10" style={{ background: "linear-gradient(135deg,#5a4fd4,#7c6af0)", color: "white", fontSize: "12px" }}>
-          Upgrade Now
-        </button>
-      </div> */}
-    </aside>
+        {/* Toggle panel icon (two vertical columns) */}
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <rect
+            x="1"
+            y="1"
+            width="4"
+            height="12"
+            rx="1"
+            stroke="currentColor"
+            strokeWidth="1.3"
+          />
+          <rect
+            x="9"
+            y="1"
+            width="4"
+            height="12"
+            rx="1"
+            stroke="currentColor"
+            strokeWidth="1.3"
+          />
+        </svg>
+      </button>
+
+      {/* ── Mobile slide-in overlay ───────────────────────────────── */}
+      {isOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-20"
+          onClick={() => setIsOpen(false)}
+          style={{ background: "rgba(0,0,0,0.5)" }}
+        />
+      )}
+      <aside
+        className={`
+          md:hidden fixed top-[56px] left-0 bottom-0 z-20 flex flex-col overflow-y-auto
+          transition-transform duration-300 ease-in-out
+          ${isOpen ? "translate-x-0" : "-translate-x-full"}
+        `}
+        style={{
+          width: "260px",
+          borderRight: "1px solid #161616",
+          backgroundColor: "#0c0c0c",
+          padding: "24px 0",
+        }}
+      >
+        {panelContent}
+      </aside>
+
+      {/* ── Desktop: always-visible sidebar ──────────────────────── */}
+      <aside
+        className="hidden md:flex flex-col flex-shrink-0 overflow-y-auto"
+        style={{
+          width: "250px",
+          borderRight: "1px solid #161616",
+          backgroundColor: "#0c0c0c",
+          padding: "24px 0",
+        }}
+      >
+        {panelContent}
+      </aside>
+    </>
   );
 }

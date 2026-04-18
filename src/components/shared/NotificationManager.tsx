@@ -22,27 +22,45 @@ function ReminderToast({
   }, [toast.id, onDismiss]);
 
   return (
-    <div className="flex items-start gap-3 bg-[#1a1a1e] border border-purple-500/30 rounded-[12px] p-4 shadow-[0_8px_32px_rgba(0,0,0,0.4)] min-w-[300px] max-w-[380px] animate-slide-in">
-      <div className="w-8 h-8 rounded-2xl bg-purple-500/15 flex items-center justify-center flex-shrink-0">
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#7c6af0"
-          strokeWidth="2"
-          className="block"
-        >
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: "12px",
+        backgroundColor: "#1a1a1e",
+        border: "1px solid rgba(124,106,240,0.3)",
+        borderRadius: "12px",
+        padding: "14px 16px",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+        minWidth: "300px",
+        maxWidth: "380px",
+        animation: "lebenSlideIn 0.35s cubic-bezier(0.16,1,0.3,1) forwards",
+        pointerEvents: "all",
+      }}
+    >
+      <div
+        style={{
+          width: "32px",
+          height: "32px",
+          borderRadius: "8px",
+          background: "rgba(124,106,240,0.15)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c6af0" strokeWidth="2">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
       </div>
 
-      <div className="flex-1">
-        <p className="m-0 text-[11px] text-[#7c6af0] font-bold uppercase tracking-[0.08em]">
+      <div style={{ flex: 1 }}>
+        <p style={{ margin: 0, fontSize: "11px", color: "#7c6af0", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>
           {toast.title}
         </p>
-        <p className="mt-1 text-[13px] text-[#e0e0e0] leading-[1.4]">
+        <p style={{ marginTop: "4px", fontSize: "13px", color: "#e0e0e0", lineHeight: 1.4 }}>
           {toast.body}
         </p>
       </div>
@@ -50,7 +68,7 @@ function ReminderToast({
       <button
         type="button"
         onClick={() => onDismiss(toast.id)}
-        className="text-[#777] hover:text-[#ddd] transition-colors text-[16px] leading-none focus:outline-none"
+        style={{ background: "none", border: "none", color: "#777", fontSize: "18px", cursor: "pointer", lineHeight: 1, padding: "0 2px" }}
       >
         ×
       </button>
@@ -58,14 +76,28 @@ function ReminderToast({
   );
 }
 
+// ---------- helpers ----------
+
+/**
+ * Returns a "day key" string like "2026-04-18" for a given ISO timestamp.
+ * We use this so `notifiedRef` resets per-day instead of per-session.
+ */
+function dayKey(isoString: string): string {
+  return isoString.split("T")[0];
+}
+
+/** Build a deduplication key that includes the day, so tomorrow's reminder fires fresh. */
+function notifKey(id: string, reminderAt: string): string {
+  return `${id}::${dayKey(reminderAt)}`;
+}
+
 export default function NotificationManager() {
-  const tasks = useLebenStore((state) => state.tasks);
-  const habits = useLebenStore((state) => state.habits);
+  const tasks    = useLebenStore((state) => state.tasks);
+  const habits   = useLebenStore((state) => state.habits);
   const schedule = useLebenStore((state) => state.schedule);
-  const updateTask = useLebenStore((state) => state.updateTask);
-  const updateHabit = useLebenStore((state) => state.updateHabit);
   const addNotification = useLebenStore((state) => state.addNotification);
 
+  // Key format: "id::YYYY-MM-DD" → resets automatically on a new day
   const notifiedRef = useRef<Set<string>>(new Set());
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -74,82 +106,104 @@ export default function NotificationManager() {
   }, []);
 
   const fireNotification = useCallback(
-    (id: string, title: string, body: string) => {
-      setToasts((prev) => [...prev, { id: `toast-${id}`, title, body }]);
-      addNotification({ id, title, body });
+    (id: string, reminderAt: string, title: string, body: string) => {
+      const key = notifKey(id, reminderAt);
+      if (notifiedRef.current.has(key)) return; // already fired today
+      notifiedRef.current.add(key);
 
-      if (
-        typeof Notification !== "undefined" &&
-        Notification.permission === "granted"
-      ) {
-        new Notification(title, {
-          body,
-          icon: "/favicon.svg",
-          badge: "/favicon.svg",
-        });
+      setToasts((prev) => [...prev, { id: `toast-${id}-${Date.now()}`, title, body }]);
+      addNotification({ id: `${id}-${Date.now()}`, title, body });
+
+      // Native browser push (only if already granted — don't prompt here)
+      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+        try {
+          new Notification(title, {
+            body,
+            icon: "/favicon.svg",
+            badge: "/favicon.svg",
+          });
+        } catch {
+          // Some browsers require a ServiceWorker for Notification; swallow silently
+        }
       }
-
-      notifiedRef.current.add(id);
     },
     [addNotification],
   );
 
+  // ── Habit streak motivation ──────────────────────────────────────────────────
+  // Fire an evening nudge for any habit that isn't checked and has no reminderAt
+  const streakNudgeRef = useRef<Set<string>>(new Set());
   useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      "Notification" in window &&
-      Notification.permission === "default"
-    ) {
-      Notification.requestPermission();
-    }
-  }, []);
+    const checkStreakNudge = () => {
+      const hour = new Date().getHours();
+      // Only nudge in the evening (7pm–10pm)
+      if (hour < 19 || hour >= 22) return;
+      const today = new Date().toISOString().split("T")[0];
 
-  useEffect(() => {
-    const checkReminders = () => {
-      const now = new Date();
+      habits.forEach((h: any) => {
+        if (h.checked) return; // already done today
+        const nudgeKey = `streak-nudge::${h.id}::${today}`;
+        if (streakNudgeRef.current.has(nudgeKey)) return;
+        streakNudgeRef.current.add(nudgeKey);
 
-      // Combine all triggerable items
-      const allRemindables = [
-        ...tasks
-          .filter((t: any) => !t.completed && t.reminderAt)
-          .map((t: any) => ({ ...t, type: "Task Reminder", itemType: "task" })),
-        ...habits
-          .filter((h: any) => !h.checked && h.reminderAt)
-          .map((h: any) => ({
-            ...h,
-            type: "Habit Reminder",
-            title: h.label || h.name,
-            itemType: "habit",
-          })),
-        ...schedule
-          .filter((s: any) => s.status !== "completed" && s.reminderAt)
-          .map((s: any) => ({ ...s, type: "Planner Reminder", itemType: "schedule" })),
-      ];
+        const streakMsg =
+          h.streak > 0
+            ? `You're on a ${h.streak}-day streak! Don't break it now.`
+            : `Complete "${h.name || h.label}" today to start a new streak!`;
 
-      allRemindables.forEach((item: any) => {
-        if (notifiedRef.current.has(item.id)) return;
+        setToasts((prev) => [
+          ...prev,
+          { id: nudgeKey, title: "Streak Motivation", body: streakMsg },
+        ]);
+        addNotification({ id: nudgeKey, title: "Streak Motivation", body: streakMsg });
 
-        const reminderTime = new Date(item.reminderAt);
-
-        // TRIGGER: If current time is exactly at or past the reminder time
-        // We look for reminders in the last 2 minutes to catch them, but not older ones
-        const twoMinutesAgo = new Date(now.getTime() - 120000);
-
-        if (reminderTime <= now && reminderTime > twoMinutesAgo) {
-          fireNotification(
-            item.id,
-            item.type,
-            `Time for: ${item.title || item.name}`
-          );
-        } else if (reminderTime <= twoMinutesAgo) {
-          // It's an old reminder, just mark it as "notified" so we don't bug the user
-          notifiedRef.current.add(item.id);
+        if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+          try {
+            new Notification("Streak Motivation 🔥", { body: streakMsg, icon: "/favicon.svg" });
+          } catch { /* swallow */ }
         }
       });
     };
 
-    // Check more frequently for precision (every 10 seconds)
-    const interval = setInterval(checkReminders, 10000);
+    const interval = setInterval(checkStreakNudge, 60_000); // check every minute
+    checkStreakNudge();
+    return () => clearInterval(interval);
+  }, [habits, addNotification]);
+
+  // ── Reminder checker ─────────────────────────────────────────────────────────
+  useEffect(() => {
+    const checkReminders = () => {
+      const now = new Date();
+      const twoMinutesAgo = new Date(now.getTime() - 120_000);
+
+      const allRemindables = [
+        ...tasks
+          .filter((t: any) => !t.completed && t.reminderAt)
+          .map((t: any) => ({ id: t.id, reminderAt: t.reminderAt, type: "Task Reminder", label: t.title || t.name })),
+        ...habits
+          // ✅ Fixed: filter only on reminderAt, not on .checked
+          .filter((h: any) => h.reminderAt)
+          .map((h: any) => ({ id: h.id, reminderAt: h.reminderAt, type: "Habit Reminder", label: h.label || h.name })),
+        ...schedule
+          .filter((s: any) => s.status !== "completed" && s.reminderAt)
+          .map((s: any) => ({ id: s.id, reminderAt: s.reminderAt, type: "Planner Reminder", label: s.title })),
+      ];
+
+      allRemindables.forEach((item: any) => {
+        const reminderTime = new Date(item.reminderAt);
+
+        if (reminderTime <= now && reminderTime > twoMinutesAgo) {
+          // In the firing window → fire
+          fireNotification(item.id, item.reminderAt, item.type, `Time for: ${item.label}`);
+        } else if (reminderTime <= twoMinutesAgo) {
+          // Stale → just suppress without broadcasting
+          const key = notifKey(item.id, item.reminderAt);
+          notifiedRef.current.add(key);
+        }
+      });
+    };
+
+    const interval = setInterval(checkReminders, 10_000);
     checkReminders();
     return () => clearInterval(interval);
   }, [tasks, habits, schedule, fireNotification]);
@@ -159,17 +213,26 @@ export default function NotificationManager() {
   return (
     <>
       <style>{`
-        @keyframes slideIn {
-          from { transform: translateX(100%); opacity: 0; }
-          to   { transform: translateX(0); opacity: 1; }
+        @keyframes lebenSlideIn {
+          from { transform: translateX(110%); opacity: 0; }
+          to   { transform: translateX(0);    opacity: 1; }
         }
       `}</style>
 
-      <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-2 pointer-events-none">
+      <div
+        style={{
+          position: "fixed",
+          bottom: "24px",
+          right: "24px",
+          zIndex: 9999,
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
+          pointerEvents: "none",
+        }}
+      >
         {toasts.map((toast) => (
-          <div key={toast.id} className="pointer-events-auto">
-            <ReminderToast toast={toast} onDismiss={dismissToast} />
-          </div>
+          <ReminderToast key={toast.id} toast={toast} onDismiss={dismissToast} />
         ))}
       </div>
     </>
