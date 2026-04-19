@@ -26,7 +26,7 @@ export default function HabitStreaks() {
 
   const handleSetReminder = (habitId: string) => {
     if (!reminderTime) return;
-    
+
     const [hours, minutes] = reminderTime.split(":").map(Number);
     const now = new Date();
     const reminderDate = new Date();
@@ -52,10 +52,7 @@ export default function HabitStreaks() {
       }}
     >
       <div className="flex items-center justify-between mb-5">
-        <h3
-          className="font-semibold text-white"
-          style={{ fontSize: "15px" }}
-        >
+        <h3 className="font-semibold text-white" style={{ fontSize: "15px" }}>
           Habit Streaks
         </h3>
         {!loading && habits.length > 0 && (
@@ -70,25 +67,25 @@ export default function HabitStreaks() {
       </div>
 
       {habits.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center py-4 gap-3">
-            <PlusIcon />
-            <p style={{ fontSize: "11px", color: "#333" }}>
-              No habits tracked yet
-            </p>
-            <Link
-              href="/habits"
-              className="px-4 py-1.5 rounded-lg transition-opacity hover:opacity-80"
-              style={{
-                fontSize: "11px",
-                color: "#666",
-                border: "1px solid #222",
-                textDecoration: "none",
-              }}
-            >
-              Set up habits
-            </Link>
-          </div>
-        ) : (
+        <div className="flex-1 flex flex-col items-center justify-center py-4 gap-3">
+          <PlusIcon />
+          <p style={{ fontSize: "11px", color: "#333" }}>
+            No habits tracked yet
+          </p>
+          <Link
+            href="/habits"
+            className="px-4 py-1.5 rounded-lg transition-opacity hover:opacity-80"
+            style={{
+              fontSize: "11px",
+              color: "#666",
+              border: "1px solid #222",
+              textDecoration: "none",
+            }}
+          >
+            Set up habits
+          </Link>
+        </div>
+      ) : (
         <div className="w-full flex-1 flex flex-col gap-4">
           {habits.slice(0, 3).map((h: Habit) => (
             <div key={h.id}>
@@ -114,24 +111,34 @@ export default function HabitStreaks() {
                       {h.label}
                     </div>
                     <div style={{ fontSize: "11px", color: "#666" }}>
-                      🔥 {h.longestStreak} day streak
+                      🔥 {h.streak} day streak
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setReminderHabit(reminderHabit === h.id ? null : h.id)}
+                    onClick={() =>
+                      setReminderHabit(reminderHabit === h.id ? null : h.id)
+                    }
                     style={{
                       width: "26px",
                       height: "26px",
                       borderRadius: "6px",
-                      border: h.reminderAt ? "1px solid #7c6af0" : "1px solid transparent",
-                      backgroundColor: h.reminderAt ? "rgba(124, 106, 240, 0.15)" : "transparent",
+                      border: h.reminderAt
+                        ? "1px solid #7c6af0"
+                        : "1px solid transparent",
+                      backgroundColor: h.reminderAt
+                        ? "rgba(124, 106, 240, 0.15)"
+                        : "transparent",
                       color: h.reminderAt ? "#7c6af0" : "#444",
                       cursor: "pointer",
                       fontSize: "14px",
                     }}
-                    title={h.reminderAt ? `Reminder set for ${new Date(h.reminderAt).toLocaleTimeString()}` : "Set reminder"}
+                    title={
+                      h.reminderAt
+                        ? `Reminder set for ${new Date(h.reminderAt).toLocaleTimeString()}`
+                        : "Set reminder"
+                    }
                   >
                     🔔
                   </button>
@@ -186,7 +193,9 @@ export default function HabitStreaks() {
                   </button>
                   {h.reminderAt && (
                     <button
-                      onClick={() => updateHabit(h.id, { reminderAt: undefined })}
+                      onClick={() =>
+                        updateHabit(h.id, { reminderAt: undefined })
+                      }
                       style={{
                         padding: "6px 12px",
                         borderRadius: "4px",
