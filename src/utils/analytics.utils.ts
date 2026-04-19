@@ -215,14 +215,14 @@ export function computeAIInsights(
     });
   }
 
-  // Habit streak encouragement
+  // Habit streak encouragement based on longest streak
   const bestHabit = habits
-    .map((h) => ({ name: h.label, total: (h.completedDates ?? []).length }))
-    .sort((a, b) => b.total - a.total)[0];
-  if (bestHabit) {
+    .map((h) => ({ name: h.label, longestStreak: h.longestStreak ?? 0 }))
+    .sort((a, b) => b.longestStreak - a.longestStreak)[0];
+  if (bestHabit && bestHabit.longestStreak > 0) {
     insights.push({
       icon: "🔥",
-      text: `${bestHabit.name} is your strongest habit. Use it as an anchor for building new routines.`,
+      text: `Your longest streak is ${bestHabit.longestStreak} days for ${bestHabit.name}. Use that momentum to stay consistent.`,
     });
   }
 

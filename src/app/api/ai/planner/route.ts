@@ -77,7 +77,7 @@ ${
 }
 
 HABITS:
-${(habits as any[]).map((h: any) => `- id: "${h.id}" | name: ${h.name}`).join("\n") || "None"}
+${(habits as any[]).map((h: any) => `- id: "${h.id}" | name: ${h.name} | current streak: ${h.streak} | longest streak: ${h.longestStreak}`).join("\n") || "None"}
 
 GOALS:
 ${

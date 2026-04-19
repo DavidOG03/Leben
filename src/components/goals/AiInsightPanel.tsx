@@ -4,10 +4,12 @@ import { useState, useCallback } from "react";
 import { Goal, deriveGoalStats, Milestone } from "@/utils/goals.types";
 import { Book } from "@/store/bookSlice";
 import { unifiedAiCall } from "@/lib/ai/unifiedClient";
+import { Habit } from "@/store/useStore";
 
 interface AIInsightPanelProps {
   goals: Goal[];
   books: Book[];
+  habits: Habit[];
 }
 
 interface InsightResult {
@@ -19,13 +21,13 @@ interface InsightResult {
 const EMPTY_STATE_TEXT =
   "Add goals or books to unlock AI-powered insights about your progress and next best actions.";
 
-export default function AIInsightPanel({ goals, books }: AIInsightPanelProps) {
+export default function AIInsightPanel({ goals, books, habits }: AIInsightPanelProps) {
   const [insight, setInsight] = useState<InsightResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchInsight = useCallback(async () => {
-    if (goals.length === 0 && books.length === 0) return;
+    if (goals.length === 0 && books.length === 0 && habits.length === 0) return;
     setLoading(true);
     setError(null);
 
@@ -55,16 +57,25 @@ export default function AIInsightPanel({ goals, books }: AIInsightPanelProps) {
       totalPages: b.totalPages,
     }));
 
+    const habitSnapshot = habits.map((h) => ({
+      title: h.label,
+      currentStreak: h.streak,
+      longestStreak: h.longestStreak,
+    }));
+
     const prompt = `
-You are a focused productivity coach. Analyze these goals and books to return a JSON object only — no markdown, no explanation:
+You are a focused productivity coach. Analyze these goals, habits, and books to return a JSON object only — no markdown, no explanation:
 {
   "headline": "One short punchy sentence (max 10 words) about what the user should do next",
-  "detail": "Two sentences: which goal or book needs attention and why, referencing actual data such as time, urgency, or discipline.",
-  "focusItem": "The exact title of the goal or book most at risk or most worth prioritizing now"
+  "detail": "Two sentences: which goal, habit, or book needs attention and why, referencing actual data such as time, urgency, or discipline.",
+  "focusItem": "The exact title of the goal, habit, or book most at risk or most worth prioritizing now"
 }
 
 Goals data:
 ${JSON.stringify(snapshot, null, 2)}
+
+Habits data:
+${JSON.stringify(habitSnapshot, null, 2)}
 
 Books data:
 ${JSON.stringify(bookSnapshot, null, 2)}
@@ -81,9 +92,9 @@ ${JSON.stringify(bookSnapshot, null, 2)}
     } finally {
       setLoading(false);
     }
-  }, [goals, books]);
+  }, [goals, books, habits]);
 
-  const hasData = goals.length > 0 || books.length > 0;
+  const hasData = goals.length > 0 || books.length > 0 || habits.length > 0;
 
   return (
     <div

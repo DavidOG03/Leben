@@ -200,6 +200,7 @@ function BooksPanelSkeleton() {
 export default function GoalsContent() {
   const goals = useLebenStore((s) => s.goals);
   const books = useLebenStore((s) => s.books);
+  const habits = useLebenStore((s) => s.habits);
   const [showModal, setShowModal] = useState(false);
 
   const topGoals = goals.slice(0, 3);
@@ -537,7 +538,7 @@ export default function GoalsContent() {
             <BooksPanelSkeleton />
           )}
 
-          <AIInsightPanel goals={goals} books={books} />
+          <AIInsightPanel goals={goals} books={books} habits={habits} />
         </div>
       </div>
 
