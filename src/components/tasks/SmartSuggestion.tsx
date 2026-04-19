@@ -111,7 +111,7 @@ export default function SmartSuggestion() {
     <div
       className="flex flex-col justify-between rounded-xl p-4 flex-shrink-0"
       style={{
-        width: "190px",
+        width: "100%",
         minHeight: "220px",
         background: "linear-gradient(145deg, #2a2460, #1e1a50)",
         border: "1px solid rgba(124,106,240,0.3)",
@@ -226,8 +226,8 @@ export default function SmartSuggestion() {
             }}
           >
             {hasTasks
-                ? "Analysis required to find your high-impact task."
-                : "No pending tasks found. Add some to get a strategy."}
+              ? "Analysis required to find your high-impact task."
+              : "No pending tasks found. Add some to get a strategy."}
           </p>
         )}
       </div>
@@ -253,26 +253,31 @@ export default function SmartSuggestion() {
             style={{
               fontSize: "11px",
               letterSpacing: "0.02em",
-              backgroundColor: hasTasks && !loading && waitCountdown === null
+              backgroundColor:
+                hasTasks && !loading && waitCountdown === null
                   ? "#7c6af0"
                   : "rgba(255,255,255,0.04)",
-              color: hasTasks && !loading && waitCountdown === null
+              color:
+                hasTasks && !loading && waitCountdown === null
                   ? "#ffffff"
                   : "rgba(200,190,255,0.25)",
-              cursor: hasTasks && !loading && waitCountdown === null
+              cursor:
+                hasTasks && !loading && waitCountdown === null
                   ? "pointer"
                   : "not-allowed",
-              boxShadow: hasTasks && !loading && waitCountdown === null
+              boxShadow:
+                hasTasks && !loading && waitCountdown === null
                   ? "0 4px 12px rgba(124,106,240,0.3)"
                   : "none",
-              border: !user && hasTasks ? "1px solid rgba(124,106,240,0.25)" : "none",
+              border:
+                !user && hasTasks ? "1px solid rgba(124,106,240,0.25)" : "none",
             }}
           >
             {waitCountdown !== null
-                ? "Waiting bounds..."
-                : loading
-                  ? "Calculating..."
-                  : "Identify Priority"}
+              ? "Waiting bounds..."
+              : loading
+                ? "Calculating..."
+                : "Identify Priority"}
           </button>
         )}
       </div>

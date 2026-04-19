@@ -236,8 +236,8 @@ export default function TasksMainPanel() {
       {view === "list" ? <TaskList /> : <KanbanView />}
 
       {/* Bottom row: chart + smart suggestion */}
-      <div className="flex flex-col lg:flex-row gap-4 mt-4">
-        <div className="flex-1" style={{ minWidth: 0 }}>
+      <div className="grid grid-rows-2 lg:grid-cols-3 lg:grid-rows-1 gap-4 mt-4">
+        <div className="col-span-2" style={{ minWidth: 0 }}>
           <WeeklyProductivity />
         </div>
         <SmartSuggestion />
