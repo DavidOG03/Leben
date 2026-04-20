@@ -1,5 +1,7 @@
 import { StateCreator } from "zustand";
 
+import { insertBook, updateBook as updateBookDb, deleteBook } from "@/lib/supabase/db";
+
 export interface Book {
   id: string;
   title: string;
@@ -8,7 +10,7 @@ export interface Book {
   totalPages: number;
   coverColor: string; // hex, used for card accent
   status: "reading" | "completed" | "paused";
-  addedAt: number;
+  addedAt: string;
 }
 
 export interface BookFormData {
@@ -75,31 +77,37 @@ export const createBooksSlice: StateCreator<BooksSlice, [], [], BooksSlice> = (
       totalPages: data.totalPages,
       coverColor: data.coverColor,
       status: "reading",
-      addedAt: Date.now(),
+      addedAt: new Date().toISOString(),
     };
     set((state) => ({ books: [...state.books, newBook] }));
+    insertBook(newBook);
   },
 
   updateBook: (id, updates) => {
+    let updatedBook: Book | undefined;
     set((state) => ({
       books: state.books.map((b) => {
         if (b.id !== id) return b;
-        const updated = { ...b, ...updates };
+        updatedBook = { ...b, ...updates };
         // auto-mark as completed when currentPage reaches totalPages
         if (
-          updated.currentPage >= updated.totalPages &&
-          updated.totalPages > 0
+          updatedBook.currentPage >= updatedBook.totalPages &&
+          updatedBook.totalPages > 0
         ) {
-          updated.status = "completed";
-          updated.currentPage = updated.totalPages;
+          updatedBook.status = "completed";
+          updatedBook.currentPage = updatedBook.totalPages;
         }
-        return updated;
+        return updatedBook;
       }),
     }));
+    if (updatedBook) {
+      updateBookDb(id, updates);
+    }
   },
 
   removeBook: (id) => {
     set((state) => ({ books: state.books.filter((b) => b.id !== id) }));
+    deleteBook(id);
   },
   setBooks: (books: Book[]) => set({ books }),
 });

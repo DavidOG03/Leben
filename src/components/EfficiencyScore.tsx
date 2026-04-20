@@ -9,6 +9,7 @@ export default function EfficiencyScore() {
   const [user, setUser] = useState<any>(null);
   const tasks = useLebenStore((s) => s.tasks);
   const habits = useLebenStore((s) => s.habits);
+  const goals = useLebenStore((s) => s.goals);
 
   const [loading, setLoading] = useState(true);
 
@@ -28,6 +29,8 @@ export default function EfficiencyScore() {
     let totalCompletedTasks = 0;
     let totalPossibleHabits = habits.length * 7;
     let totalCompletedHabits = 0;
+    let totalScheduledGoals = 0;
+    let totalCompleteGoals = 0;
 
     for (let i = 6; i >= 0; i--) {
       const date = new Date(today);
@@ -47,25 +50,46 @@ export default function EfficiencyScore() {
       totalCompletedHabits += habits.filter((h) =>
         h.completedDates?.includes(dateStr),
       ).length;
+
+      // Milestones (Goals)
+      goals.forEach((g) => {
+        const milestonesDone = g.milestones.filter(
+          (m) => m.done && m.completedAt === dateStr,
+        ).length;
+        totalCompleteGoals += milestonesDone;
+      });
     }
+
+    // Goal rate logic: milestones completed vs total milestones across active goals
+    const totalMilestones = goals.reduce((acc, g) => acc + g.milestones.length, 0);
+    const goalRate = totalMilestones > 0 ? totalCompleteGoals / Math.max(totalMilestones / 2, 1) : 0; // Simplified "pace" check
 
     const taskRate =
       totalScheduledTasks > 0 ? totalCompletedTasks / totalScheduledTasks : 0;
     const habitRate =
       totalPossibleHabits > 0 ? totalCompletedHabits / totalPossibleHabits : 0;
 
-    // Weight: 60% Tasks, 40% Habits if both exist. Otherwise redistribute.
+    const clampedGoalRate = Math.min(goalRate, 1);
+
+    // Weight: 40% Tasks, 30% Habits, 30% Goals
     let finalScore = 0;
-    if (totalScheduledTasks > 0 && totalPossibleHabits > 0) {
-      finalScore = (taskRate * 0.6 + habitRate * 0.4) * 100;
-    } else if (totalScheduledTasks > 0) {
-      finalScore = taskRate * 100;
-    } else if (totalPossibleHabits > 0) {
-      finalScore = habitRate * 100;
+    const weights = { task: 0.4, habit: 0.3, goal: 0.3 };
+    
+    let activeWeightsCount = 0;
+    if (totalScheduledTasks > 0) activeWeightsCount += weights.task;
+    if (totalPossibleHabits > 0) activeWeightsCount += weights.habit;
+    if (totalMilestones > 0) activeWeightsCount += weights.goal;
+
+    if (activeWeightsCount > 0) {
+      finalScore = (
+        (totalScheduledTasks > 0 ? (taskRate * weights.task) : 0) +
+        (totalPossibleHabits > 0 ? (habitRate * weights.habit) : 0) +
+        (totalMilestones > 0 ? (clampedGoalRate * weights.goal) : 0)
+      ) / activeWeightsCount * 100;
     }
 
-    // "After a week" logic - only show if there's significant data or some activity
-    const hasEnoughData = totalScheduledTasks > 3 || totalCompletedHabits > 3;
+    // "After a week" logic
+    const hasEnoughData = totalScheduledTasks > 3 || totalCompletedHabits > 3 || totalCompleteGoals > 0;
 
     return {
       score: Math.round(finalScore),

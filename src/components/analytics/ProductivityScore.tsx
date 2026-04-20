@@ -3,10 +3,6 @@
 import { TrendLine, TrendLineSkeleton } from "./WeeklyActivities";
 import { ProductivityData } from "@/utils/analytics.types";
 
-interface Props {
-  data: ProductivityData;
-  hasData: boolean;
-}
 // ─── Ghost skeleton ───────────────────────────────────────────────────────────
 export function ProductivityScoreSkeleton() {
   return (
@@ -89,9 +85,9 @@ interface Props {
 }
 
 export function ProductivityScore({ data, hasData }: Props) {
-  const score = data.score;
-  const deepWorkSessions = Math.floor(score / 3);
-  const avgDailyScore = Math.round(score * 0.9);
+  // Fallbacks purely for visual representation until Focus Timer is fully wired
+  const deepWorkSessions = data.deepWorkSessions || Math.floor(data.score / 5);
+  const avgDailyScore = data.avgDailyScore || Math.round(data.score * 0.9);
 
   return (
     <div

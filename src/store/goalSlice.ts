@@ -6,6 +6,7 @@ import {
   generateGoalId,
   generateMilestoneId,
 } from "@/utils/goals.types";
+import { insertGoal, updateGoal as updateGoalDb, deleteGoal } from "@/lib/supabase/db";
 
 export interface GoalsSlice {
   goals: Goal[];
@@ -14,6 +15,7 @@ export interface GoalsSlice {
   toggleMilestone: (goalId: string, milestoneId: string) => void;
   removeGoal: (goalId: string) => void;
   updateGoal: (goalId: string, updates: Partial<Goal>) => void;
+  editMilestone: (goalId: string, milestoneId: string, newLabel: string) => void;
   incrementTasksLinked: (goalId: string) => void;
 }
 
@@ -41,7 +43,7 @@ export const createGoalsSlice: StateCreator<GoalsSlice, [], [], GoalsSlice> = (
       icon: data.icon,
       milestones,
       tasksLinked: 0,
-      createdAt: Date.now(),
+      createdAt: new Date().toISOString(),
       name: data.title,
       color: data.color,
       targetValue: data.targetValue,
@@ -49,27 +51,41 @@ export const createGoalsSlice: StateCreator<GoalsSlice, [], [], GoalsSlice> = (
     };
 
     set((state) => ({ goals: [...state.goals, newGoal] }));
+    insertGoal(newGoal);
   },
 
   toggleMilestone: (goalId: string, milestoneId: string) => {
-    set((state) => ({
-      goals: state.goals.map((g) =>
-        g.id !== goalId
-          ? g
-          : {
-              ...g,
-              milestones: g.milestones.map((m) =>
-                m.id === milestoneId ? { ...m, done: !m.done } : m,
-              ),
-            },
-      ),
-    }));
+    let updatedMilestones: Milestone[] = [];
+    set((state) => {
+      const updatedGoals = state.goals.map((g) => {
+        if (g.id !== goalId) return g;
+        updatedMilestones = g.milestones.map((m) => {
+          if (m.id === milestoneId) {
+            const newDone = !m.done;
+            return {
+              ...m,
+              done: newDone,
+              completedAt: newDone
+                ? new Date().toISOString().split("T")[0]
+                : undefined,
+            };
+          }
+          return m;
+        });
+        return { ...g, milestones: updatedMilestones };
+      });
+      return { goals: updatedGoals };
+    });
+    if (updatedMilestones.length > 0) {
+      updateGoalDb(goalId, { milestones: updatedMilestones });
+    }
   },
 
   removeGoal: (goalId: string) => {
     set((state) => ({
       goals: state.goals.filter((g) => g.id !== goalId),
     }));
+    deleteGoal(goalId);
   },
 
   updateGoal: (goalId: string, updates: Partial<Goal>) => {
@@ -78,13 +94,39 @@ export const createGoalsSlice: StateCreator<GoalsSlice, [], [], GoalsSlice> = (
         g.id === goalId ? { ...g, ...updates } : g,
       ),
     }));
+    updateGoalDb(goalId, updates);
+  },
+
+  editMilestone: (goalId: string, milestoneId: string, newLabel: string) => {
+    let updatedMilestones: Milestone[] = [];
+    set((state) => {
+      const updatedGoals = state.goals.map((g) => {
+        if (g.id !== goalId) return g;
+        updatedMilestones = g.milestones.map((m) =>
+          m.id === milestoneId ? { ...m, label: newLabel } : m,
+        );
+        return { ...g, milestones: updatedMilestones };
+      });
+      return { goals: updatedGoals };
+    });
+    if (updatedMilestones.length > 0) {
+      updateGoalDb(goalId, { milestones: updatedMilestones });
+    }
   },
 
   incrementTasksLinked: (goalId: string) => {
+    let newCount = 0;
     set((state) => ({
-      goals: state.goals.map((g) =>
-        g.id === goalId ? { ...g, tasksLinked: g.tasksLinked + 1 } : g,
-      ),
+      goals: state.goals.map((g) => {
+        if (g.id === goalId) {
+          newCount = g.tasksLinked + 1;
+          return { ...g, tasksLinked: newCount };
+        }
+        return g;
+      }),
     }));
+    if (newCount > 0) {
+      updateGoalDb(goalId, { tasksLinked: newCount });
+    }
   },
 });

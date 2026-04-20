@@ -2,6 +2,7 @@ export interface Milestone {
   id: string;
   label: string;
   done: boolean;
+  completedAt?: string; // ISO string split to date
 }
 
 export interface Goal {
@@ -11,7 +12,7 @@ export interface Goal {
   icon: string;
   milestones: Milestone[];
   tasksLinked: number;
-  createdAt: number; // timestamp
+  createdAt: string; // ISO string
   name: string;
   color: string;
   targetValue: number;

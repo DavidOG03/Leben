@@ -9,18 +9,32 @@ interface GoalCardProps {
 }
 
 export default function GoalCard({ goal }: GoalCardProps) {
-  const toggleMilestone = useLebenStore((s: any) => s.toggleMilestone);
   const removeGoal = useLebenStore((s: any) => s.removeGoal);
   const updateGoal = useLebenStore((s: any) => s.updateGoal);
+  const editMilestoneAction = useLebenStore((s: any) => s.editMilestone);
   const { progress, status, statusColor } = deriveGoalStats(goal);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(goal.title);
   const [editDeadline, setEditDeadline] = useState(goal.deadline);
+  const [editMilestones, setEditMilestones] = useState<Milestone[]>(goal.milestones);
 
   const handleSave = () => {
-    updateGoal(goal.id, { title: editTitle, deadline: editDeadline });
+    updateGoal(goal.id, { 
+      title: editTitle, 
+      deadline: editDeadline,
+      milestones: editMilestones 
+    });
     setIsEditing(false);
+  };
+
+  const handleEditToggle = () => {
+    if (!isEditing) {
+      setEditTitle(goal.title);
+      setEditDeadline(goal.deadline);
+      setEditMilestones([...goal.milestones]);
+    }
+    setIsEditing(!isEditing);
   };
 
   return (
@@ -43,7 +57,7 @@ export default function GoalCard({ goal }: GoalCardProps) {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setIsEditing(!isEditing)}
+            onClick={handleEditToggle}
             className="hover:opacity-80"
             style={{ color: "#888", fontSize: "12px", background: "transparent", border: "none" }}
             title="Edit Goal"
@@ -149,40 +163,90 @@ export default function GoalCard({ goal }: GoalCardProps) {
         Milestones
       </p>
       <div className="space-y-2 flex-1">
-        {goal.milestones.map((m: Milestone) => (
-          <button
-            key={m.id}
-            onClick={() => toggleMilestone(goal.id, m.id)}
-            className="flex items-center gap-2 w-full text-left"
-          >
-            <div
-              className="flex items-center justify-center rounded-full flex-shrink-0 transition-all duration-200"
-              style={{
-                width: "16px",
-                height: "16px",
-                backgroundColor: m.done
-                  ? "rgba(124,106,240,0.2)"
-                  : "transparent",
-                border: m.done ? "1px solid #7c6af0" : "1px solid #333",
+        {isEditing ? (
+          <>
+            {editMilestones.map((m, index) => (
+              <div key={m.id} className="flex items-center gap-2 w-full mb-1 border-b border-[#222] pb-1">
+                <div
+                  className="flex items-center justify-center rounded-full flex-shrink-0"
+                  style={{
+                    width: "16px",
+                    height: "16px",
+                    backgroundColor: m.done ? "rgba(124,106,240,0.2)" : "transparent",
+                    border: m.done ? "1px solid #7c6af0" : "1px solid #333",
+                  }}
+                />
+                <input
+                  value={m.label}
+                  onChange={(e) => {
+                    const newM = [...editMilestones];
+                    newM[index].label = e.target.value;
+                    setEditMilestones(newM);
+                  }}
+                  className="flex-1 bg-[#1a1a1a] text-[#eee] text-[12px] px-2 py-1 rounded border border-[#333] outline-none"
+                  placeholder="Milestone label"
+                />
+                <button
+                  onClick={() => {
+                    const newM = [...editMilestones];
+                    newM.splice(index, 1);
+                    setEditMilestones(newM);
+                  }}
+                  className="text-red-500 hover:text-red-400 font-bold px-2 text-[14px]"
+                  title="Remove Milestone"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => {
+                setEditMilestones([
+                  ...editMilestones,
+                  { id: Math.random().toString(36).substring(7), label: "", done: false }
+                ]);
               }}
+              className="text-[#7c6af0] text-[11px] font-semibold hover:opacity-80 mt-1 flex items-center"
             >
-              {m.done && (
-                <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                  <path
-                    d="M1.5 4l1.8 1.8L6.5 2"
-                    stroke="#7c6af0"
-                    strokeWidth="1.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              )}
+              + Add Milestone
+            </button>
+          </>
+        ) : (
+          goal.milestones.map((m: Milestone) => (
+            <div key={m.id} className="flex items-center gap-2 w-full">
+              <button
+                onClick={() => useLebenStore.getState().toggleMilestone(goal.id, m.id)}
+                className="flex items-center justify-center rounded-full flex-shrink-0 transition-all duration-200"
+                style={{
+                  width: "16px",
+                  height: "16px",
+                  backgroundColor: m.done ? "rgba(124,106,240,0.2)" : "transparent",
+                  border: m.done ? "1px solid #7c6af0" : "1px solid #333",
+                }}
+              >
+                {m.done && (
+                  <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                    <path
+                      d="M1.5 4l1.8 1.8L6.5 2"
+                      stroke="#7c6af0"
+                      strokeWidth="1.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+              </button>
+              <button
+                onClick={() => useLebenStore.getState().toggleMilestone(goal.id, m.id)}
+                className="flex-1 text-left"
+              >
+                <span style={{ fontSize: "12px", color: m.done ? "#888" : "#555" }}>
+                  {m.label}
+                </span>
+              </button>
             </div>
-            <span style={{ fontSize: "12px", color: m.done ? "#888" : "#555" }}>
-              {m.label}
-            </span>
-          </button>
-        ))}
+          ))
+        )}
       </div>
 
       {/* Footer */}

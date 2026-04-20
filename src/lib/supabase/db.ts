@@ -112,7 +112,7 @@ function mapBookFromDB(row: any): Book {
     totalPages: row.total_pages ?? 0,
     coverColor: row.cover_color ?? "#555",
     status: row.status ?? "reading",
-    addedAt: row.added_at ?? Date.now(),
+    addedAt: row.added_at ?? new Date().toISOString(),
   };
 }
 
