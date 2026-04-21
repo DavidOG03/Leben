@@ -1,11 +1,15 @@
 "use client";
 
+import { SparkleIcon } from "@/constants/Icons";
 import { useLebenStore } from "@/store/useStore";
+import NotificationBell from "../shared/NotificationBell";
+import { useRouter } from "next/navigation";
 
 // const tabs = ["Today", "Weekly", "Monthly"];
 
 export default function HabitsHeader() {
   const toggleSidebar = useLebenStore((s: any) => s.toggleSidebar);
+  const router = useRouter();
   return (
     <header
       className="flex items-center justify-between px-4 md:px-7 flex-shrink-0"
@@ -59,60 +63,36 @@ export default function HabitsHeader() {
           ))}
         </nav> */}
       </div>
-      <div className="hidden md:flex items-center gap-3">
-        <div
-          className="flex items-center gap-2 px-3 py-2 rounded-lg"
-          style={{
-            backgroundColor: "#141414",
-            border: "1px solid #1e1e1e",
-            width: "180px",
-          }}
-        >
-          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-            <circle cx="5.5" cy="5.5" r="4" stroke="#444" strokeWidth="1.2" />
-            <path
-              d="M9 9l2.5 2.5"
-              stroke="#444"
-              strokeWidth="1.2"
-              strokeLinecap="round"
-            />
-          </svg>
-          <span style={{ fontSize: "12px", color: "#3a3a3a" }}>
-            Search habits...
-          </span>
+      <div className="flex items-center gap-3">
+        {/* Right icons + wordmark */}
+        <div className="flex items-center gap-3">
+          <NotificationBell />
+          <button
+            className="flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors"
+            style={{ width: "32px", height: "32px", color: "#555" }}
+            onClick={() => router.push("/planner")}
+          >
+            <SparkleIcon />
+          </button>
         </div>
-        <button
-          className="flex items-center justify-center"
-          style={{ width: "30px", height: "30px", color: "#555" }}
+        <div
+          className="rounded-full"
+          style={{
+            width: "32px",
+            height: "32px",
+            background: "linear-gradient(135deg,#3a3a4a,#1e1e2e)",
+            border: "1.5px solid #333",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onClick={() => router.push("/settings")}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path
-              d="M8 2a4.5 4.5 0 00-4.5 4.5v2.8L2 11h12l-1.5-1.7V6.5A4.5 4.5 0 008 2z"
-              stroke="currentColor"
-              strokeWidth="1.3"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M6 13a2 2 0 004 0"
-              stroke="currentColor"
-              strokeWidth="1.3"
-              strokeLinecap="round"
-            />
+            <circle cx="8" cy="6" r="2.5" fill="#888" />
+            <path d="M3 14c0-2.8 2.2-5 5-5s5 2.2 5 5" fill="#888" />
           </svg>
-        </button>
-        <button
-          className="flex items-center justify-center"
-          style={{ width: "30px", height: "30px", color: "#555" }}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path
-              d="M8 2l1.5 4L14 8l-4.5 1.5L8 14l-1.5-4.5L2 8l4.5-1.5L8 2z"
-              stroke="currentColor"
-              strokeWidth="1.3"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
+        </div>
       </div>
     </header>
   );
