@@ -17,13 +17,15 @@ export default function GoalCard({ goal }: GoalCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(goal.title);
   const [editDeadline, setEditDeadline] = useState(goal.deadline);
-  const [editMilestones, setEditMilestones] = useState<Milestone[]>(goal.milestones);
+  const [editMilestones, setEditMilestones] = useState<Milestone[]>(
+    goal.milestones,
+  );
 
   const handleSave = () => {
-    updateGoal(goal.id, { 
-      title: editTitle, 
+    updateGoal(goal.id, {
+      title: editTitle,
       deadline: editDeadline,
-      milestones: editMilestones 
+      milestones: editMilestones,
     });
     setIsEditing(false);
   };
@@ -59,7 +61,12 @@ export default function GoalCard({ goal }: GoalCardProps) {
           <button
             onClick={handleEditToggle}
             className="hover:opacity-80"
-            style={{ color: "#888", fontSize: "12px", background: "transparent", border: "none" }}
+            style={{
+              color: "#888",
+              fontSize: "12px",
+              background: "transparent",
+              border: "none",
+            }}
             title="Edit Goal"
           >
             ✏️
@@ -67,7 +74,12 @@ export default function GoalCard({ goal }: GoalCardProps) {
           <button
             onClick={() => removeGoal(goal.id)}
             className="hover:opacity-80"
-            style={{ color: "#888", fontSize: "12px", background: "transparent", border: "none" }}
+            style={{
+              color: "#888",
+              fontSize: "12px",
+              background: "transparent",
+              border: "none",
+            }}
             title="Delete Goal"
           >
             🗑️
@@ -93,7 +105,11 @@ export default function GoalCard({ goal }: GoalCardProps) {
             value={editTitle}
             onChange={(e) => setEditTitle(e.target.value)}
             className="rounded-lg px-3 py-1.5 text-white outline-none"
-            style={{ backgroundColor: "#1a1a1a", border: "1px solid #333", fontSize: "14px" }}
+            style={{
+              backgroundColor: "#1a1a1a",
+              border: "1px solid #333",
+              fontSize: "14px",
+            }}
             placeholder="Goal Title"
             autoFocus
           />
@@ -101,7 +117,11 @@ export default function GoalCard({ goal }: GoalCardProps) {
             value={editDeadline}
             onChange={(e) => setEditDeadline(e.target.value)}
             className="rounded-lg px-3 py-1.5 text-white outline-none"
-            style={{ backgroundColor: "#1a1a1a", border: "1px solid #333", fontSize: "11px" }}
+            style={{
+              backgroundColor: "#1a1a1a",
+              border: "1px solid #333",
+              fontSize: "11px",
+            }}
             placeholder="Deadline"
           />
           <button
@@ -166,13 +186,18 @@ export default function GoalCard({ goal }: GoalCardProps) {
         {isEditing ? (
           <>
             {editMilestones.map((m, index) => (
-              <div key={m.id} className="flex items-center gap-2 w-full mb-1 border-b border-[#222] pb-1">
+              <div
+                key={m.id}
+                className="flex items-center gap-2 w-full mb-1 border-b border-[#222] pb-1"
+              >
                 <div
                   className="flex items-center justify-center rounded-full flex-shrink-0"
                   style={{
                     width: "16px",
                     height: "16px",
-                    backgroundColor: m.done ? "rgba(124,106,240,0.2)" : "transparent",
+                    backgroundColor: m.done
+                      ? "rgba(124,106,240,0.2)"
+                      : "transparent",
                     border: m.done ? "1px solid #7c6af0" : "1px solid #333",
                   }}
                 />
@@ -203,7 +228,11 @@ export default function GoalCard({ goal }: GoalCardProps) {
               onClick={() => {
                 setEditMilestones([
                   ...editMilestones,
-                  { id: Math.random().toString(36).substring(7), label: "", done: false }
+                  {
+                    id: Math.random().toString(36).substring(7),
+                    label: "",
+                    done: false,
+                  },
                 ]);
               }}
               className="text-[#7c6af0] text-[11px] font-semibold hover:opacity-80 mt-1 flex items-center"
@@ -215,12 +244,16 @@ export default function GoalCard({ goal }: GoalCardProps) {
           goal.milestones.map((m: Milestone) => (
             <div key={m.id} className="flex items-center gap-2 w-full">
               <button
-                onClick={() => useLebenStore.getState().toggleMilestone(goal.id, m.id)}
+                onClick={() =>
+                  useLebenStore.getState().toggleMilestone(goal.id, m.id)
+                }
                 className="flex items-center justify-center rounded-full flex-shrink-0 transition-all duration-200"
                 style={{
                   width: "16px",
                   height: "16px",
-                  backgroundColor: m.done ? "rgba(124,106,240,0.2)" : "transparent",
+                  backgroundColor: m.done
+                    ? "rgba(124,106,240,0.2)"
+                    : "transparent",
                   border: m.done ? "1px solid #7c6af0" : "1px solid #333",
                 }}
               >
@@ -237,10 +270,14 @@ export default function GoalCard({ goal }: GoalCardProps) {
                 )}
               </button>
               <button
-                onClick={() => useLebenStore.getState().toggleMilestone(goal.id, m.id)}
+                onClick={() =>
+                  useLebenStore.getState().toggleMilestone(goal.id, m.id)
+                }
                 className="flex-1 text-left"
               >
-                <span style={{ fontSize: "12px", color: m.done ? "#888" : "#555" }}>
+                <span
+                  style={{ fontSize: "12px", color: m.done ? "#888" : "#555" }}
+                >
                   {m.label}
                 </span>
               </button>
@@ -250,7 +287,7 @@ export default function GoalCard({ goal }: GoalCardProps) {
       </div>
 
       {/* Footer */}
-      <div
+      {/* <div
         className="flex items-center justify-between mt-5 pt-4"
         style={{ borderTop: "1px solid #1a1a1a" }}
       >
@@ -295,7 +332,7 @@ export default function GoalCard({ goal }: GoalCardProps) {
             />
           </svg>
         </button>
-      </div>
+      </div> */}
     </div>
   );
 }
