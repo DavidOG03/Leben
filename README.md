@@ -238,9 +238,9 @@ Open [http://localhost:3000](http://localhost:3000).
 - [x] AI morning brief
 - [x] Analytics dashboard
 - [x] Supabase database integration
-- [ ] Mobile-responsive polish
-- [ ] Notifications and reminders
-- [ ] AI-suggested habits based on goals
+- [x] Mobile-responsive polish
+- [x] Notifications and reminders
+- [x] AI-suggested habits based on goals
 - [ ] Weekly AI review and retrospective
 - [ ] Collaborative goals (share progress with accountability partner)
 - [ ] Mobile app (React Native)
