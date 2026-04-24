@@ -58,13 +58,17 @@ const WeeklyProgress: React.FC<WeeklyProgressProps> = ({ habits }) => {
 
     // Streak resets when a day is skipped — calcStreak already handles this
     // by walking backwards from today/yesterday and stopping at the first miss.
-    const currentStreak = habits.length > 0
-      ? Math.min(...habits.map((h) => calcStreak(h.completedDates ?? [])))
-      : 0;
+    const currentStreak =
+      habits.length > 0
+        ? Math.min(...habits.map((h) => calcStreak(h.completedDates ?? [])))
+        : 0;
 
     const longestStreak =
       habits.length > 0
-        ? Math.max(0, ...habits.map((h) => calcLongestStreak(h.completedDates ?? [])))
+        ? Math.max(
+            0,
+            ...habits.map((h) => calcLongestStreak(h.completedDates ?? [])),
+          )
         : 0;
 
     return {
@@ -141,7 +145,8 @@ const WeeklyProgress: React.FC<WeeklyProgressProps> = ({ habits }) => {
                   />
 
                   {/* Hover tooltip */}
-                  <div className="absolute bottom-full mb-2 hidden group-hover:flex flex-col items-center z-10 pointer-events-none"
+                  <div
+                    className="absolute bottom-full mb-2 hidden group-hover:flex flex-col items-center z-10 pointer-events-none"
                     style={{
                       background: "#1e1e1e",
                       border: "1px solid #333",
@@ -149,7 +154,14 @@ const WeeklyProgress: React.FC<WeeklyProgressProps> = ({ habits }) => {
                       padding: "5px 8px",
                     }}
                   >
-                    <span style={{ fontSize: "10px", color: d.isSkipped ? "#555" : "#7c6af0", fontWeight: 700, whiteSpace: "nowrap" }}>
+                    <span
+                      style={{
+                        fontSize: "10px",
+                        color: d.isSkipped ? "#555" : "#7c6af0",
+                        fontWeight: 700,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       {d.isSkipped ? "Skipped" : `${d.count} habits`}
                     </span>
                   </div>
@@ -165,7 +177,11 @@ const WeeklyProgress: React.FC<WeeklyProgressProps> = ({ habits }) => {
                 key={i}
                 style={{
                   fontSize: "9px",
-                  color: d.isToday ? "#7c6af0" : d.isSkipped ? "#2a2a2a" : "#444",
+                  color: d.isToday
+                    ? "#7c6af0"
+                    : d.isSkipped
+                      ? "#2a2a2a"
+                      : "#444",
                   fontWeight: d.isToday ? 700 : 400,
                   flex: 1,
                   textAlign: "center",
@@ -177,33 +193,53 @@ const WeeklyProgress: React.FC<WeeklyProgressProps> = ({ habits }) => {
           </div>
 
           {/* ── Stats ───────────────────────────────────── */}
-          <div className="space-y-2 pt-3" style={{ borderTop: "1px solid #1a1a1a" }}>
-            <div className="flex items-center justify-between">
+          <div
+            className="space-y-2 pt-3"
+            style={{ borderTop: "1px solid #1a1a1a" }}
+          >
+            {/* <div className="flex items-center justify-between">
               <span style={{ fontSize: "12px", color: "#555" }}>Daily Average</span>
               <span style={{ fontSize: "12px", color: "#aaa" }}>
                 {weeklyAnalytics.dailyAverage.toFixed(1)} habits
               </span>
-            </div>
+            </div> */}
 
             <div className="flex items-center justify-between">
-              <span style={{ fontSize: "12px", color: "#555" }}>Current Streak</span>
-              <span style={{ fontSize: "12px", color: weeklyAnalytics.currentStreak > 0 ? "#4caf7d" : "#e85555", fontWeight: 600 }}>
+              <span style={{ fontSize: "12px", color: "#555" }}>
+                Current Streak
+              </span>
+              <span
+                style={{
+                  fontSize: "12px",
+                  color:
+                    weeklyAnalytics.currentStreak > 0 ? "#4caf7d" : "#e85555",
+                  fontWeight: 600,
+                }}
+              >
                 {weeklyAnalytics.currentStreak} days
               </span>
             </div>
 
             <div className="flex items-center justify-between">
-              <span style={{ fontSize: "12px", color: "#555" }}>Longest Streak</span>
-              <span style={{ fontSize: "12px", color: "#7c6af0", fontWeight: 600 }}>
+              <span style={{ fontSize: "12px", color: "#555" }}>
+                Longest Streak
+              </span>
+              <span
+                style={{ fontSize: "12px", color: "#7c6af0", fontWeight: 600 }}
+              >
                 {weeklyAnalytics.longestStreak} days
               </span>
             </div>
 
-            {weeklyAnalytics.currentStreak === 0 && weeklyAnalytics.longestStreak > 0 && (
-              <p style={{ fontSize: "10px", color: "#333", marginTop: "6px" }}>
-                Streak reset — best was {weeklyAnalytics.longestStreak} days. Start fresh today!
-              </p>
-            )}
+            {weeklyAnalytics.currentStreak === 0 &&
+              weeklyAnalytics.longestStreak > 0 && (
+                <p
+                  style={{ fontSize: "10px", color: "#333", marginTop: "6px" }}
+                >
+                  Streak reset — best was {weeklyAnalytics.longestStreak} days.
+                  Start fresh today!
+                </p>
+              )}
           </div>
         </>
       )}

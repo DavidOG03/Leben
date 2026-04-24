@@ -47,24 +47,33 @@ export function buildAllHabitsMatrix(habits: Habit[]): number[][] {
 export function calcStreak(history: string[]): number {
   if (!history || history.length === 0) return 0;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Normalize all dates to YYYY-MM-DD to ignore times, and remove duplicates
+  const dates = new Set(history.map((d) => d.slice(0, 10)));
+
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0, 10);
   
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().slice(0, 10);
 
-  const dates = new Set(history);
-  let streak = 0;
-  let checkDate = new Date(today);
-
-  // If not done today, start checking from yesterday
-  if (!dates.has(today.toISOString().slice(0, 10))) {
-    checkDate = yesterday;
+  // If not done today AND not done yesterday, the current streak is broken (0)
+  if (!dates.has(todayStr) && !dates.has(yesterdayStr)) {
+    return 0;
   }
 
-  while (dates.has(checkDate.toISOString().slice(0, 10))) {
-    streak++;
-    checkDate.setDate(checkDate.getDate() - 1);
+  let streak = 0;
+  // Start checking from today if completed today, otherwise start from yesterday
+  let checkDate = dates.has(todayStr) ? now : yesterday;
+
+  while (true) {
+    const checkStr = checkDate.toISOString().slice(0, 10);
+    if (dates.has(checkStr)) {
+      streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else {
+      break;
+    }
   }
 
   return streak;
@@ -74,7 +83,9 @@ export function calcStreak(history: string[]): number {
 export function calcLongestStreak(history: string[]): number {
   if (!history || history.length === 0) return 0;
 
-  const sorted = Array.from(new Set(history)).sort();
+  // Normalize to YYYY-MM-DD and sort chronologically
+  const sorted = Array.from(new Set(history.map((d) => d.slice(0, 10)))).sort();
+  
   let maxStreak = 0;
   let currentStreak = 1;
 
@@ -82,6 +93,7 @@ export function calcLongestStreak(history: string[]): number {
     const prev = new Date(sorted[i - 1]);
     const curr = new Date(sorted[i]);
     
+    // Difference in days between two UTC midnights is always an exact integer
     const diff = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
 
     if (diff === 1) {
