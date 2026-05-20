@@ -5,6 +5,7 @@ import { useLebenStore } from "@/store/useStore";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 
 interface Suggestion {
   task: string;
@@ -20,7 +21,7 @@ export default function SmartSuggestion() {
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
   const [loading, setLoading] = useState(false);
   const [waitCountdown, setWaitCountdown] = useState<number | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [dots, setDots] = useState(".");
   const dotsRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -30,7 +31,9 @@ export default function SmartSuggestion() {
   // Detect auth state
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth
+      .getUser()
+      .then(({ data }: { data: { user: User | null } }) => setUser(data.user));
   }, []);
 
   // Countdown ticker (not used for errors now, but kept for UI consistency if needed)

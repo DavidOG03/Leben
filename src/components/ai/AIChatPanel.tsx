@@ -2,17 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useAIStore } from "@/store/useAIStore";
-
-const SparkleIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path
-      d="M8 2l1.5 4L14 8l-4.5 1.5L8 14l-1.5-4.5L2 8l4.5-1.5L8 2z"
-      stroke="white"
-      strokeWidth="1.3"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
+import { useLebenStore } from "@/store/useStore";
+import { SparkleIcon } from "@/constants/Icons";
 
 const suggestions = [
   { icon: "", label: "Analyze my productivity" },
@@ -22,8 +13,124 @@ const suggestions = [
 
 export default function AIChatPanel() {
   const { messages, addMessage, isThinking, setThinking } = useAIStore();
+  const addTask = useLebenStore((s) => s.addTask);
   const [input, setInput] = useState("");
+  const [importedMessageIds, setImportedMessageIds] = useState<Record<string, boolean>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const renderInlineFormatting = (text: string) => {
+    const parts: Array<string | JSX.Element> = [];
+    const boldRegex = /\*\*(.+?)\*\*/g;
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+    let keyIndex = 0;
+
+    while ((match = boldRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(text.slice(lastIndex, match.index));
+      }
+      parts.push(
+        <span key={`bold-${match.index}-${keyIndex++}`} className="font-semibold">
+          {match[1]}
+        </span>,
+      );
+      lastIndex = match.index + match[0].length;
+    }
+
+    if (lastIndex < text.length) {
+      parts.push(text.slice(lastIndex));
+    }
+
+    return parts;
+  };
+
+  const parseAssistantContent = (content: string) => {
+    const lines = content.split("\n");
+    const blocks: Array<{
+      type: "paragraph" | "list";
+      content: string[];
+    }> = [];
+    let currentList: string[] = [];
+
+    const flushList = () => {
+      if (currentList.length > 0) {
+        blocks.push({ type: "list", content: currentList });
+        currentList = [];
+      }
+    };
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      const listMatch = trimmed.match(/^([*+-])\s+(.*)$/);
+      if (listMatch) {
+        currentList.push(listMatch[2].trim());
+        continue;
+      }
+
+      if (trimmed === "") {
+        flushList();
+        continue;
+      }
+
+      flushList();
+      blocks.push({ type: "paragraph", content: [trimmed] });
+    }
+    flushList();
+
+    return blocks;
+  };
+
+  const extractTaskItems = (content: string) => {
+    return content
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => /^([*+-])\s+/.test(line))
+      .map((line) => line.replace(/^([*+-])\s+/, ""))
+      .filter(Boolean);
+  };
+
+  const importAssistantTasks = (messageId: string, content: string) => {
+    const items = extractTaskItems(content);
+    if (items.length === 0) return;
+
+    const now = new Date().toISOString();
+    items.forEach((title) => {
+      addTask({
+        id: crypto.randomUUID(),
+        title,
+        completed: false,
+        tag: "WORK",
+        priority: "medium",
+        date: now.slice(0, 10),
+        createdAt: now,
+      });
+    });
+
+    setImportedMessageIds((current) => ({ ...current, [messageId]: true }));
+  };
+
+  const renderAssistantMessage = (message: string) => {
+    const blocks = parseAssistantContent(message);
+    return blocks.map((block, index) => {
+      if (block.type === "list") {
+        return (
+          <ul key={`list-${index}`} className="list-disc ml-5 space-y-1 text-[#ccc] text-[14px] leading-relaxed">
+            {block.content.map((item, itemIndex) => (
+              <li key={`item-${index}-${itemIndex}`}>{renderInlineFormatting(item)}</li>
+            ))}
+          </ul>
+        );
+      }
+
+      return (
+        <p key={`para-${index}`} className="text-[#ccc] text-[14px] leading-relaxed">
+          {block.content.map((line, lineIndex) => (
+            <span key={`line-${index}-${lineIndex}`}>{renderInlineFormatting(line)}</span>
+          ))}
+        </p>
+      );
+    });
+  };
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -118,9 +225,26 @@ export default function AIChatPanel() {
                     boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
                   }}
                 >
-                  <p className="text-[#ccc] text-[14px] leading-relaxed whitespace-pre-wrap">
-                    {msg.content}
-                  </p>
+                  <div className="flex flex-col gap-3">
+                    <div className="space-y-3">{renderAssistantMessage(msg.content)}</div>
+                    {extractTaskItems(msg.content).length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => importAssistantTasks(msg.id, msg.content)}
+                        disabled={importedMessageIds[msg.id]}
+                        className="self-start rounded-lg px-3 py-2 text-[11px] font-semibold transition-colors"
+                        style={{
+                          backgroundColor: importedMessageIds[msg.id] ? "#2a2a2a" : "#2d2480",
+                          color: importedMessageIds[msg.id] ? "#888" : "#fff",
+                          border: importedMessageIds[msg.id] ? "1px solid #3a3a3a" : "1px solid #6258f2",
+                        }}
+                      >
+                        {importedMessageIds[msg.id]
+                          ? `Tasks added`
+                          : `Import ${extractTaskItems(msg.content).length} task${extractTaskItems(msg.content).length > 1 ? "s" : ""}`}
+                      </button>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div

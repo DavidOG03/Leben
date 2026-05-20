@@ -19,6 +19,7 @@ import {
 } from "@/constants/Icons";
 
 import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { useLebenStore } from "@/store/useStore";
 
@@ -35,14 +36,16 @@ const navItems = [
 
 export default function AppSidebar() {
   const pathname = usePathname();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-    });
+    supabase.auth
+      .getUser()
+      .then(({ data }: { data: { user: User | null } }) => {
+        setUser(data.user);
+      });
   }, []);
 
   const userName = user?.user_metadata?.full_name || "Guest";
@@ -65,25 +68,11 @@ export default function AppSidebar() {
       <aside
         className={`fixed top-0 left-0 z-50 h-full flex flex-col flex-shrink-0 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-        style={{
-          width: "190px",
-          backgroundColor: "#0d0d0d",
-          borderRight: "1px solid #1a1a1a",
-          padding: "20px 0",
-        }}
+        } w-[190px] bg-[#0d0d0d] border-r border-[#1a1a1a] py-5`}
       >
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-5 mb-7">
-          <div
-            className="flex items-center justify-center rounded-lg flex-shrink-0"
-            style={{
-              width: "28px",
-              height: "28px",
-              background: "linear-gradient(135deg,#3a3060,#252040)",
-              border: "1px solid #3a3060",
-            }}
-          >
+          <div className="flex items-center justify-center rounded-lg flex-shrink-0 w-7 h-7 bg-gradient-to-br from-[#3a3060] to-[#252040] border border-[#3a3060]">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <rect
                 x="1.5"
@@ -122,10 +111,7 @@ export default function AppSidebar() {
               />
             </svg>
           </div>
-          <span
-            className="font-bold text-white"
-            style={{ fontSize: "16px", letterSpacing: "-0.02em" }}
-          >
+          <span className="font-bold text-white text-base tracking-[-0.02em]">
             Leben
           </span>
 
@@ -172,17 +158,13 @@ export default function AppSidebar() {
                     toggleSidebar(false);
                   }
                 }}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors group
-                "
-                style={{
-                  backgroundColor: active ? "#1e1e1e" : "transparent",
-                  color: active ? "#f0f0f0" : "#555",
-                  fontSize: "13px",
-                  fontWeight: active ? 500 : 400,
-                  textDecoration: "none",
-                }}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors ${
+                  active
+                    ? "bg-[#1e1e1e] text-white font-medium"
+                    : "text-[#555] hover:text-white hover:bg-white/5"
+                } text-[13px]`}
               >
-                <span style={{ color: active ? "#7c6af0" : "#444" }}>
+                <span className={active ? "text-[#7c6af0]" : "text-[#444]"}>
                   {item.icon}
                 </span>
                 {item.label}
@@ -198,10 +180,7 @@ export default function AppSidebar() {
 
         {/* Bottom */}
         <div className="px-3 space-y-px">
-          <button
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg"
-            style={{ color: "#444", fontSize: "12px" }}
-          >
+          <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[#444] text-xs hover:text-white hover:bg-white/5 transition-colors">
             <HelpIcon /> Help
           </button>
           {isAuthenticated ? (
@@ -210,20 +189,14 @@ export default function AppSidebar() {
                 useLebenStore.getState().clearStore();
                 signOut();
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg"
-              style={{ color: "#444", fontSize: "12px" }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[#444] text-xs hover:text-white hover:bg-white/5 transition-colors"
             >
               <LogoutIcon /> Logout
             </button>
           ) : (
             <Link
               href="/auth/signin"
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors hover:bg-white/5"
-              style={{
-                color: "#7c6af0",
-                fontSize: "12px",
-                textDecoration: "none",
-              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[#7c6af0] text-xs transition-colors hover:bg-white/5"
             >
               <LogoutIcon /> Sign In
             </Link>
@@ -232,39 +205,22 @@ export default function AppSidebar() {
 
         {/* User profile */}
         <div
-          className="flex items-center gap-2.5 mx-3 mt-3 pt-3"
-          style={{ borderTop: "1px solid #1a1a1a" }}
+          className="flex items-center gap-2.5 mx-3 mt-3 pt-3 border-t border-[#1a1a1a] cursor-pointer"
           role="button"
           aria-roledescription="Go to profile"
           onClick={() => router.push("/settings")}
         >
-          <div
-            className="rounded-full flex-shrink-0"
-            style={{
-              width: "30px",
-              height: "30px",
-              background: "linear-gradient(135deg,#3a3a4a,#1e1e2e)",
-              border: "1.5px solid #333",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
+          <div className="w-[30px] h-[30px] rounded-full flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-[#3a3a4a] to-[#1e1e2e] border border-[#333]">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <circle cx="8" cy="6" r="2.5" fill="#888" />
               <path d="M3 14c0-2.8 2.2-5 5-5s5 2.2 5 5" fill="#888" />
             </svg>
           </div>
           <div>
-            <p
-              className="text-white font-medium capitalize"
-              style={{ fontSize: "12px", lineHeight: 1.3 }}
-            >
+            <p className="text-white font-medium capitalize text-[12px] leading-[1.3]">
               {userName}
             </p>
-            <p style={{ fontSize: "10px", color: "#444", lineHeight: 1.3 }}>
-              {userRole}
-            </p>
+            <p className="text-[#444] text-[10px] leading-[1.3]">{userRole}</p>
           </div>
         </div>
       </aside>

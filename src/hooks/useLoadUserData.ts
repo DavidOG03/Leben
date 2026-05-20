@@ -2,12 +2,14 @@
 "use client";
 
 import { useEffect } from "react";
+import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 import { useLebenStore } from "@/store/useStore";
 import {
   fetchTasks,
   fetchHabits,
   fetchGoals,
   fetchBooks,
+  fetchProductivityHistory,
 } from "@/lib/supabase/db";
 import { createClient } from "@/lib/supabase/client";
 
@@ -16,6 +18,7 @@ export function useLoadUserData() {
   const setHabits = useLebenStore((s) => s.setHabits);
   const setGoals = useLebenStore((s) => s.setGoals);
   const setBooks = useLebenStore((s) => s.setBooks);
+  const setProductivityHistory = useLebenStore((s) => s.setProductivityHistory);
   const setIsSyncing = useLebenStore((s) => s.setIsSyncing);
 
   useEffect(() => {
@@ -24,7 +27,7 @@ export function useLoadUserData() {
     const loadUserData = async () => {
       const {
         data: { user },
-      } = await supabase.auth.getUser();
+      }: { data: { user: User | null } } = await supabase.auth.getUser();
 
       if (!user) {
         useLebenStore.getState().clearStore();
@@ -33,17 +36,19 @@ export function useLoadUserData() {
 
       try {
         setIsSyncing(true);
-        const [tasks, habits, goals, books] = await Promise.all([
+        const [tasks, habits, goals, books, history] = await Promise.all([
           fetchTasks(),
           fetchHabits(),
           fetchGoals(),
           fetchBooks(),
+          fetchProductivityHistory(),
         ]);
 
         setTasks(tasks);
         setHabits(habits);
         setGoals(goals);
         setBooks(books);
+        setProductivityHistory(history);
       } catch (error) {
         console.error("Failed to load user data:", error);
       } finally {
@@ -54,44 +59,46 @@ export function useLoadUserData() {
     // Listen for auth state changes - this is our primary mechanism
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(
-        `🔄 Auth state changed: ${event}`,
-        session?.user?.id || "no user",
-      );
+    } = supabase.auth.onAuthStateChange(
+      async (event: AuthChangeEvent, session: Session | null) => {
+        console.log(
+          `🔄 Auth state changed: ${event}`,
+          session?.user?.id || "no user",
+        );
 
-      if (
-        (event === "SIGNED_IN" || event === "INITIAL_SESSION") &&
-        session?.user
-      ) {
-        // User is signed in - immediately clear any cached data and show loading state
-        useLebenStore.getState().clearStore();
+        if (
+          (event === "SIGNED_IN" || event === "INITIAL_SESSION") &&
+          session?.user
+        ) {
+          // User is signed in - immediately clear any cached data and show loading state
+          useLebenStore.getState().clearStore();
 
-        // Force clear localStorage for this store to prevent stale data
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("leben-storage");
+          // Force clear localStorage for this store to prevent stale data
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("leben-storage");
+          }
+
+          // Small delay to ensure UI updates before loading new data
+          setTimeout(async () => {
+            await loadUserData();
+          }, 100);
+        } else if (event === "SIGNED_OUT") {
+          // User signed out - clear everything
+          useLebenStore.getState().clearStore();
+
+          // Also clear localStorage
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("leben-storage");
+          }
+        } else if (event === "TOKEN_REFRESHED") {
+          // Token was refreshed, might need to reload data
+          const currentUser = useLebenStore.getState().tasks.length > 0; // Simple check if we have data
+          if (currentUser) {
+            await loadUserData();
+          }
         }
-
-        // Small delay to ensure UI updates before loading new data
-        setTimeout(async () => {
-          await loadUserData();
-        }, 100);
-      } else if (event === "SIGNED_OUT") {
-        // User signed out - clear everything
-        useLebenStore.getState().clearStore();
-
-        // Also clear localStorage
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("leben-storage");
-        }
-      } else if (event === "TOKEN_REFRESHED") {
-        // Token was refreshed, might need to reload data
-        const currentUser = useLebenStore.getState().tasks.length > 0; // Simple check if we have data
-        if (currentUser) {
-          await loadUserData();
-        }
-      }
-    });
+      },
+    );
 
     // Cleanup subscription on unmount
     return () => {

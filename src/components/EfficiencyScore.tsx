@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { useLebenStore } from "@/store/useStore";
 import Link from "next/link";
 
 export default function EfficiencyScore() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const tasks = useLebenStore((s) => s.tasks);
   const habits = useLebenStore((s) => s.habits);
   const goals = useLebenStore((s) => s.goals);
@@ -15,81 +16,119 @@ export default function EfficiencyScore() {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-      setLoading(false);
-    });
+    supabase.auth
+      .getUser()
+      .then(({ data }: { data: { user: User | null } }) => {
+        setUser(data.user);
+        setLoading(false);
+      });
   }, []);
 
   const analytics = useMemo(() => {
     if (!user) return null;
 
     const today = new Date();
+    const todayIso = today.toISOString().split("T")[0];
+    const weekDates = Array.from({ length: 7 }, (_, offset) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() - offset);
+      return d.toISOString().split("T")[0];
+    });
+
+    const allActivityDates = [
+      ...tasks
+        .map((t) => t.completedAt || t.date)
+        .filter(Boolean)
+        .map((value) => value.split("T")[0]),
+      ...habits.flatMap((h) => h.completedDates ?? []),
+      ...goals.flatMap((g) =>
+        g.milestones
+          .filter((m) => m.done && m.completedAt)
+          .map((m) => m.completedAt!.split("T")[0]),
+      ),
+    ] as string[];
+
+    const firstActivityDate = allActivityDates.sort()[0];
+    const msPerDay = 24 * 60 * 60 * 1000;
+    const daysSinceFirstActivity = firstActivityDate
+      ? Math.floor(
+          (new Date(todayIso).getTime() -
+            new Date(firstActivityDate).getTime()) /
+            msPerDay,
+        )
+      : 0;
+
     let totalScheduledTasks = 0;
     let totalCompletedTasks = 0;
-    let totalPossibleHabits = habits.length * 7;
     let totalCompletedHabits = 0;
-    let totalScheduledGoals = 0;
     let totalCompleteGoals = 0;
+    let weeklyActiveDays = 0;
 
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      const dateStr = date.toISOString().split("T")[0];
-
-      // Tasks
-      const tasksOnDay = tasks.filter(
-        (t) => t.date === dateStr || t.completedAt === dateStr,
+    for (const dateStr of weekDates) {
+      const dayTasks = tasks.filter(
+        (t) => t.date === dateStr || t.completedAt?.split("T")[0] === dateStr,
       );
-      totalScheduledTasks += tasksOnDay.length;
-      totalCompletedTasks += tasksOnDay.filter(
-        (t) => t.completed && t.completedAt === dateStr,
+      const dayCompletedTasks = dayTasks.filter(
+        (t) => t.completed && t.completedAt?.split("T")[0] === dateStr,
       ).length;
-
-      // Habits
-      totalCompletedHabits += habits.filter((h) =>
+      const dayHabits = habits.filter((h) =>
         h.completedDates?.includes(dateStr),
       ).length;
+      const dayGoals = goals.reduce(
+        (count, g) =>
+          count +
+          g.milestones.filter(
+            (m) => m.done && m.completedAt?.split("T")[0] === dateStr,
+          ).length,
+        0,
+      );
 
-      // Milestones (Goals)
-      goals.forEach((g) => {
-        const milestonesDone = g.milestones.filter(
-          (m) => m.done && m.completedAt === dateStr,
-        ).length;
-        totalCompleteGoals += milestonesDone;
-      });
+      totalScheduledTasks += dayTasks.length;
+      totalCompletedTasks += dayCompletedTasks;
+      totalCompletedHabits += dayHabits;
+      totalCompleteGoals += dayGoals;
+
+      if (dayTasks.length > 0 || dayHabits > 0 || dayGoals > 0) {
+        weeklyActiveDays += 1;
+      }
     }
 
-    // Goal rate logic: milestones completed vs total milestones across active goals
-    const totalMilestones = goals.reduce((acc, g) => acc + g.milestones.length, 0);
-    const goalRate = totalMilestones > 0 ? totalCompleteGoals / Math.max(totalMilestones / 2, 1) : 0; // Simplified "pace" check
+    const totalPossibleHabits = habits.length * 7;
+    const totalMilestones = goals.reduce(
+      (acc, g) => acc + g.milestones.length,
+      0,
+    );
+    const totalCompletedMilestones = goals.reduce(
+      (acc, g) => acc + g.milestones.filter((m) => m.done).length,
+      0,
+    );
 
     const taskRate =
       totalScheduledTasks > 0 ? totalCompletedTasks / totalScheduledTasks : 0;
     const habitRate =
       totalPossibleHabits > 0 ? totalCompletedHabits / totalPossibleHabits : 0;
+    const goalRate =
+      totalMilestones > 0 ? totalCompletedMilestones / totalMilestones : 0;
 
-    const clampedGoalRate = Math.min(goalRate, 1);
-
-    // Weight: 40% Tasks, 30% Habits, 30% Goals
-    let finalScore = 0;
     const weights = { task: 0.4, habit: 0.3, goal: 0.3 };
-    
     let activeWeightsCount = 0;
     if (totalScheduledTasks > 0) activeWeightsCount += weights.task;
     if (totalPossibleHabits > 0) activeWeightsCount += weights.habit;
     if (totalMilestones > 0) activeWeightsCount += weights.goal;
 
-    if (activeWeightsCount > 0) {
-      finalScore = (
-        (totalScheduledTasks > 0 ? (taskRate * weights.task) : 0) +
-        (totalPossibleHabits > 0 ? (habitRate * weights.habit) : 0) +
-        (totalMilestones > 0 ? (clampedGoalRate * weights.goal) : 0)
-      ) / activeWeightsCount * 100;
-    }
+    const finalScore =
+      activeWeightsCount > 0
+        ? (((totalScheduledTasks > 0 ? taskRate * weights.task : 0) +
+            (totalPossibleHabits > 0 ? habitRate * weights.habit : 0) +
+            (totalMilestones > 0 ? goalRate * weights.goal : 0)) /
+            activeWeightsCount) *
+          100
+        : 0;
 
-    // "After a week" logic
-    const hasEnoughData = totalScheduledTasks > 3 || totalCompletedHabits > 3 || totalCompleteGoals > 0;
+    const hasEnoughData =
+      firstActivityDate !== undefined &&
+      daysSinceFirstActivity >= 6 &&
+      weeklyActiveDays > 0;
 
     return {
       score: Math.round(finalScore),
@@ -103,7 +142,7 @@ export default function EfficiencyScore() {
               ? "Steady"
               : "Growth",
     };
-  }, [user, tasks, habits]);
+  }, [user, tasks, habits, goals]);
 
   const dashOffset = analytics ? (1 - analytics.score / 100) * 339 : 339; // 2 * PI * 54
 

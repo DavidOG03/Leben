@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { useLebenStore, Habit } from "@/store/useStore";
 import Link from "next/link";
@@ -10,7 +11,7 @@ export default function HabitStreaks() {
   const habits = useLebenStore((s: any) => s.habits) as Habit[];
   const toggleHabit = useLebenStore((s: any) => s.toggleHabit);
   const updateHabit = useLebenStore((s: any) => s.updateHabit);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [reminderHabit, setReminderHabit] = useState<string | null>(null);
   const [reminderTime, setReminderTime] = useState<string>("");
   const router = useRouter();
@@ -18,10 +19,12 @@ export default function HabitStreaks() {
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-      setLoading(false);
-    });
+    supabase.auth
+      .getUser()
+      .then(({ data }: { data: { user: User | null } }) => {
+        setUser(data.user);
+        setLoading(false);
+      });
   }, []);
 
   const handleSetReminder = (habitId: string) => {

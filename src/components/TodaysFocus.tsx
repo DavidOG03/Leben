@@ -6,6 +6,37 @@ import { CheckIcon, PlusIcon, TrashIcon } from "../constants/Icons";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+function renderInlineFormatting(text: string) {
+  const parts: Array<string | JSX.Element> = [];
+  const boldRegex = /\*\*(.+?)\*\*/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let keyIndex = 0;
+
+  while ((match = boldRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+    parts.push(
+      <span key={`bold-${match.index}-${keyIndex++}`} className="font-semibold">
+        {match[1]}
+      </span>,
+    );
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts;
+}
+
+function truncateWords(text: string, maxWords = 4) {
+  const words = text.trim().split(/\s+/);
+  return words.length > maxWords ? `${words.slice(0, maxWords).join(" ")}…` : text;
+}
+
 export default function TodaysFocus() {
   const tasks = useLebenStore((s) => s.tasks);
   const isSyncing = useLebenStore((s) => s.isSyncing);
@@ -139,7 +170,7 @@ export default function TodaysFocus() {
                   lineHeight: 1.4,
                 }}
               >
-                {task.title}
+                {renderInlineFormatting(truncateWords(task.title, 4))}
               </span>
 
               <div className="flex flex-col gap-2 items-end">

@@ -116,6 +116,34 @@ export const GridIcon = ({ className = "", style = {}, ...props } = {}) => (
   </svg>
 );
 
+export const CheckCircleIcon = ({ className = "", style = {}, ...props } = {}) => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={className} style={style} {...props}>
+    <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
+    <path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+export const RepeatIcon = ({ className = "", style = {}, ...props } = {}) => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={className} style={style} {...props}>
+    <path d="M2 5h9a3 3 0 010 6H2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M5 2L2 5l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M14 8h-9a3 3 0 010-6h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M11 11l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+export const TrophyIcon = ({ className = "", style = {}, ...props } = {}) => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={className} style={style} {...props}>
+    <path d="M8 11V13M5 15h6M3 2H1v2a4 4 0 003 3.87M13 2h2v2a4 4 0 01-3 3.87M5 2h6v5a3 3 0 01-6 0V2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+export const ChartIcon = ({ className = "", style = {}, ...props } = {}) => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={className} style={style} {...props}>
+    <path d="M2 12l4-4 3 3 5-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 export const TaskIcon = ({ className = "", style = {}, ...props } = {}) => (
   <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className={className} style={style} {...props}>
     <circle cx="7.5" cy="7.5" r="6" stroke="currentColor" strokeWidth="1.3" />

@@ -5,13 +5,13 @@
 :root {
   /* Global Tokens */
   --bg-primary: #0a0a0a;
-  --bg-secondary: #111111;
+  --bg-secondary: #333333;
   --bg-card: #161616;
   --border-subtle: #222222;
   --accent-purple: #6b7fff;
   --accent-purple-light: #5a6bff;
   --text-primary: #f0f0f0;
-  --text-secondary: #888888;
+  --text-secondary: #acacac;
   --text-muted: rgba(255, 255, 255, 0.25);
   --success-green: #4caf7d;
 
@@ -46,6 +46,13 @@ body {
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+
+p,
+span,
+label {
+  color: var(--text-secondary);
 }
 
 /* Custom scrollbar */

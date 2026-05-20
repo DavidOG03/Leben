@@ -22,18 +22,25 @@ export default function Header({ title, subtitle }: HeaderProps) {
     setMounted(true);
     async function fetchUser() {
       const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
 
-      if (user?.user_metadata?.full_name) {
-        setFirstName(user.user_metadata.full_name.split(" ")[0]);
-      } else if (user?.email) {
-        setFirstName(user.email.split("@")[0]);
-      } else {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user?.user_metadata?.full_name) {
+          setFirstName(user.user_metadata.full_name.split(" ")[0]);
+        } else if (user?.email) {
+          setFirstName(user.email.split("@")[0]);
+        } else {
+          setFirstName("Guest");
+        }
+      } catch (error) {
+        console.warn("Supabase auth lock error, falling back to Guest:", error);
         setFirstName("Guest");
       }
     }
+
     fetchUser();
   }, []);
 

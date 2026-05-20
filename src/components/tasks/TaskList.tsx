@@ -11,6 +11,32 @@ import {
 } from "../../constants/Icons";
 import ReminderPicker from "../shared/ReminderPicker";
 
+function renderInlineFormatting(text: string) {
+  const parts: Array<string | JSX.Element> = [];
+  const boldRegex = /\*\*(.+?)\*\*/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let keyIndex = 0;
+
+  while ((match = boldRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+    parts.push(
+      <span key={`bold-${match.index}-${keyIndex++}`} className="font-semibold">
+        {match[1]}
+      </span>,
+    );
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts;
+}
+
 export default function TaskList() {
   const tasks = useLebenStore((s) => s.tasks);
   const toggleTask = useLebenStore((s) => s.toggleTask);
@@ -172,7 +198,7 @@ export default function TaskList() {
                       lineHeight: 1.4,
                     }}
                   >
-                    {task.title}
+                    {renderInlineFormatting(task.title)}
                   </span>
                 )}
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { useLebenStore } from "@/store/useStore";
 import { useRouter } from "next/navigation";
@@ -61,7 +62,7 @@ export default function AIMorningBrief() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isUnavailable, setIsUnavailable] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
 
   const hasData = tasks.length > 0 || habits.length > 0 || goals.length > 0;
@@ -69,7 +70,9 @@ export default function AIMorningBrief() {
   // Detect auth state
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth
+      .getUser()
+      .then(({ data }: { data: { user: User | null } }) => setUser(data.user));
   }, []);
 
   // Countdown ticker removed — rate limiting now handled server-side
@@ -184,86 +187,84 @@ export default function AIMorningBrief() {
             }}
           >
             {hasData ? (
-                brief ? (
-                  brief.summary
-                ) : (
-                  "Ready to plan your day?"
-                )
+              brief ? (
+                brief.summary
               ) : (
-                <>
-                  Welcome to <span style={{ color: "#7c6af0" }}>Leben.</span>
-                </>
-              )}
+                "Ready to plan your day?"
+              )
+            ) : (
+              <>
+                Welcome to <span style={{ color: "#7c6af0" }}>Leben.</span>
+              </>
+            )}
           </h2>
 
           {/* Content area */}
           {hasData ? (
-              <div className="space-y-4">
-                {loading && (
-                  <div className="space-y-2 animate-pulse">
-                    <div className="h-3 rounded bg-white/5 w-3/4" />
-                    <div className="h-3 rounded bg-white/5 w-1/2" />
-                  </div>
-                )}
-  
-                {error && !loading && !isUnavailable && (
-                  <p style={{ fontSize: "13px", color: "#f87171" }}>{error}</p>
-                )}
-  
-                {isUnavailable && !loading && (
-                  <div
-                    className="rounded-xl p-4"
+            <div className="space-y-4">
+              {loading && (
+                <div className="space-y-2 animate-pulse">
+                  <div className="h-3 rounded bg-white/5 w-3/4" />
+                  <div className="h-3 rounded bg-white/5 w-1/2" />
+                </div>
+              )}
+
+              {error && !loading && !isUnavailable && (
+                <p style={{ fontSize: "13px", color: "#f87171" }}>{error}</p>
+              )}
+
+              {isUnavailable && !loading && (
+                <div
+                  className="rounded-xl p-4"
+                  style={{
+                    backgroundColor: "rgba(250, 200, 80, 0.06)",
+                    border: "1px solid rgba(250, 200, 80, 0.15)",
+                  }}
+                >
+                  <p
                     style={{
-                      backgroundColor: "rgba(250, 200, 80, 0.06)",
-                      border: "1px solid rgba(250, 200, 80, 0.15)",
+                      fontSize: "13px",
+                      color: "#facc50",
+                      lineHeight: 1.6,
                     }}
                   >
-                    <p
+                    ⏳ The AI is experiencing high demand right now. This is
+                    temporary — try again in a moment.
+                  </p>
+                </div>
+              )}
+
+              {brief && !loading && (
+                <div className="flex flex-wrap gap-2">
+                  {brief.insights.map((insight, i) => (
+                    <span
+                      key={i}
+                      className="px-2 py-1 rounded-md text-[10px] border font-medium tracking-tight"
                       style={{
-                        fontSize: "13px",
-                        color: "#facc50",
-                        lineHeight: 1.6,
+                        background: "rgba(124, 106, 240, 0.08)",
+                        color: "#7c6af0",
+                        borderColor: "rgba(124, 106, 240, 0.2)",
                       }}
                     >
-                      ⏳ The AI is experiencing high demand right now. This is
-                      temporary — try again in a moment.
-                    </p>
-                  </div>
-                )}
-  
-                {brief && !loading && (
-                  <div className="flex flex-wrap gap-2">
-                    {brief.insights.map((insight, i) => (
-                      <span
-                        key={i}
-                        className="px-2 py-1 rounded-md text-[10px] border font-medium tracking-tight"
-                        style={{
-                          background: "rgba(124, 106, 240, 0.08)",
-                          color: "#7c6af0",
-                          borderColor: "rgba(124, 106, 240, 0.2)",
-                        }}
-                      >
-                        {insight.toUpperCase()}
-                      </span>
-                    ))}
-                  </div>
-                )}
-  
-                {!brief && !loading && !error && (
-                  <p
-                    style={{ fontSize: "13px", color: "#555", lineHeight: 1.7 }}
-                  >
-                    Your AI morning brief will appear here. Hit the button below
-                    to generate it.
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p style={{ fontSize: "13px", color: "#555", lineHeight: 1.7 }}>
-                Your AI morning brief will appear here once you&apos;ve added
-                tasks, habits, and goals. Start by creating your first task.
-              </p>
-            )}
+                      {insight.toUpperCase()}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {!brief && !loading && !error && (
+                <p style={{ fontSize: "13px", color: "#555", lineHeight: 1.7 }}>
+                  Your AI morning brief will appear here. Hit the button below
+                  to generate it.
+                </p>
+              )}
+            </div>
+          ) : (
+            <p style={{ fontSize: "13px", color: "#555", lineHeight: 1.7 }}>
+              Your AI morning brief will appear here once you&apos;ve added
+              tasks, habits, and goals. Start by creating your first task.
+            </p>
+          )}
         </div>
 
         {/* CTAs */}
@@ -318,7 +319,7 @@ export default function AIMorningBrief() {
                   Regenerate
                 </button>
               )}
-              
+
               {!brief && !loading && !error && !isUnavailable && (
                 <button
                   onClick={() => handleGenerate()}

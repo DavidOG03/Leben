@@ -129,6 +129,14 @@ function mapBookToDB(book: Partial<Book>) {
   return row;
 }
 
+function mapHistoryFromDB(row: any): { date: string, completed: number, total: number } {
+  return {
+    date: row.date,
+    completed: row.completed ?? 0,
+    total: row.total ?? 0,
+  };
+}
+
 // ─── Tasks ────────────────────────────────────────────────────────────────────
 
 export async function fetchTasks(): Promise<Task[]> {
@@ -259,12 +267,39 @@ export async function deleteBook(id: string): Promise<void> {
   if (error) console.error("deleteBook:", error.message);
 }
 
+// ─── Productivity History ─────────────────────────────────────────────────────
+
+export async function fetchProductivityHistory(): Promise<Record<string, { completed: number; total: number }>> {
+  const { data, error } = await supabase.from("productivity_history").select("*");
+  if (error) {
+    console.error("fetchProductivityHistory:", error.message);
+    return {};
+  }
+  const history: Record<string, { completed: number; total: number }> = {};
+  (data ?? []).forEach((row: any) => {
+    history[row.date] = { completed: row.completed, total: row.total };
+  });
+  return history;
+}
+
+export async function upsertProductivityHistory(date: string, completed: number, total: number): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  const { error } = await supabase.from("productivity_history").upsert({
+    user_id: user.id,
+    date,
+    completed,
+    total
+  }, { onConflict: "user_id, date" });
+  if (error) console.error("upsertProductivityHistory:", error.message);
+}
+
 // ─── System ───────────────────────────────────────────────────────────────────
 
 export async function purgeAllData(): Promise<void> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
-  const tables = ["tasks", "habits", "goals", "books"];
+  const tables = ["tasks", "habits", "goals", "books", "productivity_history"];
   for (const table of tables) {
     const { error } = await supabase.from(table).delete().eq("user_id", user.id);
     if (error) console.error(`Failed to purge ${table}:`, error.message);

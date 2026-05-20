@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import type { User } from "@supabase/supabase-js";
 
 import AppSidebar from "@/components/shared/AppSidebar";
 import Header from "@/components/Header";
@@ -10,16 +11,18 @@ import { SparkleIcon, ArrowRightIcon } from "@/constants/Icons";
 
 export default function PlannerPage() {
   const [mounted, setMounted] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setMounted(true);
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-      setLoading(false);
-    });
+    supabase.auth
+      .getUser()
+      .then(({ data }: { data: { user: User | null } }) => {
+        setUser(data.user);
+        setLoading(false);
+      });
   }, []);
 
   if (!mounted) return null;

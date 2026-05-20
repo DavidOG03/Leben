@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { useLebenStore } from "@/store/useStore";
 
@@ -46,17 +47,19 @@ export default function SettingsContent() {
     email: false,
     push: true,
   });
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   const purgeAll = useLebenStore((s) => s.purgeAll);
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      if (data?.user) {
-        setUser(data.user);
-      }
-    });
+    supabase.auth
+      .getUser()
+      .then(({ data }: { data: { user: User | null } }) => {
+        if (data?.user) {
+          setUser(data.user);
+        }
+      });
   }, []);
 
   const handlePurge = () => {

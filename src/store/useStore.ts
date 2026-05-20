@@ -10,6 +10,7 @@ import {
   updateHabit,
   updateTask,
   purgeAllData,
+  upsertProductivityHistory,
 } from "@/lib/supabase/db";
 import { calcStreak, calcLongestStreak } from "@/utils/habits";
 
@@ -94,6 +95,9 @@ interface TasksHabitsSlice {
   setNotificationOpen: (open: boolean) => void;
   clearStore: () => void;
   purgeAll: () => void;
+  productivityHistory: Record<string, { completed: number; total: number }>;
+  setProductivityHistory: (history: Record<string, { completed: number; total: number }>) => void;
+  updateHistory: (date: string, completedDelta: number, totalDelta: number) => void;
 }
 
 export type LebenState = TasksHabitsSlice & GoalsSlice & BooksSlice;
@@ -104,6 +108,7 @@ export const useLebenStore = create<LebenState>()(
       // --- Tasks & Habits slice ---
       tasks: [],
       habits: [],
+      productivityHistory: {},
       isSidebarOpen: false,
       isSyncing: false,
       setIsSyncing: (isSyncing) => set({ isSyncing }),
@@ -139,6 +144,25 @@ export const useLebenStore = create<LebenState>()(
         set((state) => ({
           isSidebarOpen: isOpen !== undefined ? isOpen : !state.isSidebarOpen,
         })),
+      updateHistory: (date, completedDelta, totalDelta) => {
+        set((state) => {
+          const history = { ...(state.productivityHistory || {}) };
+          if (!history[date]) history[date] = { completed: 0, total: 0 };
+          const newCompleted = Math.max(0, history[date].completed + completedDelta);
+          const newTotal = Math.max(0, history[date].total + totalDelta);
+          
+          history[date] = {
+            completed: newCompleted,
+            total: newTotal,
+          };
+          
+          // Sync to Supabase
+          upsertProductivityHistory(date, newCompleted, newTotal);
+          
+          return { productivityHistory: history };
+        });
+      },
+      setProductivityHistory: (history) => set({ productivityHistory: history }),
       setTasks: (tasks) => set({ tasks }),
       setHabits: (habits) => {
         const today = new Date().toISOString().split("T")[0];
@@ -151,10 +175,16 @@ export const useLebenStore = create<LebenState>()(
 
       toggleTask: (id) => {
         const today = new Date().toISOString().split("T")[0];
+        const state = get();
+        const task = state.tasks.find((t) => t.id === id);
+        if (!task) return;
+
+        const newCompleted = !task.completed;
+        const dateStr = task.date || today;
+
         set((state) => ({
           tasks: state.tasks.map((t) => {
             if (t.id === id) {
-              const newCompleted = !t.completed;
               return {
                 ...t,
                 completed: newCompleted,
@@ -165,14 +195,15 @@ export const useLebenStore = create<LebenState>()(
             return t;
           }),
         }));
-        const task = get().tasks.find((t) => t.id === id);
-        if (task) {
-          updateTask(id, {
-            completed: task.completed,
-            completedAt: task.completedAt,
-            reminderAt: task.reminderAt,
-          });
-        }
+
+        // Update history
+        get().updateHistory(dateStr, newCompleted ? 1 : -1, 0);
+
+        updateTask(id, {
+          completed: newCompleted,
+          completedAt: newCompleted ? today : undefined,
+          reminderAt: newCompleted ? undefined : task.reminderAt,
+        });
       },
       toggleHabit: (id) => {
         set((state) => ({
@@ -204,11 +235,20 @@ export const useLebenStore = create<LebenState>()(
         if (updated) updateHabit(id, updated);
       },
       addTask: (task) => {
+        const today = new Date().toISOString().split("T")[0];
+        const dateStr = task.date || today;
         set((state) => ({ tasks: [...state.tasks, task] }));
+        get().updateHistory(dateStr, 0, 1);
         insertTask(task);
       },
 
       updateTask: (id, updates) => {
+        const state = get();
+        const task = state.tasks.find((t) => t.id === id);
+        if (task && updates.completed !== undefined && updates.completed !== task.completed) {
+          const dateStr = task.date || new Date().toISOString().split("T")[0];
+          get().updateHistory(dateStr, updates.completed ? 1 : -1, 0);
+        }
         set((state) => ({
           tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...updates } : t)),
         }));
@@ -251,16 +291,20 @@ export const useLebenStore = create<LebenState>()(
 
           let newTasks = state.tasks;
           if (scheduleItem.taskId) {
-            newTasks = state.tasks.map((t) =>
-              t.id === scheduleItem.taskId
-                ? {
-                    ...t,
-                    completed: newStatus === "completed",
-                    reminderAt:
-                      newStatus === "completed" ? undefined : t.reminderAt,
-                  }
-                : t,
-            );
+            newTasks = state.tasks.map((t) => {
+              if (t.id === scheduleItem.taskId) {
+                const dateStr = t.date || new Date().toISOString().split("T")[0];
+                if (t.completed !== (newStatus === "completed")) {
+                  get().updateHistory(dateStr, newStatus === "completed" ? 1 : -1, 0);
+                }
+                return {
+                  ...t,
+                  completed: newStatus === "completed",
+                  reminderAt: newStatus === "completed" ? undefined : t.reminderAt,
+                };
+              }
+              return t;
+            });
           }
 
           return { 
@@ -280,6 +324,7 @@ export const useLebenStore = create<LebenState>()(
         set({
           tasks: [],
           habits: [],
+          productivityHistory: {},
           goals: [],
           books: [],
           schedule: [],

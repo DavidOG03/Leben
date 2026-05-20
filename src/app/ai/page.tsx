@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import type { User } from "@supabase/supabase-js";
 import AppSidebar from "@/components/shared/AppSidebar";
 import AILeftPanel from "@/components/ai/AILeftPanel";
 import AIChatPanel from "@/components/ai/AIChatPanel";
@@ -12,13 +13,13 @@ import { AIIcon, ArrowRightIcon } from "@/constants/Icons";
 
 export default function AIPage() {
   const [mounted, setMounted] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setMounted(true);
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(({ data }: { data: { user: User | null } }) => {
       setUser(data.user);
       setLoading(false);
     });

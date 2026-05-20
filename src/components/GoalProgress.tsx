@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { useLebenStore } from "@/store/useStore";
 import { deriveGoalStats, Goal, Milestone } from "@/utils/goals.types";
@@ -12,15 +13,17 @@ export default function GoalProgress() {
   const goals = useLebenStore((s: any) => s.goals) as Goal[];
   const isSyncing = useLebenStore((s: any) => s.isSyncing) as boolean;
   const toggleMilestone = useLebenStore((s: any) => s.toggleMilestone);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-    });
+    supabase.auth
+      .getUser()
+      .then(({ data }: { data: { user: User | null } }) => {
+        setUser(data.user);
+      });
   }, []);
 
   return (
@@ -33,10 +36,7 @@ export default function GoalProgress() {
       }}
     >
       <div className="flex items-center justify-between mb-5">
-        <h3
-          className="font-semibold text-white"
-          style={{ fontSize: "15px" }}
-        >
+        <h3 className="font-semibold text-white" style={{ fontSize: "15px" }}>
           Goal Progress
         </h3>
         {!(loading || isSyncing) && goals.length > 0 && (
@@ -50,7 +50,7 @@ export default function GoalProgress() {
         )}
       </div>
 
-      {(loading || isSyncing) ? (
+      {loading || isSyncing ? (
         <div className="space-y-6 flex-1 animate-pulse">
           {[1, 2].map((i) => (
             <div key={i}>
@@ -70,23 +70,23 @@ export default function GoalProgress() {
           ))}
         </div>
       ) : goals.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 my-auto pt-2">
-            <PlusIcon />
-            <p style={{ fontSize: "11px", color: "#333" }}>No goals added yet</p>
-            <Link
-              href="/goals"
-              className="px-4 py-1.5 rounded-lg transition-opacity hover:opacity-80"
-              style={{
-                fontSize: "11px",
-                color: "#666",
-                border: "1px solid #222",
-                textDecoration: "none",
-              }}
-            >
-              Create a goal
-            </Link>
-          </div>
-        ) : (
+        <div className="flex flex-col items-center gap-2 my-auto pt-2">
+          <PlusIcon />
+          <p style={{ fontSize: "11px", color: "#333" }}>No goals added yet</p>
+          <Link
+            href="/goals"
+            className="px-4 py-1.5 rounded-lg transition-opacity hover:opacity-80"
+            style={{
+              fontSize: "11px",
+              color: "#666",
+              border: "1px solid #222",
+              textDecoration: "none",
+            }}
+          >
+            Create a goal
+          </Link>
+        </div>
+      ) : (
         <div className="space-y-6 flex-1 pr-1">
           {goals.slice(0, 2).map((g) => {
             const { progress } = deriveGoalStats(g);
