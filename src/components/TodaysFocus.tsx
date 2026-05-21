@@ -49,6 +49,10 @@ export default function TodaysFocus() {
   const [reminderTime, setReminderTime] = useState<string>("");
   const router = useRouter();
 
+  const handleToggleTask = (taskId: string) => {
+    toggleTask(taskId);
+  };
+
   const handleSetReminder = (taskId: string) => {
     if (!reminderTime) return;
 
@@ -144,7 +148,7 @@ export default function TodaysFocus() {
             >
               {/* Checkbox */}
               <button
-                onClick={() => toggleTask(task.id)}
+                onClick={() => handleToggleTask(task.id)}
                 className="flex-shrink-0 flex items-center justify-center transition-all"
                 style={{
                   width: "18px",

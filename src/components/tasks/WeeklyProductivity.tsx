@@ -17,21 +17,22 @@ export default function WeeklyProductivity() {
       date.setDate(today.getDate() - (6 - idx));
       const dateStr = date.toISOString().split("T")[0];
 
-      // Current tasks for this date
-      const scheduled = tasks.filter(
-        (t) => t.date === dateStr || t.completedAt === dateStr,
-      );
-      const currentCompleted = scheduled.filter(
+      // Only count tasks that were actually completed on this date
+      // (scheduled date doesn't affect productivity; only completion date does)
+      const completedOnThisDay = tasks.filter(
         (t) => t.completed && t.completedAt === dateStr,
-      ).length;
-      const currentTotal = scheduled.length;
+      );
+      const currentCompleted = completedOnThisDay.length;
+      const currentTotal = completedOnThisDay.length;
 
       // History data
       const hist = history[dateStr] || { completed: 0, total: 0 };
 
       // Use the maximum of current or history to handle migration and deletions
+      // Important: if tasks were deleted after completion, history preserves the count
       const completed = Math.max(currentCompleted, hist.completed);
-      const total = Math.max(currentTotal, hist.total);
+      // Total should be the max of current/history, but never less than completed count
+      const total = Math.max(currentTotal, hist.total, completed);
 
       return {
         day: DAY_LABELS[date.getDay()],

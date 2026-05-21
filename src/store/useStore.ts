@@ -96,8 +96,14 @@ interface TasksHabitsSlice {
   clearStore: () => void;
   purgeAll: () => void;
   productivityHistory: Record<string, { completed: number; total: number }>;
-  setProductivityHistory: (history: Record<string, { completed: number; total: number }>) => void;
-  updateHistory: (date: string, completedDelta: number, totalDelta: number) => void;
+  setProductivityHistory: (
+    history: Record<string, { completed: number; total: number }>,
+  ) => void;
+  updateHistory: (
+    date: string,
+    completedDelta: number,
+    totalDelta: number,
+  ) => void;
 }
 
 export type LebenState = TasksHabitsSlice & GoalsSlice & BooksSlice;
@@ -148,27 +154,31 @@ export const useLebenStore = create<LebenState>()(
         set((state) => {
           const history = { ...(state.productivityHistory || {}) };
           if (!history[date]) history[date] = { completed: 0, total: 0 };
-          const newCompleted = Math.max(0, history[date].completed + completedDelta);
+          const newCompleted = Math.max(
+            0,
+            history[date].completed + completedDelta,
+          );
           const newTotal = Math.max(0, history[date].total + totalDelta);
-          
+
           history[date] = {
             completed: newCompleted,
             total: newTotal,
           };
-          
+
           // Sync to Supabase
           upsertProductivityHistory(date, newCompleted, newTotal);
-          
+
           return { productivityHistory: history };
         });
       },
-      setProductivityHistory: (history) => set({ productivityHistory: history }),
+      setProductivityHistory: (history) =>
+        set({ productivityHistory: history }),
       setTasks: (tasks) => set({ tasks }),
       setHabits: (habits) => {
         const today = new Date().toISOString().split("T")[0];
-        const habitsWithChecked = habits.map(h => ({
+        const habitsWithChecked = habits.map((h) => ({
           ...h,
-          checked: h.completedDates?.includes(today) ?? false
+          checked: h.completedDates?.includes(today) ?? false,
         }));
         set({ habits: habitsWithChecked });
       },
@@ -180,7 +190,6 @@ export const useLebenStore = create<LebenState>()(
         if (!task) return;
 
         const newCompleted = !task.completed;
-        const dateStr = task.date || today;
 
         set((state) => ({
           tasks: state.tasks.map((t) => {
@@ -195,9 +204,6 @@ export const useLebenStore = create<LebenState>()(
             return t;
           }),
         }));
-
-        // Update history
-        get().updateHistory(dateStr, newCompleted ? 1 : -1, 0);
 
         updateTask(id, {
           completed: newCompleted,
@@ -245,12 +251,21 @@ export const useLebenStore = create<LebenState>()(
       updateTask: (id, updates) => {
         const state = get();
         const task = state.tasks.find((t) => t.id === id);
-        if (task && updates.completed !== undefined && updates.completed !== task.completed) {
-          const dateStr = task.date || new Date().toISOString().split("T")[0];
+        if (
+          task &&
+          updates.completed !== undefined &&
+          updates.completed !== task.completed
+        ) {
+          const today = new Date().toISOString().split("T")[0];
+          const dateStr = updates.completed
+            ? (updates.completedAt ?? today)
+            : (task.completedAt ?? today);
           get().updateHistory(dateStr, updates.completed ? 1 : -1, 0);
         }
         set((state) => ({
-          tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...updates } : t)),
+          tasks: state.tasks.map((t) =>
+            t.id === id ? { ...t, ...updates } : t,
+          ),
         }));
         updateTask(id, updates);
       },
@@ -293,23 +308,29 @@ export const useLebenStore = create<LebenState>()(
           if (scheduleItem.taskId) {
             newTasks = state.tasks.map((t) => {
               if (t.id === scheduleItem.taskId) {
-                const dateStr = t.date || new Date().toISOString().split("T")[0];
+                const dateStr =
+                  t.date || new Date().toISOString().split("T")[0];
                 if (t.completed !== (newStatus === "completed")) {
-                  get().updateHistory(dateStr, newStatus === "completed" ? 1 : -1, 0);
+                  get().updateHistory(
+                    dateStr,
+                    newStatus === "completed" ? 1 : -1,
+                    0,
+                  );
                 }
                 return {
                   ...t,
                   completed: newStatus === "completed",
-                  reminderAt: newStatus === "completed" ? undefined : t.reminderAt,
+                  reminderAt:
+                    newStatus === "completed" ? undefined : t.reminderAt,
                 };
               }
               return t;
             });
           }
 
-          return { 
-            schedule: newSchedule, 
-            tasks: newTasks 
+          return {
+            schedule: newSchedule,
+            tasks: newTasks,
           };
         }),
 

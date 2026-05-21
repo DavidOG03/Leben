@@ -85,10 +85,6 @@ interface Props {
 }
 
 export function ProductivityScore({ data, hasData }: Props) {
-  // Fallbacks purely for visual representation until Focus Timer is fully wired
-  const deepWorkSessions = data.deepWorkSessions || Math.floor(data.score / 5);
-  const avgDailyScore = data.avgDailyScore || Math.round(data.score * 0.9);
-
   return (
     <div
       className="rounded-2xl p-5"
@@ -114,7 +110,7 @@ export function ProductivityScore({ data, hasData }: Props) {
               lineHeight: 1,
             }}
           >
-            {data.score}
+            {data.score} %
           </p>
           <p style={{ fontSize: "11px", color: "#7c6af0", marginTop: "4px" }}>
             Based on {data.taskCount} tasks &amp; {data.habitCount} habits
@@ -123,37 +119,7 @@ export function ProductivityScore({ data, hasData }: Props) {
         <TrendLine data={data.trend} />
       </div>
 
-      <div className="mt-4 space-y-2.5">
-        {[
-          {
-            label: "Deep Work Sessions (est.)",
-            val: deepWorkSessions,
-            max: 20,
-          },
-          { label: "Avg Daily Score", val: avgDailyScore, max: 100 },
-        ].map(({ label, val, max }) => (
-          <div key={label}>
-            <div className="flex justify-between mb-1">
-              <span style={{ fontSize: "11px", color: "#555" }}>{label}</span>
-              <span style={{ fontSize: "11px", color: "#888" }}>
-                {val}/{max}
-              </span>
-            </div>
-            <div
-              className="rounded-full overflow-hidden"
-              style={{ height: "3px", backgroundColor: "#1a1a1a" }}
-            >
-              <div
-                className="h-full rounded-full"
-                style={{
-                  width: `${Math.min((val / max) * 100, 100)}%`,
-                  background: "linear-gradient(90deg,#5a4fd4,#7c6af0)",
-                }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Placeholder metrics removed until the focus timer is active. */}
     </div>
   );
 }

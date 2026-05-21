@@ -69,6 +69,10 @@ export default function TaskList() {
 
   const cancelEdit = () => setEditingId(null);
 
+  const handleToggleTask = (taskId: string) => {
+    toggleTask(taskId);
+  };
+
   const handleSetReminder = (taskId: string, isoDate: string | undefined) => {
     updateTask(taskId, { reminderAt: isoDate });
     setReminderEditingId(null);
@@ -148,7 +152,7 @@ export default function TaskList() {
             <div className="flex items-center gap-3 px-4 py-3.5">
               {/* Checkbox */}
               <button
-                onClick={() => toggleTask(task.id)}
+                onClick={() => handleToggleTask(task.id)}
                 className="flex-shrink-0 flex items-center justify-center transition-all"
                 style={{
                   width: "18px",
