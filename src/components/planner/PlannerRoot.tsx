@@ -37,7 +37,7 @@ export function PlannerRoot() {
   const [waitCountdown, setWaitCountdown] = useState<number | null>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
 
-  const isAlive = tasks.length > 2;
+  const isAlive = tasks.length > 1;
 
   useEffect(() => {
     if (waitCountdown !== null && waitCountdown > 0) {
@@ -69,7 +69,11 @@ export function PlannerRoot() {
         schedule: newSchedule,
         insights,
         mainFocus: newMainFocus,
-      } = await generateDayPlan({ tasks, habits, goals }, undefined, forceRefresh);
+      } = await generateDayPlan(
+        { tasks, habits, goals },
+        undefined,
+        forceRefresh,
+      );
 
       setSchedule(newSchedule);
       setAiInsights(insights);

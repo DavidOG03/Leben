@@ -203,7 +203,7 @@ export default function GoalsContent() {
   const habits = useLebenStore((s) => s.habits);
   const [showModal, setShowModal] = useState(false);
 
-  const topGoals = goals.slice(0, 3);
+  const topGoals = goals;
   const financialGoal = goals.find(
     (g) => g.title.toLowerCase().includes("financ") || g.icon === "💰",
   );
@@ -265,7 +265,7 @@ export default function GoalsContent() {
       </div>
 
       {/* Top 3 goal cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
+      <div className="overflow-y-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
         {!hasGoals
           ? [0, 1, 2].map((i) => <GoalCardSkeleton key={i} />)
           : topGoals.map((g) => <GoalCard key={g.id} goal={g} />)}
