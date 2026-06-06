@@ -4,9 +4,9 @@ import type { RefObject } from "react";
 import { SparkleIcon } from "@/constants/Icons";
 import {
   getImportStateKey,
+  getImportButtonLabel,
   parseAssistantContent,
   parseStructuredListItems,
-  summarizeCounts,
 } from "@/utils/aiChatImportUtils";
 import type { ChatMessage, ImportKind } from "@/utils/aiChatTypes";
 
@@ -142,9 +142,10 @@ export default function AIChatMessages({
                             : "1px solid #6258f2",
                         }}
                       >
-                        {importedMessageIds[importKey]
-                          ? "Imported"
-                          : `Import ${summarizeCounts(counts)}`}
+                        {getImportButtonLabel(
+                          counts,
+                          Boolean(importedMessageIds[importKey]),
+                        )}
                       </button>
                     )}
                   </div>

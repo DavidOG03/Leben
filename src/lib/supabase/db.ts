@@ -4,7 +4,7 @@ import type { Task, Habit } from "@/store/useStore";
 import type { Goal } from "@/utils/goals.types";
 import type { Book } from "@/store/bookSlice";
 
-const supabase = createClient();
+const getSupabase = () => createClient();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -140,7 +140,7 @@ function mapHistoryFromDB(row: any): { date: string, completed: number, total: n
 // ─── Tasks ────────────────────────────────────────────────────────────────────
 
 export async function fetchTasks(): Promise<Task[]> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("tasks")
     .select("*")
     .order("created_at", { ascending: false });
@@ -153,28 +153,28 @@ export async function fetchTasks(): Promise<Task[]> {
 }
 
 export async function insertTask(task: Task): Promise<void> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await getSupabase().auth.getUser();
   if (!user) return;
   const dbRow = mapTaskToDB(task);
-  const { error } = await supabase.from("tasks").insert({ ...dbRow, user_id: user.id });
+  const { error } = await getSupabase().from("tasks").insert({ ...dbRow, user_id: user.id });
   if (error) console.error("insertTask:", error.message);
 }
 
 export async function updateTask(id: string, updates: Partial<Task>): Promise<void> {
   const dbRow = mapTaskToDB(updates);
-  const { error } = await supabase.from("tasks").update(dbRow).eq("id", id);
+  const { error } = await getSupabase().from("tasks").update(dbRow).eq("id", id);
   if (error) console.error("updateTask:", error.message);
 }
 
 export async function deleteTask(id: string): Promise<void> {
-  const { error } = await supabase.from("tasks").delete().eq("id", id);
+  const { error } = await getSupabase().from("tasks").delete().eq("id", id);
   if (error) console.error("deleteTask:", error.message);
 }
 
 // ─── Habits ───────────────────────────────────────────────────────────────────
 
 export async function fetchHabits(): Promise<Habit[]> {
-  const { data, error } = await supabase.from("habits").select("*");
+  const { data, error } = await getSupabase().from("habits").select("*");
   if (error) {
     console.error("fetchHabits:", error.message);
     return [];
@@ -183,28 +183,28 @@ export async function fetchHabits(): Promise<Habit[]> {
 }
 
 export async function insertHabit(habit: Habit): Promise<void> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await getSupabase().auth.getUser();
   if (!user) return;
   const dbRow = mapHabitToDB(habit);
-  const { error } = await supabase.from("habits").insert({ ...dbRow, user_id: user.id });
+  const { error } = await getSupabase().from("habits").insert({ ...dbRow, user_id: user.id });
   if (error) console.error("insertHabit:", error.message);
 }
 
 export async function updateHabit(id: string, updates: Partial<Habit>): Promise<void> {
   const dbRow = mapHabitToDB(updates);
-  const { error } = await supabase.from("habits").update(dbRow).eq("id", id);
+  const { error } = await getSupabase().from("habits").update(dbRow).eq("id", id);
   if (error) console.error("updateHabit:", error.message);
 }
 
 export async function removeHabit(id: string): Promise<void> {
-  const { error } = await supabase.from("habits").delete().eq("id", id);
+  const { error } = await getSupabase().from("habits").delete().eq("id", id);
   if (error) console.error("removeHabit:", error.message);
 }
 
 // ─── Goals ────────────────────────────────────────────────────────────────────
 
 export async function fetchGoals(): Promise<Goal[]> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("goals")
     .select("*")
     .order("created_at", { ascending: false });
@@ -216,28 +216,28 @@ export async function fetchGoals(): Promise<Goal[]> {
 }
 
 export async function insertGoal(goal: Goal): Promise<void> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await getSupabase().auth.getUser();
   if (!user) return;
   const dbRow = mapGoalToDB(goal);
-  const { error } = await supabase.from("goals").insert({ ...dbRow, user_id: user.id });
+  const { error } = await getSupabase().from("goals").insert({ ...dbRow, user_id: user.id });
   if (error) console.error("insertGoal:", error.message);
 }
 
 export async function updateGoal(id: string, updates: Partial<Goal>): Promise<void> {
   const dbRow = mapGoalToDB(updates);
-  const { error } = await supabase.from("goals").update(dbRow).eq("id", id);
+  const { error } = await getSupabase().from("goals").update(dbRow).eq("id", id);
   if (error) console.error("updateGoal:", error.message);
 }
 
 export async function deleteGoal(id: string): Promise<void> {
-  const { error } = await supabase.from("goals").delete().eq("id", id);
+  const { error } = await getSupabase().from("goals").delete().eq("id", id);
   if (error) console.error("deleteGoal:", error.message);
 }
 
 // ─── Books ────────────────────────────────────────────────────────────────────
 
 export async function fetchBooks(): Promise<Book[]> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("books")
     .select("*")
     .order("added_at", { ascending: false });
@@ -249,28 +249,28 @@ export async function fetchBooks(): Promise<Book[]> {
 }
 
 export async function insertBook(book: Book): Promise<void> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await getSupabase().auth.getUser();
   if (!user) return;
   const dbRow = mapBookToDB(book);
-  const { error } = await supabase.from("books").insert({ ...dbRow, user_id: user.id });
+  const { error } = await getSupabase().from("books").insert({ ...dbRow, user_id: user.id });
   if (error) console.error("insertBook:", error.message);
 }
 
 export async function updateBook(id: string, updates: Partial<Book>): Promise<void> {
   const dbRow = mapBookToDB(updates);
-  const { error } = await supabase.from("books").update(dbRow).eq("id", id);
+  const { error } = await getSupabase().from("books").update(dbRow).eq("id", id);
   if (error) console.error("updateBook:", error.message);
 }
 
 export async function deleteBook(id: string): Promise<void> {
-  const { error } = await supabase.from("books").delete().eq("id", id);
+  const { error } = await getSupabase().from("books").delete().eq("id", id);
   if (error) console.error("deleteBook:", error.message);
 }
 
 // ─── Productivity History ─────────────────────────────────────────────────────
 
 export async function fetchProductivityHistory(): Promise<Record<string, { completed: number; total: number }>> {
-  const { data, error } = await supabase.from("productivity_history").select("*");
+  const { data, error } = await getSupabase().from("productivity_history").select("*");
   if (error) {
     console.error("fetchProductivityHistory:", error.message);
     return {};
@@ -283,9 +283,9 @@ export async function fetchProductivityHistory(): Promise<Record<string, { compl
 }
 
 export async function upsertProductivityHistory(date: string, completed: number, total: number): Promise<void> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await getSupabase().auth.getUser();
   if (!user) return;
-  const { error } = await supabase.from("productivity_history").upsert({
+  const { error } = await getSupabase().from("productivity_history").upsert({
     user_id: user.id,
     date,
     completed,
@@ -297,11 +297,11 @@ export async function upsertProductivityHistory(date: string, completed: number,
 // ─── System ───────────────────────────────────────────────────────────────────
 
 export async function purgeAllData(): Promise<void> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await getSupabase().auth.getUser();
   if (!user) return;
   const tables = ["tasks", "habits", "goals", "books", "productivity_history"];
   for (const table of tables) {
-    const { error } = await supabase.from(table).delete().eq("user_id", user.id);
+    const { error } = await getSupabase().from(table).delete().eq("user_id", user.id);
     if (error) console.error(`Failed to purge ${table}:`, error.message);
   }
 }

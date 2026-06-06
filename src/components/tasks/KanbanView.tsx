@@ -1,7 +1,12 @@
 "use client";
 
 import { useLebenStore, Task } from "@/store/useStore";
-import { BellIcon, CheckIcon, TrashIcon, EditIcon } from "../../constants/Icons";
+import {
+  BellIcon,
+  CheckIcon,
+  TrashIcon,
+  EditIcon,
+} from "../../constants/Icons";
 import ReminderPicker from "../shared/ReminderPicker";
 import { useState, useRef, useEffect } from "react";
 
@@ -12,7 +17,9 @@ export default function KanbanView() {
   const updateTask = useLebenStore((s) => s.updateTask);
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [reminderEditingId, setReminderEditingId] = useState<string | null>(null);
+  const [reminderEditingId, setReminderEditingId] = useState<string | null>(
+    null,
+  );
   const [editTitle, setEditTitle] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -26,7 +33,8 @@ export default function KanbanView() {
   };
 
   const saveEdit = () => {
-    if (editingId && editTitle.trim()) updateTask(editingId, { title: editTitle.trim() });
+    if (editingId && editTitle.trim())
+      updateTask(editingId, { title: editTitle.trim() });
     setEditingId(null);
   };
 
@@ -56,7 +64,7 @@ export default function KanbanView() {
             </div>
 
             <div
-              className="flex-1 rounded-2xl p-3 flex flex-col gap-3"
+              className="flex-1 rounded-2xl p-3 flex flex-col gap-3 overflow-y-auto"
               style={{ backgroundColor: "#111", border: "1px solid #1a1a1a" }}
             >
               {colTasks.length === 0 ? (
@@ -68,7 +76,10 @@ export default function KanbanView() {
                   <div
                     key={task.id}
                     className="p-4 rounded-xl transition-all relative"
-                    style={{ backgroundColor: "#161616", border: "1px solid #222" }}
+                    style={{
+                      backgroundColor: "#161616",
+                      border: "1px solid #222",
+                    }}
                   >
                     {/* ── Top row: meta + always-visible actions ── */}
                     <div className="flex items-start justify-between mb-3">
@@ -77,7 +88,11 @@ export default function KanbanView() {
                           className="w-1.5 h-1.5 rounded-full"
                           style={{
                             backgroundColor:
-                              task.priority === "high" ? "#e85555" : task.priority === "low" ? "#55e855" : "#e8a855",
+                              task.priority === "high"
+                                ? "#e85555"
+                                : task.priority === "low"
+                                  ? "#55e855"
+                                  : "#e8a855",
                             boxShadow: `0 0 6px ${task.priority === "high" ? "#e85555" : task.priority === "low" ? "#55e855" : "#e8a855"}44`,
                           }}
                         />
@@ -87,7 +102,10 @@ export default function KanbanView() {
                             fontSize: "9px",
                             fontWeight: 700,
                             letterSpacing: "0.02em",
-                            backgroundColor: task.tag === "WORK" ? "rgba(74,122,191,0.1)" : "rgba(138,90,191,0.1)",
+                            backgroundColor:
+                              task.tag === "WORK"
+                                ? "rgba(74,122,191,0.1)"
+                                : "rgba(138,90,191,0.1)",
                             color: task.tag === "WORK" ? "#4a7abf" : "#8a5abf",
                             border: `1px solid ${task.tag === "WORK" ? "rgba(74,122,191,0.2)" : "rgba(138,90,191,0.2)"}`,
                           }}
@@ -100,10 +118,18 @@ export default function KanbanView() {
                       <div className="flex items-center gap-1">
                         {/* Reminder — coloured if set */}
                         <button
-                          onClick={() => setReminderEditingId(reminderEditingId === task.id ? null : task.id)}
+                          onClick={() =>
+                            setReminderEditingId(
+                              reminderEditingId === task.id ? null : task.id,
+                            )
+                          }
                           className={`flex items-center justify-center p-1.5 rounded-lg transition-all hover:bg-white/5 ${task.reminderAt ? "text-[#7c6af0]" : "text-[#555]"}`}
                           aria-label="Set reminder"
-                          title={task.reminderAt ? `Reminder: ${new Date(task.reminderAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "Set reminder"}
+                          title={
+                            task.reminderAt
+                              ? `Reminder: ${new Date(task.reminderAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                              : "Set reminder"
+                          }
                         >
                           <BellIcon />
                         </button>
@@ -125,8 +151,12 @@ export default function KanbanView() {
                             width: "16px",
                             height: "16px",
                             borderRadius: "5px",
-                            border: task.completed ? "1px solid #3a7a4a" : "1px solid #333",
-                            backgroundColor: task.completed ? "#1e3d26" : "#1a1a1a",
+                            border: task.completed
+                              ? "1px solid #3a7a4a"
+                              : "1px solid #333",
+                            backgroundColor: task.completed
+                              ? "#1e3d26"
+                              : "#1a1a1a",
                             color: task.completed ? "#4caf70" : "transparent",
                           }}
                         >
@@ -150,7 +180,9 @@ export default function KanbanView() {
                       style={{
                         fontSize: "13px",
                         color: task.completed ? "#555" : "#eee",
-                        textDecoration: task.completed ? "line-through" : "none",
+                        textDecoration: task.completed
+                          ? "line-through"
+                          : "none",
                         lineHeight: 1.5,
                         marginBottom: "4px",
                       }}
@@ -174,12 +206,20 @@ export default function KanbanView() {
 
                     {/* ── Date + Reminder label ── */}
                     <div className="flex items-center justify-between mt-2">
-                      <p style={{ fontSize: "10px", color: "#333" }}>{task.date}</p>
+                      <p style={{ fontSize: "10px", color: "#333" }}>
+                        {task.date}
+                      </p>
                       {task.reminderAt && (
-                        <div className="flex items-center gap-1 text-[#7c6af0]" style={{ fontSize: "9px", fontWeight: 600 }}>
+                        <div
+                          className="flex items-center gap-1 text-[#7c6af0]"
+                          style={{ fontSize: "9px", fontWeight: 600 }}
+                        >
                           <BellIcon />
                           <span>
-                            {new Date(task.reminderAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                            {new Date(task.reminderAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
                           </span>
                         </div>
                       )}

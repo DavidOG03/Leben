@@ -215,6 +215,31 @@ export const parseStructuredListItems = (
       continue;
     }
 
+    const prefixedMatch = trimmed.match(
+      /^(tasks?|habits?|goals?|planner|schedule|timeline)\s*:\s+(.+)$/i,
+    );
+    if (prefixedMatch) {
+      const label = prefixedMatch[1].toLowerCase();
+      const text = prefixedMatch[2].trim();
+      const kind: ImportKind = label.startsWith("task")
+        ? "task"
+        : label.startsWith("habit")
+          ? "habit"
+          : label.startsWith("goal")
+            ? "goal"
+            : "planner";
+
+      if (text) {
+        items.push({
+          raw: trimmed,
+          text,
+          section: currentSection,
+          kind,
+        });
+      }
+      continue;
+    }
+
     const listMatch = trimmed.match(LIST_ITEM_REGEX);
     if (!listMatch) continue;
 
@@ -307,6 +332,32 @@ export const parseDirectAddRequest = (text: string) => {
         /^(?:please\s+)?add(?:\s+(?:a|an))?\s+goal(?:\s+(?:called|named))?\s+(.+)$/i,
     },
     {
+      kind: "goal",
+      regex:
+        /^(?:please\s+)?(?:i\s+want\s+to|i'd\s+like\s+to|i\s+would\s+like\s+to)\s+achieve\s+(.+)$/i,
+    },
+    {
+      kind: "goal",
+      regex: /^(?:please\s+)?my\s+goal\s+is\s+to\s+(.+)$/i,
+    },
+    {
+      kind: "goal",
+      regex:
+        /^(?:please\s+)?help\s+me\s+(?:set|create|add)\s+(?:a\s+)?goal\s+to\s+(.+)$/i,
+    },
+    {
+      kind: "goal",
+      regex: /^(?:please\s+)?i\s+want\s+to\s+work\s+towards\s+(.+)$/i,
+    },
+    {
+      kind: "goal",
+      regex: /^i\s+want\s+to\s+work\s+towards\s+(.+)$/i,
+    },
+    {
+      kind: "goal",
+      regex: /^i\s+want\s+to\s+be\s+(.+)$/i,
+    },
+    {
       kind: "planner",
       regex:
         /^(?:please\s+)?add(?:\s+(?:this|a|an))?\s+(?:timeline item|planner item|schedule item|time block|timeblock)(?:\s+(?:called|named))?\s+(.+)$/i,
@@ -315,6 +366,10 @@ export const parseDirectAddRequest = (text: string) => {
       kind: "planner",
       regex:
         /^(?:please\s+)?add\s+to\s+(?:my\s+)?(?:planner|schedule|timeline)\s+(.+)$/i,
+    },
+    {
+      kind: "planner",
+      regex: /^add\s+to\s+(?:my\s+)?(?:planner|schedule|timeline)\s+(.+)$/i,
     },
   ];
   for (const pattern of patterns) {
@@ -345,6 +400,27 @@ export const summarizeCounts = (counts: Partial<Record<ImportKind, number>>) =>
         `${counts[kind]} ${kind === "planner" ? "planner block" : kind}${counts[kind] === 1 ? "" : "s"}`,
     )
     .join(", ");
+
+export const getImportButtonLabel = (
+  counts: Partial<Record<ImportKind, number>>,
+  imported: boolean,
+) => {
+  if (imported) return "Imported";
+
+  const presentKinds = (["task", "habit", "goal", "planner"] as const).filter(
+    (kind) => (counts[kind] ?? 0) > 0,
+  );
+
+  if (presentKinds.length === 1) {
+    const kind = presentKinds[0];
+    if (kind === "goal") return `Import to Goals`;
+    if (kind === "habit") return `Import to Habits`;
+    if (kind === "task") return `Import to Tasks`;
+    return `Import to Planner`;
+  }
+
+  return `Import ${summarizeCounts(counts)}`;
+};
 
 export const getImportStateKey = (messageId: string, kinds?: ImportKind[]) =>
   `${messageId}:${kinds && kinds.length > 0 ? [...kinds].sort().join(",") : "all"}`;

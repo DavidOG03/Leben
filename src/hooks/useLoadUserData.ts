@@ -34,6 +34,9 @@ export function useLoadUserData() {
         return;
       }
 
+      // Track the user ID associated with this store's data
+      useLebenStore.getState().setUserId(user.id);
+
       try {
         setIsSyncing(true);
         const [tasks, habits, goals, books, history] = await Promise.all([
@@ -66,35 +69,43 @@ export function useLoadUserData() {
           session?.user?.id || "no user",
         );
 
-        if (
-          (event === "SIGNED_IN" || event === "INITIAL_SESSION") &&
-          session?.user
-        ) {
-          // User is signed in - immediately clear any cached data and show loading state
-          useLebenStore.getState().clearStore();
+        const currentStoreUserId = useLebenStore.getState().userId;
 
-          // Force clear localStorage for this store to prevent stale data
-          if (typeof window !== "undefined") {
-            localStorage.removeItem("leben-storage");
+        if (session?.user) {
+          // If the user has changed, clear the store first to prevent leakage
+          const isUserChanged = session.user.id !== currentStoreUserId;
+          if (isUserChanged) {
+            useLebenStore.getState().clearStore();
+            useLebenStore.getState().setUserId(session.user.id);
+            if (typeof window !== "undefined") {
+              localStorage.removeItem("leben-storage");
+            }
           }
 
-          // Small delay to ensure UI updates before loading new data
-          setTimeout(async () => {
-            await loadUserData();
-          }, 100);
-        } else if (event === "SIGNED_OUT") {
-          // User signed out - clear everything
-          useLebenStore.getState().clearStore();
+          // Small delay on transition to ensure UI updates before loading new data
+          const shouldLoad =
+            isUserChanged ||
+            event === "SIGNED_IN" ||
+            event === "INITIAL_SESSION" ||
+            (event === "TOKEN_REFRESHED" && useLebenStore.getState().tasks.length > 0);
 
-          // Also clear localStorage
-          if (typeof window !== "undefined") {
-            localStorage.removeItem("leben-storage");
+          if (shouldLoad) {
+            if (isUserChanged) {
+              setTimeout(async () => {
+                await loadUserData();
+              }, 100);
+            } else {
+              await loadUserData();
+            }
           }
-        } else if (event === "TOKEN_REFRESHED") {
-          // Token was refreshed, might need to reload data
-          const currentUser = useLebenStore.getState().tasks.length > 0; // Simple check if we have data
-          if (currentUser) {
-            await loadUserData();
+        } else {
+          // User is signed out or is a guest
+          // If the store is populated with a signed-in user's data, clear it!
+          if (currentStoreUserId !== null) {
+            useLebenStore.getState().clearStore();
+            if (typeof window !== "undefined") {
+              localStorage.removeItem("leben-storage");
+            }
           }
         }
       },
