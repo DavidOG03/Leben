@@ -48,7 +48,9 @@ export default function SettingsContent() {
     email: false,
     push: false,
   });
-  const [user, setUser] = useState<User | null>(null);
+  const userId = useLebenStore((s: any) => s.userId);
+  const userFullName = useLebenStore((s: any) => s.userFullName);
+  const userEmail = useLebenStore((s: any) => s.userEmail);
 
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
@@ -111,17 +113,6 @@ export default function SettingsContent() {
 
   const purgeAll = useLebenStore((s) => s.purgeAll);
 
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth
-      .getUser()
-      .then(({ data }: { data: { user: User | null } }) => {
-        if (data?.user) {
-          setUser(data.user);
-        }
-      });
-  }, []);
-
   const handlePurge = () => {
     const confirmed = window.confirm(
       "CRITICAL WARNING:\n\nThis will permanently delete all tasks, habits, goals, and books from the server. This action is irreversible. \n\nAre you absolutely sure?",
@@ -132,8 +123,8 @@ export default function SettingsContent() {
     }
   };
 
-  const displayName = user?.user_metadata?.full_name || "Leben User";
-  const displayEmail = user?.email || "---";
+  const displayName = userFullName || "Leben User";
+  const displayEmail = userEmail || "---";
 
   return (
     <main
@@ -191,7 +182,7 @@ export default function SettingsContent() {
               className="font-black text-white capitalize"
               style={{ fontSize: "26px", letterSpacing: "-0.02em" }}
             >
-              {user ? displayName : "Guest"}
+              {userId ? displayName : "Guest"}
             </h1>
           </div>
           <p style={{ fontSize: "13px", color: "#555" }}>{displayEmail}</p>
@@ -204,7 +195,7 @@ export default function SettingsContent() {
           { label: "DISPLAY NAME", val: displayName },
           {
             label: "WORKSPACE ID",
-            val: user ? `OS-${user.id.substring(0, 8).toUpperCase()}` : "--",
+            val: userId ? `OS-${userId.substring(0, 8).toUpperCase()}` : "--",
           },
         ].map(({ label, val }) => (
           <div

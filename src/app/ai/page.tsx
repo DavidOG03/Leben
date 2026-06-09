@@ -8,21 +8,16 @@ import AIChatPanel from "@/components/ai/AIChatPanel";
 // import AIRightPanel from "@/components/ai/AIRightPanel";
 import AITopBar from "@/components/ai/AITopBar";
 import { createClient } from "@/lib/supabase/client";
+import { useLebenStore } from "@/store/useStore";
 import Link from "next/link";
 import { AIIcon, ArrowRightIcon } from "@/constants/Icons";
 
 export default function AIPage() {
   const [mounted, setMounted] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const userId = useLebenStore((s: any) => s.userId);
 
   useEffect(() => {
     setMounted(true);
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }: { data: { user: User | null } }) => {
-      setUser(data.user);
-      setLoading(false);
-    });
   }, []);
 
   if (!mounted) return null;
@@ -39,11 +34,11 @@ export default function AIPage() {
         <AITopBar />
 
         <div className="flex flex-1 overflow-hidden">
-          {loading ? (
+          {!mounted ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="w-8 h-8 rounded-full border-2 border-[#7c6af0]/20 border-t-[#7c6af0] animate-spin" />
             </div>
-          ) : user ? (
+          ) : userId ? (
             <>
               <AILeftPanel />
               <AIChatPanel />

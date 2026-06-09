@@ -6,21 +6,16 @@ import AppSidebar from "@/components/shared/AppSidebar";
 import AnalyticsHeader from "@/components/analytics/AnalyticsHeader";
 import AnalyticsContent from "@/components/analytics/AnalyticsContent";
 import { createClient } from "@/lib/supabase/client";
+import { useLebenStore } from "@/store/useStore";
 import Link from "next/link";
 import { AnalyticsIcon, ArrowRightIcon } from "@/constants/Icons";
 
 export default function AnalyticsPage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  const userId = useLebenStore((s: any) => s.userId);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth
-      .getUser()
-      .then(({ data }: { data: { user: User | null } }) => {
-        setUser(data.user);
-        setLoading(false);
-      });
+    setMounted(true);
   }, []);
 
   return (
@@ -34,11 +29,11 @@ export default function AnalyticsPage() {
 
         <main className="flex-1 overflow-y-auto px-4 py-8">
           <div className="max-w-6xl mx-auto h-full">
-            {loading ? (
+            {!mounted ? (
               <div className="flex items-center justify-center h-full">
                 <div className="w-8 h-8 rounded-full border-2 border-[#7c6af0]/20 border-t-[#7c6af0] animate-spin" />
               </div>
-            ) : user ? (
+            ) : userId ? (
               <AnalyticsContent />
             ) : (
               /* Analytics Lock Screen */
