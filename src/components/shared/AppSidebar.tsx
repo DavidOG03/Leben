@@ -36,21 +36,12 @@ const navItems = [
 
 export default function AppSidebar() {
   const pathname = usePathname();
-  const [user, setUser] = useState<User | null>(null);
+  const userFullName = useLebenStore((s: any) => s.userFullName);
+  const isAuthenticated = useLebenStore((s: any) => s.userId !== null);
   const router = useRouter();
 
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth
-      .getUser()
-      .then(({ data }: { data: { user: User | null } }) => {
-        setUser(data.user);
-      });
-  }, []);
-
-  const userName = user?.user_metadata?.full_name || "Guest";
-  const userRole = user ? "Premium Curator" : "Preview Mode";
-  const isAuthenticated = !!user;
+  const userName = userFullName || "Guest";
+  const userRole = isAuthenticated ? "Premium Curator" : "Preview Mode";
 
   const isSidebarOpen = useLebenStore((s: any) => s.isSidebarOpen);
   const toggleSidebar = useLebenStore((s: any) => s.toggleSidebar);

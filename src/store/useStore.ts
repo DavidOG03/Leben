@@ -105,7 +105,10 @@ interface TasksHabitsSlice {
     totalDelta: number,
   ) => void;
   userId: string | null;
+  userFullName: string | null;
+  userEmail: string | null;
   setUserId: (userId: string | null) => void;
+  setUserDetails: (fullName: string | null, email: string | null) => void;
 }
 
 export type LebenState = TasksHabitsSlice & GoalsSlice & BooksSlice;
@@ -115,7 +118,10 @@ export const useLebenStore = create<LebenState>()(
     (set, get, store) => ({
       // --- Tasks & Habits slice ---
       userId: null,
+      userFullName: null,
+      userEmail: null,
       setUserId: (userId) => set({ userId }),
+      setUserDetails: (userFullName, userEmail) => set({ userFullName, userEmail }),
       tasks: [],
       habits: [],
       productivityHistory: {},
@@ -348,6 +354,8 @@ export const useLebenStore = create<LebenState>()(
       clearStore: () => {
         set({
           userId: null,
+          userFullName: null,
+          userEmail: null,
           tasks: [],
           habits: [],
           productivityHistory: {},

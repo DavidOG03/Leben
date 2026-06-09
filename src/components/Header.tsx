@@ -14,35 +14,23 @@ interface HeaderProps {
 
 export default function Header({ title, subtitle }: HeaderProps) {
   const [mounted, setMounted] = useState(false);
-  const [firstName, setFirstName] = useState("Guest");
   const toggleSidebar = useLebenStore((s: any) => s.toggleSidebar);
   const router = useRouter();
 
+  const userFullName = useLebenStore((s: any) => s.userFullName);
+  const userEmail = useLebenStore((s: any) => s.userEmail);
+  const isAuthenticated = useLebenStore((s: any) => s.userId !== null);
+
   useEffect(() => {
     setMounted(true);
-    async function fetchUser() {
-      const supabase = createClient();
-
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (user?.user_metadata?.full_name) {
-          setFirstName(user.user_metadata.full_name.split(" ")[0]);
-        } else if (user?.email) {
-          setFirstName(user.email.split("@")[0]);
-        } else {
-          setFirstName("Guest");
-        }
-      } catch (error) {
-        console.warn("Supabase auth lock error, falling back to Guest:", error);
-        setFirstName("Guest");
-      }
-    }
-
-    fetchUser();
   }, []);
+
+  let firstName = "Guest";
+  if (userFullName) {
+    firstName = userFullName.split(" ")[0];
+  } else if (userEmail) {
+    firstName = userEmail.split("@")[0];
+  }
 
   const getGreeting = () => {
     if (!mounted) return "Hello";

@@ -27,15 +27,25 @@ export function useLoadUserData() {
     const loadUserData = async () => {
       const {
         data: { user },
-      }: { data: { user: User | null } } = await supabase.auth.getUser();
+        error,
+      } = await supabase.auth.getUser();
 
+      // If no user and no error (or it's an explicit auth error like invalid token), we might clear.
+      // But if it's a network error (Failed to fetch), we should preserve the offline store!
       if (!user) {
-        useLebenStore.getState().clearStore();
+        // Only clear if it's not a network error
+        if (error?.message !== "Failed to fetch") {
+          useLebenStore.getState().clearStore();
+        }
         return;
       }
 
       // Track the user ID associated with this store's data
       useLebenStore.getState().setUserId(user.id);
+      
+      const fullName = user.user_metadata?.full_name || null;
+      const email = user.email || null;
+      useLebenStore.getState().setUserDetails(fullName, email);
 
       try {
         setIsSyncing(true);
