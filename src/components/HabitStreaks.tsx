@@ -11,20 +11,14 @@ export default function HabitStreaks() {
   const habits = useLebenStore((s: any) => s.habits) as Habit[];
   const toggleHabit = useLebenStore((s: any) => s.toggleHabit);
   const updateHabit = useLebenStore((s: any) => s.updateHabit);
-  const [user, setUser] = useState<User | null>(null);
+  const userId = useLebenStore((s: any) => s.userId);
   const [reminderHabit, setReminderHabit] = useState<string | null>(null);
   const [reminderTime, setReminderTime] = useState<string>("");
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth
-      .getUser()
-      .then(({ data }: { data: { user: User | null } }) => {
-        setUser(data.user);
-        setLoading(false);
-      });
+    setTimeout(() => setLoading(false), 500);
   }, []);
 
   const handleSetReminder = (habitId: string) => {

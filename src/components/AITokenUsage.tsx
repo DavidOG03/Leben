@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useLebenStore } from "@/store/useStore";
 
 interface UsageData {
   used: number;
@@ -13,13 +14,11 @@ interface UsageData {
 export default function AITokenUsage() {
   const [usage, setUsage] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
+  const userId = useLebenStore((s: any) => s.userId);
 
   useEffect(() => {
     async function fetchUsage() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
+      if (!userId) {
         setLoading(false);
         return;
       }

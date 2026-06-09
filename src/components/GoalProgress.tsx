@@ -13,17 +13,12 @@ export default function GoalProgress() {
   const goals = useLebenStore((s: any) => s.goals) as Goal[];
   const isSyncing = useLebenStore((s: any) => s.isSyncing) as boolean;
   const toggleMilestone = useLebenStore((s: any) => s.toggleMilestone);
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false);
+  const userId = useLebenStore((s: any) => s.userId);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth
-      .getUser()
-      .then(({ data }: { data: { user: User | null } }) => {
-        setUser(data.user);
-      });
+    setTimeout(() => setLoading(false), 500);
   }, []);
 
   return (

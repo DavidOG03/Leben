@@ -3,29 +3,25 @@
 import { useEffect, useState, useMemo } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { useLebenStore } from "@/store/useStore";
+import { useLebenStore, LebenState } from "@/store/useStore";
+import { Goal, Milestone } from "@/utils/goals.types";
 import Link from "next/link";
 
 export default function EfficiencyScore() {
-  const [user, setUser] = useState<User | null>(null);
-  const tasks = useLebenStore((s) => s.tasks);
-  const habits = useLebenStore((s) => s.habits);
-  const goals = useLebenStore((s) => s.goals);
+  const userId = useLebenStore((s: LebenState) => s.userId);
+  const tasks = useLebenStore((s: LebenState) => s.tasks);
+  const habits = useLebenStore((s: LebenState) => s.habits);
+  const goals = useLebenStore((s: LebenState) => s.goals);
 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth
-      .getUser()
-      .then(({ data }: { data: { user: User | null } }) => {
-        setUser(data.user);
-        setLoading(false);
-      });
+    // Quick timeout to let store initialize
+    setTimeout(() => setLoading(false), 500);
   }, []);
 
   const analytics = useMemo(() => {
-    if (!user) return null;
+    if (!userId) return null;
 
     const today = new Date();
     const todayIso = today.toISOString().split("T")[0];
@@ -75,10 +71,11 @@ export default function EfficiencyScore() {
         h.completedDates?.includes(dateStr),
       ).length;
       const dayGoals = goals.reduce(
-        (count, g) =>
+        (count: number, g: Goal) =>
           count +
           g.milestones.filter(
-            (m) => m.done && m.completedAt?.split("T")[0] === dateStr,
+            (m: Milestone) =>
+              m.done && m.completedAt?.split("T")[0] === dateStr,
           ).length,
         0,
       );
@@ -95,11 +92,12 @@ export default function EfficiencyScore() {
 
     const totalPossibleHabits = habits.length * 7;
     const totalMilestones = goals.reduce(
-      (acc, g) => acc + g.milestones.length,
+      (acc: number, g: Goal) => acc + g.milestones.length,
       0,
     );
     const totalCompletedMilestones = goals.reduce(
-      (acc, g) => acc + g.milestones.filter((m) => m.done).length,
+      (acc: number, g: Goal) =>
+        acc + g.milestones.filter((m: Milestone) => m.done).length,
       0,
     );
 
@@ -142,7 +140,7 @@ export default function EfficiencyScore() {
               ? "Steady"
               : "Growth",
     };
-  }, [user, tasks, habits, goals]);
+  }, [userId, tasks, habits, goals]);
 
   const dashOffset = analytics ? (1 - analytics.score / 100) * 339 : 339; // 2 * PI * 54
 
@@ -180,7 +178,7 @@ export default function EfficiencyScore() {
           <div className="w-24 h-3 rounded bg-white/5" />
           <div className="w-20 h-8 rounded-lg bg-white/5" />
         </div>
-      ) : !user ? (
+      ) : !userId ? (
         <div className="flex flex-col items-center justify-center py-4 gap-4 w-full">
           <div className="relative flex items-center justify-center">
             <svg width="100" height="100" viewBox="0 0 140 140">

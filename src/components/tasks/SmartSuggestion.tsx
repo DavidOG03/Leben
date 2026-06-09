@@ -28,13 +28,10 @@ export default function SmartSuggestion() {
   const pendingTasks = tasks.filter((t) => !t.completed);
   const hasTasks = pendingTasks.length > 0;
 
+  const userId = useLebenStore((s: any) => s.userId);
+
   // Detect auth state
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth
-      .getUser()
-      .then(({ data }: { data: { user: User | null } }) => setUser(data.user));
-  }, []);
+  // Auth state now handled by global store
 
   // Countdown ticker (not used for errors now, but kept for UI consistency if needed)
   useEffect(() => {
@@ -48,7 +45,7 @@ export default function SmartSuggestion() {
 
   const fetchSuggestion = async () => {
     // Guest guard — redirect to sign in instead of calling AI
-    if (!user) {
+    if (!userId) {
       router.push("/auth/signin");
       return;
     }
@@ -237,7 +234,7 @@ export default function SmartSuggestion() {
 
       {/* CTA */}
       <div className="mt-4">
-        {suggestion && !loading && user ? (
+        {suggestion && !loading && userId ? (
           <button
             onClick={fetchSuggestion}
             className="w-full flex items-center justify-between group"
@@ -251,7 +248,7 @@ export default function SmartSuggestion() {
         ) : (
           <button
             onClick={fetchSuggestion}
-            disabled={(!hasTasks || loading) && !!user}
+            disabled={(!hasTasks || loading) && !!userId}
             className="w-full flex items-center justify-center gap-1.5 rounded-lg py-2.5 font-bold transition-all active:scale-95"
             style={{
               fontSize: "11px",
@@ -273,7 +270,7 @@ export default function SmartSuggestion() {
                   ? "0 4px 12px rgba(124,106,240,0.3)"
                   : "none",
               border:
-                !user && hasTasks ? "1px solid rgba(124,106,240,0.25)" : "none",
+                !userId && hasTasks ? "1px solid rgba(124,106,240,0.25)" : "none",
             }}
           >
             {waitCountdown !== null

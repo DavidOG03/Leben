@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { useLebenStore } from "@/store/useStore";
+import { savePushSubscription } from "@/lib/supabase/db";
 
 function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
   return (
@@ -45,9 +46,68 @@ export default function SettingsContent() {
   const [notifs, setNotifs] = useState({
     audio: true,
     email: false,
-    push: true,
+    push: false,
   });
   const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setNotifs((p) => ({ ...p, push: Notification.permission === "granted" }));
+    }
+  }, []);
+
+  const handlePushToggle = async () => {
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) {
+      alert("Push notifications are not supported by your browser.");
+      return;
+    }
+
+    if (notifs.push) {
+      alert(
+        "To disable push notifications, please change your browser settings.",
+      );
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") {
+      setNotifs((p) => ({ ...p, push: true }));
+      try {
+        const registration = await navigator.serviceWorker.register("/sw.js");
+        const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+        if (!publicVapidKey) {
+          console.error("Missing NEXT_PUBLIC_VAPID_PUBLIC_KEY");
+          return;
+        }
+
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicVapidKey),
+        });
+
+        await savePushSubscription(subscription.toJSON());
+        alert("Push notifications enabled!");
+      } catch (err) {
+        console.error("Failed to subscribe to push notifications", err);
+      }
+    }
+  };
+
+  // Helper function for VAPID key
+  const urlBase64ToUint8Array = (base64String: string) => {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding)
+      .replace(/\-/g, "+")
+      .replace(/_/g, "/");
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  };
 
   const purgeAll = useLebenStore((s) => s.purgeAll);
 
@@ -203,31 +263,69 @@ export default function SettingsContent() {
           </div>
         </div> */}
 
-      {/* Notification Channels
-        <div className="rounded-xl p-5" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e" }}>
+      {/* Notification Channels */}
+      <SectionLabel text="System Preferences" />
+      <div className="space-y-3 mb-8">
+        <div
+          className="rounded-xl p-5"
+          style={{ backgroundColor: "#111", border: "1px solid #1e1e1e" }}
+        >
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex items-center justify-center rounded-lg" style={{ width: "34px", height: "34px", backgroundColor: "#1a1a1a", border: "1px solid #222" }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2a4.5 4.5 0 00-4.5 4.5v2.8L2 11h12l-1.5-1.7V6.5A4.5 4.5 0 008 2z" stroke="#888" strokeWidth="1.3" strokeLinejoin="round" /><path d="M6 13a2 2 0 004 0" stroke="#888" strokeWidth="1.3" strokeLinecap="round" /></svg>
+            <div
+              className="flex items-center justify-center rounded-lg"
+              style={{
+                width: "34px",
+                height: "34px",
+                backgroundColor: "#1a1a1a",
+                border: "1px solid #222",
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M8 2a4.5 4.5 0 00-4.5 4.5v2.8L2 11h12l-1.5-1.7V6.5A4.5 4.5 0 008 2z"
+                  stroke="#888"
+                  strokeWidth="1.3"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M6 13a2 2 0 004 0"
+                  stroke="#888"
+                  strokeWidth="1.3"
+                  strokeLinecap="round"
+                />
+              </svg>
             </div>
             <div>
-              <p className="font-medium text-white" style={{ fontSize: "14px" }}>Notification Channels</p>
-              <p style={{ fontSize: "11px", color: "#555" }}>Manage how Leben communicates vital updates</p>
+              <p
+                className="font-medium text-white"
+                style={{ fontSize: "14px" }}
+              >
+                Notification Channels
+              </p>
+              <p style={{ fontSize: "11px", color: "#555" }}>
+                Manage how Leben communicates vital updates
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-8">
-            {[
-              { key: "audio" as const, label: "System Audio" },
-              { key: "email" as const, label: "Email Digests" },
-              { key: "push" as const, label: "Mobile Push" },
-            ].map(({ key, label }) => (
-              <div key={key} className="flex items-center gap-3">
-                <span style={{ fontSize: "13px", color: "#aaa" }}>{label}</span>
-                <Toggle on={notifs[key]} onChange={() => setNotifs((p) => ({ ...p, [key]: !p[key] }))} />
-              </div>
-            ))}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8 mt-4">
+            <div className="flex items-center gap-3">
+              <span style={{ fontSize: "13px", color: "#aaa" }}>
+                Email Reminders
+              </span>
+              <Toggle
+                on={notifs.email}
+                onChange={() => setNotifs((p) => ({ ...p, email: !p.email }))}
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <span style={{ fontSize: "13px", color: "#aaa" }}>
+                Desktop / Mobile Push
+              </span>
+              <Toggle on={notifs.push} onChange={handlePushToggle} />
+            </div>
           </div>
         </div>
-      </div> */}
+      </div>
 
       {/* Danger zone */}
       <div

@@ -62,25 +62,18 @@ export default function AIMorningBrief() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isUnavailable, setIsUnavailable] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const userId = useLebenStore((s: any) => s.userId);
   const [showLimitModal, setShowLimitModal] = useState(false);
 
   const hasData = tasks.length > 0 || habits.length > 0 || goals.length > 0;
 
   // Detect auth state
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth
-      .getUser()
-      .then(({ data }: { data: { user: User | null } }) => setUser(data.user));
-  }, []);
-
-  // Countdown ticker removed — rate limiting now handled server-side
+  // Rate limiting now handled server-side
 
   const handleGenerate = useCallback(
     async (forceRefresh = false) => {
       // Guest guard
-      if (!user) {
+      if (!userId) {
         router.push("/auth/signin");
         return;
       }
@@ -115,7 +108,7 @@ export default function AIMorningBrief() {
         setLoading(false);
       }
     },
-    [tasks, habits, goals, user, router],
+    [tasks, habits, goals, userId, router],
   );
 
   const currentDataStr = JSON.stringify({ tasks, habits, goals });
@@ -123,7 +116,7 @@ export default function AIMorningBrief() {
   const prevTasksCount = useRef(tasks.length);
 
   useEffect(() => {
-    if (!hasData || !user) {
+    if (!hasData || !userId) {
       setBrief(null);
       return;
     }
@@ -141,7 +134,7 @@ export default function AIMorningBrief() {
         return () => clearTimeout(timeoutId);
       }
     }
-  }, [currentDataStr, hasData, handleGenerate, user, tasks.length]);
+  }, [currentDataStr, hasData, handleGenerate, userId, tasks.length]);
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
