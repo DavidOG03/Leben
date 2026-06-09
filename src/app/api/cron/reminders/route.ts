@@ -4,23 +4,28 @@ import { Resend } from "resend";
 import webpush from "web-push";
 
 // Initialize Resend
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resendApiKey = process.env.RESEND_API_KEY;
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 // Initialize Web Push
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "";
 const vapidSubject = process.env.VAPID_SUBJECT || "mailto:support@leben.app";
 
-if (vapidPublicKey && vapidPrivateKey) {
-  webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
+try {
+  if (vapidPublicKey && vapidPrivateKey) {
+    webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
+  }
+} catch (e) {
+  console.warn("Failed to set VAPID details during build/init:", e);
 }
 
 // Initialize Supabase Service Client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+const supabase = supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
-});
+}) : null;
 
 export async function GET(req: Request) {
   // Optional: verify a cron secret to prevent unauthorized access
@@ -29,9 +34,9 @@ export async function GET(req: Request) {
   //   return new Response('Unauthorized', { status: 401 });
   // }
 
-  if (!supabaseServiceKey) {
+  if (!supabase) {
     return NextResponse.json(
-      { error: "Missing SUPABASE_SERVICE_ROLE_KEY" },
+      { error: "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY" },
       { status: 500 },
     );
   }
@@ -63,7 +68,7 @@ export async function GET(req: Request) {
         .eq("user_id", task.user_id);
 
       // --- EMAIL ---
-      if (!task.email_sent && userEmail && process.env.RESEND_API_KEY) {
+      if (!task.email_sent && userEmail && resend) {
         try {
           await resend.emails.send({
             from: "Leben Reminders <reminders@leben.app>", // Update with your verified domain!
