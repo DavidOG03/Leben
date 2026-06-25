@@ -80,7 +80,7 @@ Goals: ${JSON.stringify(goals)}
   try {
     const raw: string = await unifiedAiCall(prompt, { json: true });
     const clean = raw.replace(/```json|```/g, "").trim();
-    
+
     // Estimate tokens (approx 4 chars per token for variety of providers)
     const tokenCount = Math.ceil(clean.length / 4);
 
@@ -135,4 +135,15 @@ Goals: ${JSON.stringify(goals)}
 
     return NextResponse.json({ error: friendlyError }, { status });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "http://localhost:8081",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    },
+  });
 }
