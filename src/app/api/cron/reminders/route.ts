@@ -71,7 +71,7 @@ export async function GET(req: Request) {
       if (!task.email_sent && userEmail && resend) {
         try {
           await resend.emails.send({
-            from: "Leben Reminders <reminders@leben.app>", // Update with your verified domain!
+            from: "Leben Reminders <onboarding@resend.dev>",
             to: [userEmail],
             subject: `Reminder: ${task.title}`,
             html: `

@@ -34,7 +34,11 @@ function mapTaskToDB(task: Partial<Task>) {
   if (task.completedAt !== undefined) row.completed_at = task.completedAt;
   if (task.priority !== undefined) row.priority = task.priority;
   if (task.category !== undefined) row.category = task.category;
-  if (task.reminderAt !== undefined) row.reminder_at = task.reminderAt;
+  if ("reminderAt" in task) {
+    row.reminder_at = task.reminderAt ?? null;
+    row.email_sent = false;
+    row.push_sent = false;
+  }
   return row;
 }
 
@@ -68,7 +72,11 @@ function mapHabitToDB(habit: Partial<Habit>) {
   if (habit.sub !== undefined) row.sub = habit.sub;
   if (habit.icon !== undefined) row.icon = habit.icon;
   if (habit.pct !== undefined) row.pct = habit.pct;
-  if (habit.reminderAt !== undefined) row.reminder_at = habit.reminderAt;
+  if ("reminderAt" in habit) {
+    row.reminder_at = habit.reminderAt ?? null;
+    row.email_sent = false;
+    row.push_sent = false;
+  }
   return row;
 }
 
