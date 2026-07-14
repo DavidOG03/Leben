@@ -243,7 +243,7 @@ Open [http://localhost:3000](http://localhost:3000).
 - [x] AI-suggested habits based on goals
 - [ ] Weekly AI review and retrospective
 - [ ] Collaborative goals (share progress with accountability partner)
-- [ ] Mobile app (React Native)
+- [x] Mobile app (React Native)
 
 ---
 
