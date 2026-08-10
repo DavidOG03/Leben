@@ -6,6 +6,7 @@ import { AuthHeroPanel } from "@/components/auth/AuthHeroPanel";
 import { SignInForm } from "@/components/auth/SignInForm";
 import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 
 export const metadata = {
@@ -30,7 +31,12 @@ export default async function SignInPage() {
       <section className="auth-left">
         <div className="auth-logo">
           <div className="logo-icon" aria-hidden="true">
-            ✦
+            <Image
+              src="/notification-icon.png"
+              alt="Leben Icon"
+              width={30}
+              height={30}
+            />
           </div>
           <span className="logo-text">Leben</span>
         </div>
@@ -58,11 +64,11 @@ export default async function SignInPage() {
       </section>
 
       {/* Footer */}
-      <footer className="auth-footer">
+      {/* <footer className="auth-footer">
         <a href="/privacy">PRIVACY POLICY</a>
         <a href="/terms">TERMS OF SERVICE</a>
         <span>© 2026 LEBEN</span>
-      </footer>
+      </footer> */}
     </main>
   );
 }

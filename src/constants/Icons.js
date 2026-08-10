@@ -11,6 +11,7 @@ export const CheckIcon = ({ className = "", style = {}, ...props } = {}) => (
   </svg>
 );
 
+
 export const SparkleIcon = ({ className = "", style = {}, color = "currentColor", ...props } = {}) => (
   <svg
     width="14"

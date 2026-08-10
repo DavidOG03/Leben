@@ -1,5 +1,5 @@
 "use client";
-
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "@/lib/supabase/authActions";
@@ -16,6 +16,7 @@ import {
   GearIcon,
   SparkleIcon,
   LockIcon,
+  CalIcon,
 } from "@/constants/Icons";
 
 import { useEffect, useState } from "react";
@@ -29,7 +30,7 @@ const navItems = [
   { label: "Habits", icon: <HabitIcon />, href: "/habits" },
   { label: "Goals", icon: <GoalIcon />, href: "/goals" },
   { label: "AI Assistant", icon: <AIIcon />, href: "/ai" },
-  { label: "Daily Planner", icon: <SparkleIcon />, href: "/planner" },
+  { label: "Daily Planner", icon: <CalIcon />, href: "/planner" },
   { label: "Analytics", icon: <AnalyticsIcon />, href: "/analytics" },
   { label: "Settings", icon: <GearIcon />, href: "/settings" },
 ];
@@ -63,45 +64,12 @@ export default function AppSidebar() {
       >
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-5 mb-7">
-          <div className="flex items-center justify-center rounded-lg flex-shrink-0 w-7 h-7 bg-gradient-to-br from-[#3a3060] to-[#252040] border border-[#3a3060]">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <rect
-                x="1.5"
-                y="1.5"
-                width="4.5"
-                height="4.5"
-                rx="1"
-                fill="#9d8ff5"
-              />
-              <rect
-                x="8"
-                y="1.5"
-                width="4.5"
-                height="4.5"
-                rx="1"
-                fill="#7c6af0"
-                opacity="0.6"
-              />
-              <rect
-                x="1.5"
-                y="8"
-                width="4.5"
-                height="4.5"
-                rx="1"
-                fill="#7c6af0"
-                opacity="0.6"
-              />
-              <rect
-                x="8"
-                y="8"
-                width="4.5"
-                height="4.5"
-                rx="1"
-                fill="#9d8ff5"
-                opacity="0.4"
-              />
-            </svg>
-          </div>
+          <Image
+            src="/notification-icon.png"
+            alt="Leben Icon"
+            width={30}
+            height={30}
+          />
           <span className="font-bold text-white text-base tracking-[-0.02em]">
             Leben
           </span>

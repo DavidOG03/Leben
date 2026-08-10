@@ -84,9 +84,11 @@ export default function WeeklyProductivity() {
         {weeklyData.map((d) => {
           const isSkipped = d.completed === 0;
           const ratio = maxCompleted > 0 ? d.completed / maxCompleted : 0;
-          
+
           // Height logic: small stub for empty days, otherwise proportional
-          const heightPct = isSkipped ? 6 : Math.max((d.completed / maxCompleted) * 100, 12);
+          const heightPct = isSkipped
+            ? 6
+            : Math.max((d.completed / maxCompleted) * 100, 12);
 
           // Colour intensity logic matched with WeeklyProgress
           let barColor: string;
@@ -115,7 +117,10 @@ export default function WeeklyProductivity() {
                   height: `${heightPct}%`,
                   background: barColor,
                   borderRadius: "3px 3px 2px 2px",
-                  boxShadow: d.isToday && !isSkipped ? "0 0 10px rgba(124, 106, 240, 0.3)" : "none",
+                  boxShadow:
+                    d.isToday && !isSkipped
+                      ? "0 0 10px rgba(124, 106, 240, 0.3)"
+                      : "none",
                   opacity: isSkipped ? 0.4 : 1,
                 }}
               />
@@ -135,24 +140,51 @@ export default function WeeklyProductivity() {
                 {!isSkipped ? (
                   <>
                     <div className="flex items-center gap-1.5">
-                      <span style={{ fontSize: "11px", color: "#fff", fontWeight: 700 }}>
+                      <span
+                        style={{
+                          fontSize: "11px",
+                          color: "#fff",
+                          fontWeight: 700,
+                        }}
+                      >
                         {d.completed}
                       </span>
-                      <span style={{ fontSize: "9px", color: "#7c6af0", fontWeight: 500 }}>
+                      <span
+                        style={{
+                          fontSize: "9px",
+                          color: "#7c6af0",
+                          fontWeight: 500,
+                        }}
+                      >
                         / {d.total}
                       </span>
                     </div>
-                    <span style={{ fontSize: "8px", color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "1px" }}>
+                    <span
+                      style={{
+                        fontSize: "8px",
+                        color: "#666",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        marginTop: "1px",
+                      }}
+                    >
                       tasks done
                     </span>
                   </>
                 ) : (
-                  <span style={{ fontSize: "9px", color: "#555", fontWeight: 700, whiteSpace: "nowrap" }}>
+                  <span
+                    style={{
+                      fontSize: "9px",
+                      color: "#555",
+                      fontWeight: 700,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
                     No tasks done
                   </span>
                 )}
                 {/* Arrow */}
-                <div 
+                <div
                   className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0"
                   style={{
                     borderLeft: "5px solid transparent",
@@ -177,7 +209,7 @@ export default function WeeklyProductivity() {
                   {d.completed}
                 </div>
               )}
-              
+
               {/* Bright count for Today */}
               {!isSkipped && d.isToday && (
                 <div
@@ -225,23 +257,27 @@ export default function WeeklyProductivity() {
           <p style={{ fontSize: "16px", color: "#f0f0f0", fontWeight: 700 }}>
             {totalWeek}
           </p>
-          <p style={{ fontSize: "9px", color: "#444", letterSpacing: "0.05em" }}>
+          <p
+            style={{ fontSize: "9px", color: "#444", letterSpacing: "0.05em" }}
+          >
             TOTAL
           </p>
         </div>
-        <div className="text-center">
+        {/* <div className="text-center">
           <p style={{ fontSize: "16px", color: "#7c6af0", fontWeight: 700 }}>
             {(totalWeek / 7).toFixed(1)}
           </p>
           <p style={{ fontSize: "9px", color: "#444", letterSpacing: "0.05em" }}>
             /DAY AVG
           </p>
-        </div>
+        </div> */}
         <div className="text-center">
           <p style={{ fontSize: "16px", color: "#f0f0f0", fontWeight: 700 }}>
             {bestDay.completed}
           </p>
-          <p style={{ fontSize: "9px", color: "#444", letterSpacing: "0.05em" }}>
+          <p
+            style={{ fontSize: "9px", color: "#444", letterSpacing: "0.05em" }}
+          >
             BEST DAY
           </p>
         </div>
@@ -249,13 +285,18 @@ export default function WeeklyProductivity() {
           <p
             style={{
               fontSize: "11px",
-              color: weeklyData.filter((d) => d.completed > 0).length >= 5 ? "#4caf7d" : "#e8a855",
+              color:
+                weeklyData.filter((d) => d.completed > 0).length >= 5
+                  ? "#4caf7d"
+                  : "#e8a855",
               fontWeight: 700,
             }}
           >
             {weeklyData.filter((d) => d.completed > 0).length}/7
           </p>
-          <p style={{ fontSize: "9px", color: "#444", letterSpacing: "0.05em" }}>
+          <p
+            style={{ fontSize: "9px", color: "#444", letterSpacing: "0.05em" }}
+          >
             ACTIVE DAYS
           </p>
         </div>

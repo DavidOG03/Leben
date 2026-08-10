@@ -1,34 +1,23 @@
-"use client";
+import React from 'react';
 
 interface EmptyStateProps {
-  icon: string;
+  icon: string | React.ReactNode;
   message: string;
   hint: string;
 }
 
-/**
- * EmptyState renders a ghost-like placeholder when a section has no data.
- * It gives users a clear signal of what to do next rather than showing nothing.
- */
 export default function EmptyState({ icon, message, hint }: EmptyStateProps) {
   return (
-    <div
-      className="flex flex-col items-center justify-center gap-2 py-6"
-      style={{ minHeight: "80px" }}
-    >
-      <span style={{ fontSize: "22px", opacity: 0.4 }}>{icon}</span>
-      <p style={{ fontSize: "12px", color: "#444", fontWeight: 500 }}>
+    <div className="flex flex-col items-center justify-center py-6 gap-2 min-h-[80px]">
+      {typeof icon === 'string' ? (
+        <span className="text-[22px] opacity-40">{icon}</span>
+      ) : (
+        <div className="opacity-40">{icon}</div>
+      )}
+      <p className="text-leben-text-dim font-medium text-[12px]">
         {message}
       </p>
-      <p
-        style={{
-          fontSize: "10px",
-          color: "#333",
-          textAlign: "center",
-          maxWidth: "160px",
-          lineHeight: 1.5,
-        }}
-      >
+      <p className="text-center text-leben-text-dim text-[10px] max-w-[160px] leading-[15px]">
         {hint}
       </p>
     </div>

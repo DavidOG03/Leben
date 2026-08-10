@@ -44,7 +44,7 @@ export function ProductivityScoreSkeleton() {
             style={{ width: "90px", height: "9px", backgroundColor: "#1a1a1a" }}
           />
         </div>
-        <TrendLineSkeleton />
+        {/* <TrendLineSkeleton /> */}
       </div>
       <div className="mt-4 space-y-3">
         {[1, 2].map((i) => (
