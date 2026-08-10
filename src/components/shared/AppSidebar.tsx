@@ -65,7 +65,7 @@ export default function AppSidebar() {
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-5 mb-7">
           <Image
-            src="/notification-icon.png"
+            src="/leben-icon-white.png"
             alt="Leben Icon"
             width={30}
             height={30}
