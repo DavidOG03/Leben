@@ -41,7 +41,7 @@ export default async function SignUpPage() {
         <div className="auth-logo">
           <div className="logo-icon" aria-hidden="true">
             <Image
-              src="/notification-icon.png"
+              src="/leben-icon-white.png"
               alt="Leben Icon"
               width={30}
               height={30}

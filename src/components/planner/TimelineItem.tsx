@@ -109,7 +109,7 @@ export function TimelineItem({ item, isCurrent }: TimelineItemProps) {
             </h4>
           </div>
           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
+            {/* <button
               onClick={() => setIsReminderPickerOpen(!isReminderPickerOpen)}
               className={`p-1.5 rounded-md hover:bg-white/5 transition-colors ${item.reminderAt ? "text-[#7c6af0]" : "text-[#444]"}`}
               title="Set Reminder"
@@ -117,8 +117,8 @@ export function TimelineItem({ item, isCurrent }: TimelineItemProps) {
               <BellIcon />
             </button>
             <button className="p-1.5 rounded-md hover:bg-white/5 text-[#444] transition-colors">
-              <EditIcon />
-            </button>
+              <EditIcon /> 
+            </button>*/}
             <div
               onClick={() => toggleScheduleItem(item.id)}
               className="w-4 h-4 rounded border border-[#333] flex items-center justify-center cursor-pointer transition-colors hover:border-[#7c6af0]"

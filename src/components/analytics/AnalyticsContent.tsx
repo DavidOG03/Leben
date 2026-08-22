@@ -30,10 +30,11 @@ export default function AnalyticsContent() {
   const tasks = useLebenStore((s) => s.tasks);
   const habits = useLebenStore((s) => s.habits);
   const goals = useLebenStore((s) => s.goals);
+  const productivityHistory = useLebenStore((s) => s.productivityHistory);
 
   const analytics = useMemo(
-    () => buildAnalyticsData(tasks, habits, goals),
-    [tasks, habits, goals]
+    () => buildAnalyticsData(tasks, habits, goals, productivityHistory),
+    [tasks, habits, goals, productivityHistory],
   );
 
   return (
@@ -68,7 +69,11 @@ export default function AnalyticsContent() {
         />
         <AIInsights
           insights={analytics.aiInsights}
-          hasData={analytics.hasTaskData || analytics.hasHabitData || analytics.hasGoalData}
+          hasData={
+            analytics.hasTaskData ||
+            analytics.hasHabitData ||
+            analytics.hasGoalData
+          }
         />
       </div>
     </main>

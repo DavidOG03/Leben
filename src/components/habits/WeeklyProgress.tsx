@@ -204,7 +204,7 @@ const WeeklyProgress: React.FC<WeeklyProgressProps> = ({ habits }) => {
               </span>
             </div> */}
 
-            <div className="flex items-center justify-between">
+            {/* <div className="flex items-center justify-between">
               <span style={{ fontSize: "12px", color: "#555" }}>
                 Current Streak
               </span>
@@ -218,7 +218,7 @@ const WeeklyProgress: React.FC<WeeklyProgressProps> = ({ habits }) => {
               >
                 {weeklyAnalytics.currentStreak} days
               </span>
-            </div>
+            </div> */}
 
             <div className="flex items-center justify-between">
               <span style={{ fontSize: "12px", color: "#555" }}>

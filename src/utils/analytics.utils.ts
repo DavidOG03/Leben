@@ -51,8 +51,13 @@ export function computeStatCards(
   tasks: Task[],
   habits: Habit[],
   goals: Goal[],
+  productivityHistory: Record<string, { completed: number; total: number }> = {},
 ): StatCard[] {
-  const completedTasks = tasks.filter((t) => t.completed).length;
+  // Sum historical completed tasks across all recorded days for a true all-time count
+  const completedTasks = Object.values(productivityHistory).reduce(
+    (sum, day) => sum + (day.completed ?? 0),
+    0,
+  );
 
   // Habit consistency: across last 7 days, how many completions vs expected
   const last7 = lastNDays(7);
@@ -100,11 +105,18 @@ export function computeStatCards(
 export function computeWeekActivity(
   tasks: Task[],
   habits: Habit[],
+  productivityHistory: Record<string, { completed: number; total: number }> = {},
 ): DayActivity[] {
   const week = currentWeekDates();
 
   return week.map(({ isoDate, label }) => {
-    const dayTasks = tasks.filter((t) => t.completedAt === isoDate).length;
+    // Prefer the persisted history count so tasks that were later deleted or
+    // unchecked still appear on the chart. Fall back to live task data for
+    // days that have no history entry yet (e.g. a fresh install or today
+    // before any history has been written).
+    const liveTasks = tasks.filter((t) => t.completedAt === isoDate).length;
+    const dayTasks = productivityHistory[isoDate]?.completed ?? liveTasks;
+
     const dayHabits = habits.reduce(
       (sum, h) => sum + ((h.completedDates ?? []).includes(isoDate) ? 1 : 0),
       0,
@@ -252,14 +264,15 @@ export function buildAnalyticsData(
   tasks: Task[],
   habits: Habit[],
   goals: Goal[],
+  productivityHistory: Record<string, { completed: number; total: number }>,
 ): AnalyticsData {
   const hasTaskData = tasks.length > 0;
   const hasHabitData = habits.length > 0;
   const hasGoalData = goals.length > 0;
 
   return {
-    statCards: computeStatCards(tasks, habits, goals),
-    weekActivity: computeWeekActivity(tasks, habits),
+    statCards: computeStatCards(tasks, habits, goals, productivityHistory),
+    weekActivity: computeWeekActivity(tasks, habits, productivityHistory),
     productivity: computeProductivity(tasks, habits),
     topHabits: computeHabitStats(habits),
     goalProgress: computeGoalStats(goals),
