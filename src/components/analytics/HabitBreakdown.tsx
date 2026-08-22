@@ -72,8 +72,8 @@ export default function HabitBreakdown({
       ) : (
         <EmptyState
           icon="🔁"
-          message="No habits tracked"
-          hint="Add habits and check them off daily to see your consistency here"
+          message="No habits yet"
+          hint="Start a habit and check it off each day — your streak will build up here"
         />
       )}
     </div>

@@ -84,7 +84,7 @@ export default function AIInsights({ insights, hasData }: AIInsightsProps) {
         <EmptyState
           icon="✨"
           message="No insights yet"
-          hint="Interact with tasks, habits, and goals -- AI will surface patterns for you"
+          hint="Use tasks, habits, and goals for a bit — we'll start spotting patterns for you"
         />
       )}
     </div>

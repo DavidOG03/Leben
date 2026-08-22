@@ -42,8 +42,8 @@ export default async function SignInPage() {
         </div>
 
         <AuthHeroPanel
-          heading="Welcome back"
-          subheading="Continue building your life system with the digital curator designed for focused execution."
+          heading="Good to see you again"
+          subheading="Pick up right where you left off. Your goals, habits, and plans are waiting."
         />
 
         {/* <div className="auth-social-proof">

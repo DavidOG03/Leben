@@ -5,9 +5,9 @@ import AIChatMessages from "./AIChatMessages";
 import { useAIChatPanel } from "../../hooks/useAIChatPanel";
 
 const suggestions = [
-  { icon: "", label: "Analyze my productivity" },
-  { icon: "", label: "Generate task list" },
-  { icon: "", label: "Optimize my schedule" },
+  { icon: "📊", label: "How am I doing this week?" },
+  { icon: "✅", label: "Help me plan my tasks" },
+  { icon: "🗓️", label: "What should I focus on today?" },
 ];
 
 export default function AIChatPanel() {
@@ -92,7 +92,7 @@ export default function AIChatPanel() {
                 sendMessage(input);
               }
             }}
-            placeholder="Ask neural engine..."
+            placeholder="Ask me anything..."
             className="flex-1 bg-transparent outline-none resize-none max-h-32 pt-0.5"
             style={{ fontSize: "14px", color: "#ccc" }}
             rows={1}
@@ -130,7 +130,7 @@ export default function AIChatPanel() {
               fontWeight: 700,
             }}
           >
-            NEURAL ENGINE V1.0
+            POWERED BY AI
           </p>
           <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-white/20" />
         </div>

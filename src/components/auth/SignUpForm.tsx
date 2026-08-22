@@ -62,9 +62,9 @@ export function SignUpForm() {
   return (
     <div className="auth-card signup-card">
       <div className="auth-card-header">
-        <h2 className="auth-card-title">Create your Leben account</h2>
+        <h2 className="auth-card-title">Create your account</h2>
         <p className="auth-card-subtitle">
-          Start building a smarter life system
+          It only takes a moment. Let's get you set up.
         </p>
       </div>
 

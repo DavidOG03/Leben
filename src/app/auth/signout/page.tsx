@@ -24,18 +24,12 @@ export default function SignedOutPage() {
 
         <div className="w-full bg-[#161618] border border-white/5 rounded-[20px] p-9 sm:p-10 flex flex-col items-center gap-3 text-center">
           <h1 className="text-[22px] font-bold text-[#f0f0f0] m-0 tracking-tight">
-            You&apos;ve been signed out
+            See you soon
           </h1>
 
-          <div className="bg-[#6b7fff1f] border border-[#6b7fff33] rounded-full px-3 py-1">
-            <span className="text-[10px] font-bold tracking-widest text-[#6b7fff] uppercase">
-              SESSION SECURED
-            </span>
-          </div>
-
-          <p className="text-sm text-[#888888] m-0">Your session has ended securely.</p>
+          <p className="text-sm text-[#888888] m-0">You&apos;ve been signed out safely.</p>
           <p className="text-[13px] text-white/20 mt-2 mb-1">
-            Keep building your system when you&apos;re ready
+            Your progress is saved — come back whenever you&apos;re ready.
           </p>
 
           <div className="w-full flex flex-col gap-2.5 mt-2">
@@ -51,23 +45,6 @@ export default function SignedOutPage() {
             >
               Go to dashboard
             </Link>
-          </div>
-
-          <div className="flex items-center gap-1.5 mt-2">
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#444"
-              strokeWidth="2"
-              aria-hidden="true"
-            >
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-            <span className="text-[10px] tracking-widest text-white/20 uppercase font-medium">
-              ENCRYPTED END POINT
-            </span>
           </div>
         </div>
 

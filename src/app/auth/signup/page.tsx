@@ -13,13 +13,9 @@ export const metadata = {
 
 const SIGNUP_FEATURES = [
   {
-    label: "EFFICIENCY",
-    description: "Automated workflows for your daily digital life.",
+    label: "FOR EVERYONE",
+    description: "Simple enough for anyone, powerful enough to grow with you.",
   },
-  // {
-  //   label: "PRIVACY",
-  //   description: "Local-first data processing with end-to-end security.",
-  // },
 ];
 
 export default async function SignUpPage() {
@@ -51,8 +47,8 @@ export default async function SignUpPage() {
         </div>
 
         <AuthHeroPanel
-          heading="Join the Intelligence Layer"
-          subheading="Your cognitive evolution starts here."
+          heading="Start living with intention"
+          subheading="A place to organise your days, build better habits, and make real progress — at your own pace."
           features={SIGNUP_FEATURES}
         />
       </section>

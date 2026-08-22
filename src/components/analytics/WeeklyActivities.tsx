@@ -133,8 +133,8 @@ export default function WeeklyActivityChart({
       ) : (
         <EmptyState
           icon={<BarChart2 size={24} color="#555" />}
-          message="No activity yet"
-          hint="Complete tasks this week to see your activity chart"
+          message="Nothing here yet"
+          hint="Tick off some tasks this week and your activity will show up here"
         />
       )}
     </div>

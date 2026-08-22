@@ -51,8 +51,8 @@ export default function GoalBreakdown({ goals, hasData }: GoalBreakdownProps) {
       ) : (
         <EmptyState
           icon="🎯"
-          message="No goals set"
-          hint="Create goals and update your progress to track them here"
+          message="No goals yet"
+          hint="Set your first goal and track your progress right here"
         />
       )}
     </div>
