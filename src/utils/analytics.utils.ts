@@ -141,11 +141,15 @@ export function computeWeekActivity(
 export function computeProductivity(
   tasks: Task[],
   habits: Habit[],
+  productivityHistory: Record<string, { completed: number; total: number }> = {},
 ): ProductivityData {
   const last30 = lastNDays(30);
 
   const trend = last30.map((isoDate) => {
-    const dayTasks = tasks.filter((t) => t.completedAt === isoDate).length;
+    // Prefer persisted history; fall back to live task count for days not yet recorded
+    const liveTasks = tasks.filter((t) => t.completedAt === isoDate).length;
+    const dayTasks = productivityHistory[isoDate]?.completed ?? liveTasks;
+
     const dayHabits = habits.reduce(
       (sum, h) => sum + ((h.completedDates ?? []).includes(isoDate) ? 1 : 0),
       0,
@@ -273,7 +277,7 @@ export function buildAnalyticsData(
   return {
     statCards: computeStatCards(tasks, habits, goals, productivityHistory),
     weekActivity: computeWeekActivity(tasks, habits, productivityHistory),
-    productivity: computeProductivity(tasks, habits),
+    productivity: computeProductivity(tasks, habits, productivityHistory),
     topHabits: computeHabitStats(habits),
     goalProgress: computeGoalStats(goals),
     aiInsights: computeAIInsights(tasks, habits, goals),

@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { useLebenStore } from "@/store/useStore";
@@ -14,12 +13,7 @@ export default function GoalProgress() {
   const isSyncing = useLebenStore((s: any) => s.isSyncing) as boolean;
   const toggleMilestone = useLebenStore((s: any) => s.toggleMilestone);
   const userId = useLebenStore((s: any) => s.userId);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
-
-  useEffect(() => {
-    setTimeout(() => setLoading(false), 500);
-  }, []);
 
   return (
     <div
@@ -34,7 +28,7 @@ export default function GoalProgress() {
         <h3 className="font-semibold text-white" style={{ fontSize: "15px" }}>
           Goal Progress
         </h3>
-        {!(loading || isSyncing) && goals.length > 0 && (
+        {!isSyncing && goals.length > 0 && (
           <Link
             href="/goals"
             className="text-[#7c6af0] hover:underline"
@@ -45,7 +39,7 @@ export default function GoalProgress() {
         )}
       </div>
 
-      {loading || isSyncing ? (
+      {isSyncing ? (
         <div className="space-y-6 flex-1 animate-pulse">
           {[1, 2].map((i) => (
             <div key={i}>
