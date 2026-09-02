@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { unifiedAiCall } from "@/lib/ai/unifiedClient";
+
+export const dynamic = 'force-dynamic';
 import { buildUserContext } from "@/lib/ai/contextBuilder";
 
 export async function POST(req: Request) {

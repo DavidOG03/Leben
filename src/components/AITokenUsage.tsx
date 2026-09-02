@@ -41,7 +41,7 @@ export default function AITokenUsage() {
     // Refresh usage every 5 minutes or when the component mounts
     const interval = setInterval(fetchUsage, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [userId]);
 
   if (loading) return null;
   if (!usage) return null;

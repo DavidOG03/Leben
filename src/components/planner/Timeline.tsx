@@ -42,7 +42,7 @@ export function Timeline() {
         {schedule.length === 0 ? (
           <div className="py-20 text-center">
             <p className="text-[#333] italic" style={{ fontSize: "14px" }}>
-              Nothing planned yet. Add a couple of tasks and hit Regenerate — we'll build your day from there.
+              Nothing planned yet. Add a couple of tasks and hit Regenerate — we&apos;ll build your day from there.
             </p>
           </div>
         ) : (

@@ -39,7 +39,7 @@ export function EmptyPlannerState({ taskCount }: { taskCount: number }) {
         className="text-white font-bold mb-3"
         style={{ fontSize: "24px", letterSpacing: "-0.02em" }}
       >
-        Let's plan your day
+        Let&apos;s plan your day
       </h2>
       <p
         className="text-[#666] mb-10 max-w-[360px] mx-auto"

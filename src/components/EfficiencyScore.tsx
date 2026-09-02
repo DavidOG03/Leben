@@ -80,7 +80,7 @@ export default function EfficiencyScore() {
     );
     const totalBooks   = books.length;
     const engagedBooks = books.filter(
-      (b) => b.status === "finished" || (b.status === "reading" && b.currentPage > 0),
+      (b) => b.status === "completed" || (b.status === "reading" && b.currentPage > 0),
     ).length;
 
     const taskRate  = totalScheduledTasks    > 0 ? totalCompletedTasks    / totalScheduledTasks    : 0;

@@ -121,5 +121,5 @@ export function useLoadUserData() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [setTasks, setHabits, setGoals, setBooks, setIsSyncing]);
+  }, [setTasks, setHabits, setGoals, setBooks, setProductivityHistory, setIsSyncing]);
 }

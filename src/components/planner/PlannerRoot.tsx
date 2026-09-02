@@ -119,7 +119,7 @@ export function PlannerRoot() {
             className="text-[#666]"
             style={{ fontSize: "14px", maxWidth: "480px" }}
           >
-            Here's how we've arranged your day — built around what matters most to you.
+            Here&apos;s how we&apos;ve arranged your day — built around what matters most to you.
           </p>
 
           {waitCountdown !== null && waitCountdown > 0 && (

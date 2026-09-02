@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+
+export const dynamic = 'force-dynamic';
 import { createClient } from "@/lib/supabase/server";
 import { unifiedAiCall } from "@/lib/ai/unifiedClient";
 

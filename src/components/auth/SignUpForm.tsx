@@ -64,7 +64,7 @@ export function SignUpForm() {
       <div className="auth-card-header">
         <h2 className="auth-card-title">Create your account</h2>
         <p className="auth-card-subtitle">
-          It only takes a moment. Let's get you set up.
+          It only takes a moment. Let&apos;s get you set up.
         </p>
       </div>
 

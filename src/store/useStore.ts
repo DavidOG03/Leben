@@ -50,6 +50,7 @@ export interface Habit {
   pct: number;
   completedDates: string[];
   reminderAt?: string; // ISO timestamp
+  createdAt?: string;
 }
 
 export interface ScheduleItem {
