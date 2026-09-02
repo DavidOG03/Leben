@@ -42,7 +42,7 @@ export function useLoadUserData() {
 
       // Track the user ID associated with this store's data
       useLebenStore.getState().setUserId(user.id);
-      
+
       const fullName = user.user_metadata?.full_name || null;
       const email = user.email || null;
       useLebenStore.getState().setUserDetails(fullName, email);
@@ -74,11 +74,6 @@ export function useLoadUserData() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, session: Session | null) => {
-        console.log(
-          `🔄 Auth state changed: ${event}`,
-          session?.user?.id || "no user",
-        );
-
         const currentStoreUserId = useLebenStore.getState().userId;
 
         if (session?.user) {
@@ -97,7 +92,8 @@ export function useLoadUserData() {
             isUserChanged ||
             event === "SIGNED_IN" ||
             event === "INITIAL_SESSION" ||
-            (event === "TOKEN_REFRESHED" && useLebenStore.getState().tasks.length > 0);
+            (event === "TOKEN_REFRESHED" &&
+              useLebenStore.getState().tasks.length > 0);
 
           if (shouldLoad) {
             if (isUserChanged) {
