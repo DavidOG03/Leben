@@ -12,6 +12,7 @@ interface AIState {
   messages: Message[];
   isThinking: boolean;
   addMessage: (message: Message) => void;
+  removeMessage: (id: string) => void;
   setThinking: (thinking: boolean) => void;
   clearChat: () => void;
 }
@@ -39,6 +40,8 @@ export const useAIStore = create<AIState>((set) => {
     isThinking: false,
     addMessage: (msg) =>
       set((state) => ({ messages: [...state.messages, msg] })),
+    removeMessage: (id) =>
+      set((state) => ({ messages: state.messages.filter((m) => m.id !== id) })),
     setThinking: (isThinking) => set({ isThinking }),
     clearChat: () => set({ messages: [] }),
   };

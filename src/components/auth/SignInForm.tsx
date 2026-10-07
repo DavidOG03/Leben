@@ -43,7 +43,7 @@ export function SignInForm() {
       <div className="auth-card-header">
         <h2 className="auth-card-title">Sign In</h2>
         <p className="auth-card-subtitle">
-          Welcome back — your space is ready for you.
+          Step into your workspace
         </p>
       </div>
 

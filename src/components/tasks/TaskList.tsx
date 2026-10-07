@@ -317,7 +317,7 @@ export default function TaskList() {
             {reminderEditingId === task.id && (
               <div className="absolute right-0 top-full mt-2 z-50 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
                 <ReminderPicker
-                  initialValue={task.reminderAt}
+                  initialValue={task.reminderAt ?? undefined}
                   onSave={(val) => handleSetReminder(task.id, val)}
                   onClose={() => setReminderEditingId(null)}
                 />

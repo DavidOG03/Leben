@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { useLebenStore } from "@/store/useStore";
 import { savePushSubscription } from "@/lib/supabase/db";
@@ -42,19 +41,16 @@ function SectionLabel({ text }: { text: string }) {
 }
 
 export default function SettingsContent() {
-  const [theme, setTheme] = useState<"Dark" | "Light">("Dark");
-  const [notifs, setNotifs] = useState({
-    audio: true,
-    email: false,
-    push: false,
-  });
+  const [pushEnabled, setPushEnabled] = useState(false);
   const userId = useLebenStore((s: any) => s.userId);
   const userFullName = useLebenStore((s: any) => s.userFullName);
   const userEmail = useLebenStore((s: any) => s.userEmail);
+  const notificationPrefs = useLebenStore((s) => s.notificationPrefs);
+  const updateNotificationPrefs = useLebenStore((s) => s.updateNotificationPrefs);
 
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
-      setNotifs((p) => ({ ...p, push: Notification.permission === "granted" }));
+      setPushEnabled(Notification.permission === "granted");
     }
   }, []);
 
@@ -64,7 +60,7 @@ export default function SettingsContent() {
       return;
     }
 
-    if (notifs.push) {
+    if (pushEnabled) {
       alert(
         "To disable push notifications, please change your browser settings.",
       );
@@ -73,7 +69,8 @@ export default function SettingsContent() {
 
     const permission = await Notification.requestPermission();
     if (permission === "granted") {
-      setNotifs((p) => ({ ...p, push: true }));
+      setPushEnabled(true);
+      await updateNotificationPrefs({ push: true });
       try {
         const registration = await navigator.serviceWorker.register("/sw.js");
         const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
@@ -287,10 +284,7 @@ export default function SettingsContent() {
               </svg>
             </div>
             <div>
-              <p
-                className="font-medium text-white"
-                style={{ fontSize: "14px" }}
-              >
+              <p className="font-medium text-white" style={{ fontSize: "14px" }}>
                 Notification Channels
               </p>
               <p style={{ fontSize: "11px", color: "#555" }}>
@@ -298,22 +292,33 @@ export default function SettingsContent() {
               </p>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8 mt-4">
-            <div className="flex items-center gap-3">
-              <span style={{ fontSize: "13px", color: "#aaa" }}>
-                Email Reminders
-              </span>
-              <Toggle
-                on={notifs.email}
-                onChange={() => setNotifs((p) => ({ ...p, email: !p.email }))}
-              />
+
+          {/* Push toggle */}
+          <div className="flex flex-col gap-3 mt-4">
+            <div className="flex items-center justify-between">
+              <span style={{ fontSize: "13px", color: "#aaa" }}>Desktop / Mobile Push</span>
+              <Toggle on={pushEnabled} onChange={handlePushToggle} />
             </div>
-            <div className="flex items-center gap-3">
-              <span style={{ fontSize: "13px", color: "#aaa" }}>
-                Desktop / Mobile Push
-              </span>
-              <Toggle on={notifs.push} onChange={handlePushToggle} />
-            </div>
+
+            {/* Granular notification prefs */}
+            {[
+              { key: "morningBriefing" as const, label: "Morning Briefing", sub: "Daily AI summary at the start of your day" },
+              { key: "middayNudge" as const, label: "Midday Nudge", sub: "Check-in reminder at noon" },
+              { key: "eveningWrapUp" as const, label: "Evening Wrap-Up", sub: "End-of-day productivity summary" },
+              { key: "streakSavers" as const, label: "Streak Savers", sub: "Alert before a habit streak breaks" },
+              { key: "goalUpdates" as const, label: "Goal Updates", sub: "Milestone completions and deadline reminders" },
+            ].map(({ key, label, sub }) => (
+              <div key={key} className="flex items-center justify-between py-2" style={{ borderTop: "1px solid #1a1a1a" }}>
+                <div>
+                  <p style={{ fontSize: "13px", color: "#ccc" }}>{label}</p>
+                  <p style={{ fontSize: "11px", color: "#555" }}>{sub}</p>
+                </div>
+                <Toggle
+                  on={notificationPrefs[key]}
+                  onChange={() => updateNotificationPrefs({ [key]: !notificationPrefs[key] })}
+                />
+              </div>
+            ))}
           </div>
         </div>
       </div>

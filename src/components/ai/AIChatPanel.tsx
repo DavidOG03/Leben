@@ -16,8 +16,12 @@ export default function AIChatPanel() {
     input,
     setInput,
     isThinking,
+    thinkingStatus,
+    errorState,
     importedMessageIds,
     sendMessage,
+    retryRequest,
+    removeMessage,
     importAssistantMessage,
   } = useAIChatPanel();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -35,8 +39,12 @@ export default function AIChatPanel() {
       <AIChatMessages
         messages={messages}
         isThinking={isThinking}
+        thinkingStatus={thinkingStatus}
+        errorState={errorState}
+        retryRequest={retryRequest}
         importedMessageIds={importedMessageIds}
         onImport={importAssistantMessage}
+        onDeleteMessage={removeMessage}
         scrollRef={scrollRef}
       />
 

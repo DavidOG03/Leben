@@ -42,9 +42,9 @@ export default async function SignInPage() {
         </div>
 
         <AuthHeroPanel
-          heading="Good to see you again"
-          subheading="Pick up right where you left off. Your goals, habits, and plans are waiting."
-        />
+          heading="Good to see you"
+          subheading="Your goals, habits, and plans are waiting."
+          />
 
         {/* <div className="auth-social-proof">
           <div className="avatar-stack" aria-hidden="true">

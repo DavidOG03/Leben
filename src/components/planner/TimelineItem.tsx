@@ -138,7 +138,7 @@ export function TimelineItem({ item, isCurrent }: TimelineItemProps) {
         {isReminderPickerOpen && (
           <div className="absolute right-0 top-4 mt-2 z-[200] shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
             <ReminderPicker
-              initialValue={item.reminderAt}
+              initialValue={item.reminderAt ?? undefined}
               onSave={handleSetReminder}
               onClose={() => setIsReminderPickerOpen(false)}
             />

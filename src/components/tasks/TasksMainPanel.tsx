@@ -233,7 +233,9 @@ export default function TasksMainPanel() {
       </div>
 
       {/* Task visualization */}
-      {view === "list" ? <TaskList /> : <KanbanView />}
+      <div className="mb-6">
+        {view === "list" ? <TaskList /> : <KanbanView />}
+      </div>
 
       {/* Bottom row: chart + smart suggestion */}
       <div className="grid grid-rows-2 lg:grid-cols-3 lg:grid-rows-1 gap-4 mt-4">

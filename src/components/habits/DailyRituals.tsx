@@ -5,6 +5,7 @@ import { useLebenStore, Habit } from "@/store/useStore";
 import type { DailyRitualProps } from "../../utils/habits.types";
 import { BellIcon } from "@/constants/Icons";
 import ReminderPicker from "../shared/ReminderPicker";
+import { calcStreak } from "@/utils/habits";
 
 const DailyRituals: React.FC<DailyRitualProps> = ({
   setShowAddHabit,
@@ -122,7 +123,12 @@ const DailyRituals: React.FC<DailyRitualProps> = ({
               gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
             }}
           >
-            {habits.map((habit) => (
+            {habits.map((habit) => {
+              const todayStr = new Date().toISOString().slice(0, 10);
+              const isChecked = habit.completedDates?.includes(todayStr) ?? false;
+              // If we need current streak, we can also add it: const currentStreak = calcStreak(habit.completedDates || []);
+
+              return (
               <div
                 key={habit.id}
                 onClick={() => onSelectedHabitId(habit.id)}
@@ -195,7 +201,7 @@ const DailyRituals: React.FC<DailyRitualProps> = ({
                     onClick={(e) => e.stopPropagation()}
                   >
                     <ReminderPicker 
-                      initialValue={habit.reminderAt}
+                      initialValue={habit.reminderAt ?? undefined}
                       onSave={(val) => handleSetReminder(habit.id, val)}
                       onClose={() => setReminderEditingId(null)}
                     />
@@ -270,10 +276,10 @@ const DailyRituals: React.FC<DailyRitualProps> = ({
                   <span
                     style={{
                       fontSize: "10px",
-                      color: habit.checked ? habit.color : "#444",
+                      color: isChecked ? habit.color : "#444",
                     }}
                   >
-                    {habit.checked ? "Done today ✓" : "Not yet"}
+                    {isChecked ? "Done today ✓" : "Not yet"}
                   </span>
                   <button
                     onClick={(e) => {
@@ -284,15 +290,15 @@ const DailyRituals: React.FC<DailyRitualProps> = ({
                     style={{
                       width: "30px",
                       height: "30px",
-                      backgroundColor: habit.checked
+                      backgroundColor: isChecked
                         ? `${habit.color}22`
                         : "transparent",
-                      border: habit.checked
+                      border: isChecked
                         ? `1.5px solid ${habit.color}`
                         : "1.5px solid #333",
                     }}
                   >
-                    {habit.checked && (
+                    {isChecked && (
                       <svg
                         width="12"
                         height="12"
@@ -311,7 +317,8 @@ const DailyRituals: React.FC<DailyRitualProps> = ({
                   </button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

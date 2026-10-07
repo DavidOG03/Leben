@@ -2,25 +2,11 @@
 "use client";
 
 import { useEffect } from "react";
-import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { useLebenStore } from "@/store/useStore";
-import {
-  fetchTasks,
-  fetchHabits,
-  fetchGoals,
-  fetchBooks,
-  fetchProductivityHistory,
-} from "@/lib/supabase/db";
 import { createClient } from "@/lib/supabase/client";
 
 export function useLoadUserData() {
-  const setTasks = useLebenStore((s) => s.setTasks);
-  const setHabits = useLebenStore((s) => s.setHabits);
-  const setGoals = useLebenStore((s) => s.setGoals);
-  const setBooks = useLebenStore((s) => s.setBooks);
-  const setProductivityHistory = useLebenStore((s) => s.setProductivityHistory);
-  const setIsSyncing = useLebenStore((s) => s.setIsSyncing);
-
   useEffect(() => {
     const supabase = createClient();
 
@@ -30,46 +16,44 @@ export function useLoadUserData() {
         error,
       } = await supabase.auth.getUser();
 
-      // If no user and no error (or it's an explicit auth error like invalid token), we might clear.
-      // But if it's a network error (Failed to fetch), we should preserve the offline store!
+      // If no user and no error (or it's an explicit auth error like invalid token), clear.
+      // But if it's a network error (Failed to fetch), preserve the offline store!
       if (!user) {
-        // Only clear if it's not a network error
         if (error?.message !== "Failed to fetch") {
           useLebenStore.getState().clearStore();
         }
         return;
       }
 
-      // Track the user ID associated with this store's data
-      useLebenStore.getState().setUserId(user.id);
-
+      // Set user in store
       const fullName = user.user_metadata?.full_name || null;
       const email = user.email || null;
-      useLebenStore.getState().setUserDetails(fullName, email);
+      useLebenStore.getState().setUser(user.id, email, fullName);
 
       try {
-        setIsSyncing(true);
-        const [tasks, habits, goals, books, history] = await Promise.all([
-          fetchTasks(),
-          fetchHabits(),
-          fetchGoals(),
-          fetchBooks(),
-          fetchProductivityHistory(),
+        useLebenStore.getState().setIsSyncing(true);
+
+        // Use the store's load methods — they guard against double-fetching
+        // and merge local (persisted) state with cloud data
+        const store = useLebenStore.getState();
+        await Promise.all([
+          store.loadTasks(),
+          store.loadHabits(),
+          store.loadGoals(),
+          store.loadBooks(),
+          store.loadHistory(),
         ]);
 
-        setTasks(tasks);
-        setHabits(habits);
-        setGoals(goals);
-        setBooks(books);
-        setProductivityHistory(history);
-      } catch (error) {
-        console.error("Failed to load user data:", error);
+        // Replay any queued offline mutations now that we're connected
+        await useLebenStore.getState().processOfflineQueue();
+      } catch (err) {
+        console.error("Failed to load user data:", err);
       } finally {
-        setIsSyncing(false);
+        useLebenStore.getState().setIsSyncing(false);
       }
     };
 
-    // Listen for auth state changes - this is our primary mechanism
+    // Listen for auth state changes — this is our primary mechanism
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
@@ -77,17 +61,16 @@ export function useLoadUserData() {
         const currentStoreUserId = useLebenStore.getState().userId;
 
         if (session?.user) {
-          // If the user has changed, clear the store first to prevent leakage
+          // If the user has changed, clear the store first to prevent data leakage
           const isUserChanged = session.user.id !== currentStoreUserId;
           if (isUserChanged) {
             useLebenStore.getState().clearStore();
-            useLebenStore.getState().setUserId(session.user.id);
+            useLebenStore.getState().setUser(session.user.id, null);
             if (typeof window !== "undefined") {
               localStorage.removeItem("leben-storage");
             }
           }
 
-          // Small delay on transition to ensure UI updates before loading new data
           const shouldLoad =
             isUserChanged ||
             event === "SIGNED_IN" ||
@@ -97,6 +80,7 @@ export function useLoadUserData() {
 
           if (shouldLoad) {
             if (isUserChanged) {
+              // Small delay on user switch to let UI settle before loading new data
               setTimeout(async () => {
                 await loadUserData();
               }, 100);
@@ -106,7 +90,6 @@ export function useLoadUserData() {
           }
         } else {
           // User is signed out or is a guest
-          // If the store is populated with a signed-in user's data, clear it!
           if (currentStoreUserId !== null) {
             useLebenStore.getState().clearStore();
             if (typeof window !== "undefined") {
@@ -117,9 +100,8 @@ export function useLoadUserData() {
       },
     );
 
-    // Cleanup subscription on unmount
     return () => {
       subscription.unsubscribe();
     };
-  }, [setTasks, setHabits, setGoals, setBooks, setProductivityHistory, setIsSyncing]);
+  }, []); // empty deps — supabase client is stable, store accessed via getState()
 }

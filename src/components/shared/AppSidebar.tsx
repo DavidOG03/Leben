@@ -25,11 +25,11 @@ import { createClient } from "@/lib/supabase/client";
 import { useLebenStore } from "@/store/useStore";
 
 const navItems = [
-  { label: "Dashboard", icon: <GridIcon />, href: "/" },
+  { label: "Home", icon: <GridIcon />, href: "/" },
   { label: "Tasks", icon: <TaskIcon />, href: "/tasks" },
   { label: "Habits", icon: <HabitIcon />, href: "/habits" },
   { label: "Goals", icon: <GoalIcon />, href: "/goals" },
-  { label: "AI Assistant", icon: <AIIcon />, href: "/ai" },
+  { label: "AI Chat", icon: <AIIcon />, href: "/ai" },
   { label: "Daily Planner", icon: <CalIcon />, href: "/planner" },
   { label: "Analytics", icon: <AnalyticsIcon />, href: "/analytics" },
   { label: "Settings", icon: <GearIcon />, href: "/settings" },

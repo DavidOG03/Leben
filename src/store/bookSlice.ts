@@ -1,6 +1,10 @@
 import { StateCreator } from "zustand";
-
-import { insertBook, updateBook as updateBookDb, deleteBook } from "@/lib/supabase/db";
+import {
+  fetchBooks,
+  insertBook,
+  updateBook as updateBookDb,
+  deleteBook,
+} from "@/lib/supabase/db";
 
 export interface Book {
   id: string;
@@ -11,6 +15,7 @@ export interface Book {
   coverColor: string; // hex, used for card accent
   status: "reading" | "completed" | "paused";
   addedAt: string;
+  reminderAt?: string; // ISO timestamp
 }
 
 export interface BookFormData {
@@ -18,20 +23,21 @@ export interface BookFormData {
   author: string;
   totalPages: number;
   coverColor: string;
+  reminderAt?: string;
 }
 
 export interface BooksSlice {
   books: Book[];
-  addBook: (data: BookFormData) => void;
-  updateBook: (
-    id: string,
-    updates: Partial<Book>,
-  ) => void;
-  removeBook: (id: string) => void;
-  setBooks: (books: Book[]) => void;
+  booksLoaded: boolean;
+  loadBooks: () => Promise<void>;
+  addBook: (data: BookFormData) => Promise<void>;
+  updateBook: (id: string, updates: Partial<Book>) => Promise<void>;
+  removeBook: (id: string) => Promise<void>;
+  setBooks: (books: Book[]) => void; // kept for back-compat
 }
 
-// Derived stats -- pure util, no store needed
+// ─── Derived stats ────────────────────────────────────────────────────────────
+
 export function deriveBooksStats(books: Book[]) {
   const total = books.length;
   const completed = books.filter((b) => b.status === "completed").length;
@@ -63,12 +69,35 @@ function generateBookId(): string {
   );
 }
 
+// ─── Slice ────────────────────────────────────────────────────────────────────
+
 export const createBooksSlice: StateCreator<BooksSlice, [], [], BooksSlice> = (
   set,
+  get,
 ) => ({
   books: [],
+  booksLoaded: false,
 
-  addBook: (data: BookFormData) => {
+  setBooks: (books: Book[]) => set({ books }),
+
+  loadBooks: async () => {
+    const state = get() as any;
+    if (state.booksLoaded) return;
+    // Guest mode: no fetch needed
+    if (!state.userId) {
+      set({ booksLoaded: true } as any);
+      return;
+    }
+    const cloudBooks = await fetchBooks();
+    const localBooks = (get() as any).books as Book[];
+    const mergedBooks = [
+      ...localBooks.filter((b) => !cloudBooks.some((c) => c.id === b.id)),
+      ...cloudBooks,
+    ];
+    set({ books: mergedBooks, booksLoaded: true } as any);
+  },
+
+  addBook: async (data: BookFormData) => {
     const newBook: Book = {
       id: generateBookId(),
       title: data.title,
@@ -78,18 +107,23 @@ export const createBooksSlice: StateCreator<BooksSlice, [], [], BooksSlice> = (
       coverColor: data.coverColor,
       status: "reading",
       addedAt: new Date().toISOString(),
+      reminderAt: data.reminderAt,
     };
     set((state) => ({ books: [...state.books, newBook] }));
-    insertBook(newBook);
+    try {
+      await insertBook(newBook);
+    } catch {
+      (get() as any).addOfflineMutation?.("insertBook", [newBook]);
+    }
   },
 
-  updateBook: (id, updates) => {
+  updateBook: async (id: string, updates: Partial<Book>) => {
     let updatedBook: Book | undefined;
     set((state) => ({
       books: state.books.map((b) => {
         if (b.id !== id) return b;
         updatedBook = { ...b, ...updates };
-        // auto-mark as completed when currentPage reaches totalPages
+        // Auto-mark as completed when currentPage reaches totalPages
         if (
           updatedBook.currentPage >= updatedBook.totalPages &&
           updatedBook.totalPages > 0
@@ -101,13 +135,20 @@ export const createBooksSlice: StateCreator<BooksSlice, [], [], BooksSlice> = (
       }),
     }));
     if (updatedBook) {
-      updateBookDb(id, updates);
+      try {
+        await updateBookDb(id, updates);
+      } catch {
+        (get() as any).addOfflineMutation?.("updateBook", [id, updates]);
+      }
     }
   },
 
-  removeBook: (id) => {
+  removeBook: async (id: string) => {
     set((state) => ({ books: state.books.filter((b) => b.id !== id) }));
-    deleteBook(id);
+    try {
+      await deleteBook(id);
+    } catch {
+      (get() as any).addOfflineMutation?.("deleteBook", [id]);
+    }
   },
-  setBooks: (books: Book[]) => set({ books }),
 });

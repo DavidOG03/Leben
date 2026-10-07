@@ -6,6 +6,7 @@ import { useLebenStore, Habit } from "@/store/useStore";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PlusIcon } from "@/constants/Icons";
+import { calcStreak } from "@/utils/habits";
 
 export default function HabitStreaks() {
   const habits = useLebenStore((s: any) => s.habits) as Habit[];
@@ -84,7 +85,12 @@ export default function HabitStreaks() {
         </div>
       ) : (
         <div className="w-full flex-1 flex flex-col gap-4">
-          {habits.slice(0, 3).map((h: Habit) => (
+          {habits.slice(0, 3).map((h: Habit) => {
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const isChecked = h.completedDates?.includes(todayStr) ?? false;
+            const currentStreak = calcStreak(h.completedDates || []);
+
+            return (
             <div key={h.id}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -108,7 +114,7 @@ export default function HabitStreaks() {
                       {h.label}
                     </div>
                     <div style={{ fontSize: "11px", color: "#666" }}>
-                      🔥 {h.streak} day streak
+                      🔥 {currentStreak} day streak
                     </div>
                   </div>
                 </div>
@@ -146,12 +152,12 @@ export default function HabitStreaks() {
                       width: "42px",
                       height: "26px",
                       border: "1px solid #1e1e1e",
-                      backgroundColor: h.checked ? h.color : "#161616",
-                      color: h.checked ? "#fff" : "#555",
+                      backgroundColor: isChecked ? h.color : "#161616",
+                      color: isChecked ? "#fff" : "#555",
                       fontSize: "12px",
                     }}
                   >
-                    {h.checked ? "✓" : "○"}
+                    {isChecked ? "✓" : "○"}
                   </button>
                 </div>
               </div>
@@ -209,7 +215,8 @@ export default function HabitStreaks() {
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
           {habits.length > 3 && (
             <Link
               href="/habits"

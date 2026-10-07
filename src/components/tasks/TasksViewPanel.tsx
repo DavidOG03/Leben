@@ -16,8 +16,8 @@ export default function TasksViewPanel() {
 
   const views: { id: ViewId; label: string; icon: React.ReactNode; count?: number }[] = [
     { id: "all",       label: "All",       icon: <AllIcon />,      count: tasks.length },
-    { id: "today",     label: "Today",     icon: <CalendarIcon />, count: tasks.filter((t) => new Date(t.date).toDateString() === today).length },
-    { id: "upcoming",  label: "Upcoming",  icon: <ClockIcon />,    count: tasks.filter((t) => new Date(t.date) > new Date()).length },
+    { id: "today",     label: "Today",     icon: <CalendarIcon />, count: tasks.filter((t) => t.date && new Date(t.date).toDateString() === today).length },
+    { id: "upcoming",  label: "Upcoming",  icon: <ClockIcon />,    count: tasks.filter((t) => t.date && new Date(t.date) > new Date()).length },
     { id: "completed", label: "Completed", icon: <CheckIcon />,    count: tasks.filter((t) => t.completed).length },
   ];
 

@@ -6,55 +6,113 @@ import {
   generateGoalId,
   generateMilestoneId,
 } from "@/utils/goals.types";
-import { insertGoal, updateGoal as updateGoalDb, deleteGoal } from "@/lib/supabase/db";
+import {
+  fetchGoals,
+  insertGoal,
+  updateGoal as updateGoalDb,
+  deleteGoal,
+} from "@/lib/supabase/db";
 
 export interface GoalsSlice {
   goals: Goal[];
-  setGoals: (goals: Goal[]) => void;
-  addGoal: (data: GoalFormData) => void;
-  toggleMilestone: (goalId: string, milestoneId: string) => void;
-  removeGoal: (goalId: string) => void;
-  updateGoal: (goalId: string, updates: Partial<Goal>) => void;
-  editMilestone: (goalId: string, milestoneId: string, newLabel: string) => void;
+  goalsLoaded: boolean;
+  // Load from cloud with local/cloud merge + guard flag
+  loadGoals: () => Promise<void>;
+  setGoals: (goals: Goal[]) => void; // kept for back-compat
+  addGoal: (data: GoalFormData | Goal) => Promise<void>;
+  editGoal: (goalId: string, updates: Partial<Goal>) => Promise<void>;
+  toggleMilestone: (goalId: string, milestoneId: string) => Promise<void>;
+  removeGoal: (goalId: string) => Promise<void>;
+  updateGoal: (goalId: string, updates: Partial<Goal>) => Promise<void>;
+  updateGoalProgress: (goalId: string, currentValue: number) => Promise<void>;
+  editMilestone: (goalId: string, milestoneId: string, newLabel: string) => Promise<void>;
   incrementTasksLinked: (goalId: string) => void;
 }
 
-// StateCreator<FullStore, [], [], GoalsSlice> -- the slice only knows about itself
-// but receives the full store's set/get so cross-slice calls work when needed
 export const createGoalsSlice: StateCreator<GoalsSlice, [], [], GoalsSlice> = (
   set,
+  get,
 ) => ({
   goals: [],
+  goalsLoaded: false,
+
   setGoals: (goals: Goal[]) => set({ goals }),
 
-  addGoal: (data: GoalFormData) => {
-    const milestones: Milestone[] = data.milestones
-      .filter((m) => m.trim() !== "")
-      .map((label) => ({
-        id: generateMilestoneId(),
-        label,
-        done: false,
-      }));
-
-    const newGoal: Goal = {
-      id: generateGoalId(),
-      title: data.title,
-      deadline: data.deadline,
-      icon: data.icon,
-      milestones,
-      tasksLinked: 0,
-      createdAt: new Date().toISOString(),
-      name: data.title,
-      color: data.color,
-      targetValue: data.targetValue,
-      currentValue: data.currentValue,
-    };
-
-    set((state) => ({ goals: [...state.goals, newGoal] }));
-    insertGoal(newGoal);
+  loadGoals: async () => {
+    const state = get() as any;
+    if (state.goalsLoaded) return;
+    // Guest mode: no fetch needed
+    if (!state.userId) {
+      set({ goalsLoaded: true } as any);
+      return;
+    }
+    const cloudGoals = await fetchGoals();
+    const localGoals = (get() as any).goals as Goal[];
+    const mergedGoals = [
+      ...localGoals.filter((g) => !cloudGoals.some((c) => c.id === g.id)),
+      ...cloudGoals,
+    ];
+    set({ goals: mergedGoals, goalsLoaded: true } as any);
   },
 
-  toggleMilestone: (goalId: string, milestoneId: string) => {
+  addGoal: async (data: GoalFormData | Goal) => {
+    let newGoal: Goal;
+
+    // Accept either a full Goal object or GoalFormData
+    if (
+      "milestones" in data &&
+      Array.isArray((data as any).milestones) &&
+      (data as any).milestones.length > 0 &&
+      typeof (data as any).milestones[0] === "string"
+    ) {
+      // GoalFormData path — milestones are raw strings
+      const fd = data as GoalFormData;
+      const milestones: Milestone[] = (fd.milestones as string[])
+        .filter((m) => m.trim() !== "")
+        .map((label) => ({
+          id: generateMilestoneId(),
+          label,
+          done: false,
+        }));
+      newGoal = {
+        id: generateGoalId(),
+        title: fd.title,
+        name: fd.title,
+        deadline: fd.deadline,
+        icon: fd.icon,
+        milestones,
+        tasksLinked: 0,
+        createdAt: new Date().toISOString(),
+        color: fd.color,
+        targetValue: fd.targetValue,
+        currentValue: fd.currentValue,
+      };
+    } else {
+      newGoal = data as Goal;
+    }
+
+    set((state) => ({ goals: [newGoal, ...state.goals] }));
+    try {
+      await insertGoal(newGoal);
+    } catch {
+      (get() as any).addOfflineMutation?.("insertGoal", [newGoal]);
+    }
+  },
+
+  editGoal: async (goalId: string, updates: Partial<Goal>) => {
+    set((state) => ({
+      goals: state.goals.map((g) =>
+        g.id === goalId ? { ...g, ...updates } : g,
+      ),
+    }));
+    try {
+      await updateGoalDb(goalId, updates);
+    } catch {
+      (get() as any).addOfflineMutation?.("updateGoal", [goalId, updates]);
+    }
+  },
+
+  toggleMilestone: async (goalId: string, milestoneId: string) => {
     let updatedMilestones: Milestone[] = [];
     set((state) => {
       const updatedGoals = state.goals.map((g) => {
@@ -77,27 +135,52 @@ export const createGoalsSlice: StateCreator<GoalsSlice, [], [], GoalsSlice> = (
       return { goals: updatedGoals };
     });
     if (updatedMilestones.length > 0) {
-      updateGoalDb(goalId, { milestones: updatedMilestones });
+      try {
+        await updateGoalDb(goalId, { milestones: updatedMilestones });
+      } catch {
+        (get() as any).addOfflineMutation?.("updateGoal", [goalId, { milestones: updatedMilestones }]);
+      }
     }
   },
 
-  removeGoal: (goalId: string) => {
+  removeGoal: async (goalId: string) => {
     set((state) => ({
       goals: state.goals.filter((g) => g.id !== goalId),
     }));
-    deleteGoal(goalId);
+    try {
+      await deleteGoal(goalId);
+    } catch {
+      (get() as any).addOfflineMutation?.("deleteGoal", [goalId]);
+    }
   },
 
-  updateGoal: (goalId: string, updates: Partial<Goal>) => {
+  updateGoal: async (goalId: string, updates: Partial<Goal>) => {
     set((state) => ({
       goals: state.goals.map((g) =>
         g.id === goalId ? { ...g, ...updates } : g,
       ),
     }));
-    updateGoalDb(goalId, updates);
+    try {
+      await updateGoalDb(goalId, updates);
+    } catch {
+      (get() as any).addOfflineMutation?.("updateGoal", [goalId, updates]);
+    }
   },
 
-  editMilestone: (goalId: string, milestoneId: string, newLabel: string) => {
+  updateGoalProgress: async (goalId: string, currentValue: number) => {
+    set((state) => ({
+      goals: state.goals.map((g) =>
+        g.id === goalId ? { ...g, currentValue } : g,
+      ),
+    }));
+    try {
+      await updateGoalDb(goalId, { currentValue });
+    } catch {
+      (get() as any).addOfflineMutation?.("updateGoal", [goalId, { currentValue }]);
+    }
+  },
+
+  editMilestone: async (goalId: string, milestoneId: string, newLabel: string) => {
     let updatedMilestones: Milestone[] = [];
     set((state) => {
       const updatedGoals = state.goals.map((g) => {
@@ -110,7 +193,11 @@ export const createGoalsSlice: StateCreator<GoalsSlice, [], [], GoalsSlice> = (
       return { goals: updatedGoals };
     });
     if (updatedMilestones.length > 0) {
-      updateGoalDb(goalId, { milestones: updatedMilestones });
+      try {
+        await updateGoalDb(goalId, { milestones: updatedMilestones });
+      } catch {
+        (get() as any).addOfflineMutation?.("updateGoal", [goalId, { milestones: updatedMilestones }]);
+      }
     }
   },
 

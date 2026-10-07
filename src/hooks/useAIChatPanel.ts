@@ -8,6 +8,7 @@ import type { ImportedEntityTracker, ImportKind } from "@/utils/aiChatTypes";
 import {
   buildGoalDraft,
   buildHabitDraft,
+  buildBookDraft,
   cleanupImportedText,
   detectRequestedKinds,
   getImportStateKey,
@@ -21,11 +22,14 @@ import {
 } from "@/utils/aiChatImportUtils";
 
 export function useAIChatPanel() {
-  const { messages, addMessage, isThinking, setThinking } = useAIStore();
+  const { messages, addMessage, isThinking, setThinking, removeMessage } = useAIStore();
+  
   const tasks = useLebenStore((s) => s.tasks);
   const habits = useLebenStore((s) => s.habits);
   const goals = useLebenStore((s) => s.goals);
   const schedule = useLebenStore((s) => s.schedule);
+  const books = useLebenStore((s) => (s as any).books || []);
+  
   const addTask = useLebenStore((s) => s.addTask);
   const deleteTask = useLebenStore((s) => s.deleteTask);
   const addHabit = useLebenStore((s) => s.addHabit);
@@ -33,7 +37,14 @@ export function useAIChatPanel() {
   const addGoal = useLebenStore((s) => s.addGoal);
   const removeGoal = useLebenStore((s) => s.removeGoal);
   const setSchedule = useLebenStore((s) => s.setSchedule);
+  const addBook = useLebenStore((s) => (s as any).addBook);
+  const removeBook = useLebenStore((s) => (s as any).removeBook);
+
   const [input, setInput] = useState("");
+  const [thinkingStatus, setThinkingStatus] = useState("Thinking...");
+  const [errorState, setErrorState] = useState<{ failedPrompt: string; errorMessage: string } | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  
   const [importedMessageIds, setImportedMessageIds] = useState<
     Record<string, boolean>
   >({});
@@ -42,6 +53,7 @@ export function useAIChatPanel() {
     habitIds: [],
     goalTitles: [],
     plannerIds: [],
+    bookTitles: [],
   });
 
   const postAssistantMessage = (content: string) =>
@@ -69,35 +81,6 @@ export function useAIChatPanel() {
       return { message, items };
     }
     return null;
-  };
-
-  const clearPreviousImports = (kinds: Set<ImportKind>) => {
-    const tracker = importedTrackerRef.current;
-    if (kinds.has("task")) {
-      tracker.taskIds.forEach(
-        (id) => tasks.some((task) => task.id === id) && deleteTask(id),
-      );
-      tracker.taskIds = [];
-    }
-    if (kinds.has("habit")) {
-      tracker.habitIds.forEach(
-        (id) => habits.some((habit) => habit.id === id) && removeHabit(id),
-      );
-      tracker.habitIds = [];
-    }
-    if (kinds.has("goal")) {
-      tracker.goalTitles.forEach((title) => {
-        const goal = goals.find((item) => item.title === title);
-        if (goal) removeGoal(goal.id);
-      });
-      tracker.goalTitles = [];
-    }
-    if (kinds.has("planner")) {
-      setSchedule(
-        schedule.filter((item) => !tracker.plannerIds.includes(item.id)),
-      );
-      tracker.plannerIds = [];
-    }
   };
 
   const createHabit = (text: string): Habit => {
@@ -132,85 +115,35 @@ export function useAIChatPanel() {
     };
   };
 
-  const importItems = (
-    contentItems: ReturnType<typeof parseStructuredListItems>,
-    messageId?: string,
-    importKinds?: ImportKind[],
-  ) => {
-    const counts: Partial<Record<ImportKind, number>> = {};
-    const kinds = new Set(contentItems.map((item) => item.kind));
-    const previousPlannerIds = [...importedTrackerRef.current.plannerIds];
-    const createdTaskIds: string[] = [];
-    const createdHabitIds: string[] = [];
-    const createdGoalTitles: string[] = [];
-    const plannerItems: ScheduleItem[] = [];
+  const importAssistantMessage = (msgId: string, itemIndex: string | number, item: any) => {
     const now = new Date().toISOString();
-
-    clearPreviousImports(kinds);
-
-    contentItems.forEach((item) => {
-      if (item.kind === "planner") {
-        const plannerItem = createPlannerItem(item.text);
-        if (plannerItem) plannerItems.push(plannerItem);
-      } else if (item.kind === "habit") {
-        const habit = createHabit(item.text);
-        addHabit(habit);
-        createdHabitIds.push(habit.id);
-      } else if (item.kind === "goal") {
-        const goal = buildGoalDraft(item.text);
-        addGoal(goal);
-        createdGoalTitles.push(goal.title);
-      } else {
-        const id = crypto.randomUUID();
-        addTask({
-          id,
-          title:
-            shortenImportedText(item.text, { maxChars: 52, maxWords: 8 }) ||
-            cleanupImportedText(item.text),
-          completed: false,
-          tag: "WORK",
-          priority: "medium",
-          date: now.slice(0, 10),
-          createdAt: now,
-        });
-        createdTaskIds.push(id);
-      }
-      counts[item.kind] = (counts[item.kind] ?? 0) + 1;
-    });
-
-    if (kinds.has("planner")) {
-      setSchedule([
-        ...schedule.filter((item) => !previousPlannerIds.includes(item.id)),
-        ...plannerItems,
-      ]);
-    }
-
-    importedTrackerRef.current = {
-      taskIds: kinds.has("task")
-        ? createdTaskIds
-        : importedTrackerRef.current.taskIds,
-      habitIds: kinds.has("habit")
-        ? createdHabitIds
-        : importedTrackerRef.current.habitIds,
-      goalTitles: kinds.has("goal")
-        ? createdGoalTitles
-        : importedTrackerRef.current.goalTitles,
-      plannerIds: kinds.has("planner")
-        ? plannerItems.map((item) => item.id)
-        : importedTrackerRef.current.plannerIds,
-    };
-
-    if (messageId) {
-      setImportedMessageIds({
-        [getImportStateKey(messageId, importKinds)]: true,
+    
+    if (item.kind === "planner") {
+      const plannerItem = createPlannerItem(item.text);
+      if (plannerItem) setSchedule([...schedule, plannerItem]);
+    } else if (item.kind === "habit") {
+      addHabit(createHabit(item.text));
+    } else if (item.kind === "goal") {
+      addGoal(buildGoalDraft(item.text, item.milestones, item.deadline));
+    } else if (item.kind === "book") {
+      if (addBook) addBook(buildBookDraft(item.text));
+    } else if (item.kind === "task") {
+      addTask({
+        id: crypto.randomUUID(),
+        title: cleanupImportedText(item.text) || item.text,
+        completed: false,
+        tag: "WORK",
+        priority: "medium",
+        date: now.slice(0, 10),
+        createdAt: now,
       });
     }
 
-    return counts;
+    setImportedMessageIds(prev => ({
+      ...prev,
+      [`${msgId}-${itemIndex}`]: true
+    }));
   };
-
-  const importAssistantMessage = (messageId: string, content: string) =>
-    importItems(parseStructuredListItems(content), messageId);
 
   const handleDirectAdd = (kind: ImportKind, text: string) => {
     if (kind === "task") {
@@ -271,40 +204,55 @@ export function useAIChatPanel() {
     if (directRequest)
       return void handleDirectAdd(directRequest.kind, directRequest.text);
 
-    if (isListImportRequest(trimmedText)) {
-      const resolvedKinds = resolveImportKinds(
-        detectRequestedKinds(trimmedText),
-      );
-      const latest = findLatestAssistantList(resolvedKinds);
-      if (!latest)
-        return void postAssistantMessage(
-          "I couldn't find a recent list to import. Ask me to generate one first, then I can add it for you.",
-        );
-
-      const importKey = getImportStateKey(
-        latest.message.id,
-        resolvedKinds.length > 0 ? resolvedKinds : undefined,
-      );
-      if (importedMessageIds[importKey])
-        return void postAssistantMessage(
-          "That list has already been imported.",
-        );
-
-      const items =
-        resolvedKinds.length > 0
-          ? latest.items.filter((item) => resolvedKinds.includes(item.kind))
-          : latest.items;
-      return void postAssistantMessage(
-        `Imported ${summarizeCounts(importItems(items, latest.message.id, resolvedKinds.length > 0 ? resolvedKinds : undefined))}.`,
-      );
-    }
-
+    setErrorState(null);
     setThinking(true);
+
+    const lowerText = trimmedText.toLowerCase();
+    let statuses: string[] = [];
+    if (lowerText.includes("task")) {
+      statuses = ["Analyzing tasks...", "Generating items...", "Prioritizing...", "Structuring...", "Refining...", "Finalizing..."];
+    } else if (lowerText.includes("habit")) {
+      statuses = ["Reviewing habits...", "Generating items...", "Structuring routines...", "Analyzing...", "Refining...", "Finalizing..."];
+    } else if (lowerText.includes("goal")) {
+      statuses = ["Weighing goals...", "Aligning milestones...", "Analyzing...", "Structuring...", "Refining...", "Finalizing..."];
+    } else if (lowerText.includes("plan") || lowerText.includes("schedule")) {
+      statuses = ["Structuring schedule...", "Allocating time...", "Analyzing...", "Optimizing...", "Refining...", "Finalizing..."];
+    } else if (lowerText.includes("book")) {
+      statuses = ["Retrieving books...", "Searching library...", "Analyzing...", "Curating...", "Refining...", "Finalizing..."];
+    } else {
+      statuses = ["Thinking...", "Analyzing...", "Processing...", "Synthesizing...", "Refining...", "Finalizing..."];
+    }
+    
+    setThinkingStatus(statuses[0]);
+
+    const intervalId = setInterval(() => {
+      setThinkingStatus((prev) => {
+        const currentIdx = statuses.indexOf(prev);
+        const nextIdx = currentIdx === -1 ? 0 : (currentIdx + 1) % statuses.length;
+        return statuses[nextIdx];
+      });
+    }, 2000);
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
-      const res = await fetch("/api/ai/chat", {
+      const resPromise = fetch("/api/ai/chat", {
         method: "POST",
         body: JSON.stringify({ messages: [...messages, userMsg] }),
+        signal: controller.signal
       });
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout")), 120000)
+      );
+
+      const res = await Promise.race([resPromise, timeoutPromise]) as Response;
+      
+      if (!res.ok) {
+        throw new Error("Failed to fetch");
+      }
+
       const data = await res.json();
       if (data.text) {
         addMessage({
@@ -317,10 +265,43 @@ export function useAIChatPanel() {
           }),
         });
       }
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      if (error.name === "AbortError" || error.message === "AbortError") {
+        setErrorState({
+          failedPrompt: trimmedText,
+          errorMessage: "AI process was stopped by user.",
+        });
+      } else if (error.message === "Timeout") {
+        setErrorState({
+          failedPrompt: trimmedText,
+          errorMessage: "It took too long to fetch AI message.",
+        });
+      } else {
+        console.error(error);
+        setErrorState({
+          failedPrompt: trimmedText,
+          errorMessage: "Sorry, I encountered an error connecting to the neural engine.",
+        });
+      }
     } finally {
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
+      }
+      clearInterval(intervalId);
       setThinking(false);
+    }
+  };
+
+  const abortRequest = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+  };
+
+  const retryRequest = () => {
+    if (errorState?.failedPrompt) {
+      sendMessage(errorState.failedPrompt);
     }
   };
 
@@ -329,8 +310,13 @@ export function useAIChatPanel() {
     input,
     setInput,
     isThinking,
+    thinkingStatus,
+    errorState,
     importedMessageIds,
     sendMessage,
+    removeMessage,
+    abortRequest,
+    retryRequest,
     importAssistantMessage,
   };
 }

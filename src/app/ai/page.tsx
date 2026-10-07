@@ -40,7 +40,7 @@ export default function AIPage() {
             </div>
           ) : userId ? (
             <>
-              <AILeftPanel />
+              {/* <AILeftPanel /> */}
               <AIChatPanel />
               {/* <AIRightPanel /> */}
             </>

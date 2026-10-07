@@ -51,7 +51,7 @@ export default function KanbanView() {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full min-h-[400px]">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ minHeight: 0 }}>
       {columns.map((col) => {
         const colTasks = tasks.filter(col.filter);
         return (
@@ -64,8 +64,8 @@ export default function KanbanView() {
             </div>
 
             <div
-              className="flex-1 rounded-2xl p-3 flex flex-col gap-3 overflow-y-auto"
-              style={{ backgroundColor: "#111", border: "1px solid #1a1a1a" }}
+              className="rounded-2xl p-3 flex flex-col gap-3 overflow-y-auto"
+              style={{ backgroundColor: "#111", border: "1px solid #1a1a1a", maxHeight: "460px", minHeight: "120px" }}
             >
               {colTasks.length === 0 ? (
                 <div className="flex-1 flex items-center justify-center">
@@ -229,7 +229,7 @@ export default function KanbanView() {
                     {reminderEditingId === task.id && (
                       <div className="absolute right-0 top-full mt-2 z-50 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
                         <ReminderPicker
-                          initialValue={task.reminderAt}
+                          initialValue={task.reminderAt ?? undefined}
                           onSave={(val) => handleSetReminder(task.id, val)}
                           onClose={() => setReminderEditingId(null)}
                         />
