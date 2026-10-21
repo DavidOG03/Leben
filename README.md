@@ -32,6 +32,19 @@ Leben is built around the idea that your tasks, habits, goals, and daily plan sh
 
 ## Features
 
+### ✦ Notes & Encrypted Personal Vault
+A modular 3-panel notes workspace featuring a rich-text visual editor, notebooks, tags, and AI sidecar:
+- **Zero-Knowledge Encrypted Vault**: Protect sensitive documents in a locked `Personal` folder with a master password and an emergency recovery key.
+- **Freeze-Safe Reset Protection**: Forgetting a master key never destroys notes — they are safely archived into a frozen vault verifiable by your Leben account password.
+- **Embedded AI Assist**: Generate instant TL;DR summaries, extract action items straight into your Tasks board, polish writing, and discover interconnected notes across your library.
+
+### ✦ Unified Trackers Hub
+Consolidates daily discipline into a single multi-tab dashboard (`/trackers`):
+- **Habits**: Consistency score, streak counting, and commitment matrix.
+- **Reading Tracker**: Track current books, page progress percentage, and reading status.
+- **Goals**: Target milestones connected to habits and planner context.
+- **Finance**: Budgeting and savings tracker (coming soon).
+
 ### ✦ Neural Daily Planner
 Powered by Gemini 2.5 Flash, the planner reads your actual tasks, habits, and goals to generate a time-blocked itinerary. It optimizes for your energy peaks and metabolic discipline, updating as your data changes.
 
@@ -40,12 +53,6 @@ A strictly-bounded AI assistant specifically informed by your personal productiv
 
 ### ✓ Task Management
 Advanced Kanban-style boards with tags (`WORK` / `PERSONAL`), priority levels, and reminder notifications.
-
-### ◎ Habit Tracking
-Build discipline with streak counting, completion history, and a commitment matrix to visualize consistency.
-
-### ◈ Goals
-Set and track progress on long-term goals. The AI layer surfaces your goals in the assistant and planner to keep you aligned with your primary objectives.
 
 ### ◉ Analytics
 Deep-dive into your productivity patterns with visual breakdowns of completion rates and streak data derived from real time-series data.
@@ -82,42 +89,42 @@ Deep-dive into your productivity patterns with visual breakdowns of completion r
 
 ```
 leben/
-├── app/
-│   ├── auth/
-│   │   ├── signin/
-│   │   ├── signup/
-│   │   ├── signout/
-│   │   └── callback/      # OAuth + email confirmation handler
-│   ├── dashboard/
-│   ├── tasks/
-│   ├── habits/
-│   ├── goals/
-│   ├── planner/
-│   ├── analytics/
-│   └── ai/
-├── components/
-│   ├── auth/              # SignInForm, SignUpForm, AuthHeroPanel, etc.
-│   ├── planner/           # Timeline, AIInsightsCard, EnergyDistribution, etc.
-│   ├── habits/
-│   ├── goals/
-│   └── analytics/
-├── lib/
-│   ├── supabase/
-│   │   ├── client.ts      # Browser client
-│   │   ├── server.ts      # Server client
-│   │   ├── middleware.ts  # Session refresh
-│   │   ├── db.ts          # All database operations
-│   └── ai/
-│       ├── unifiedClient.ts  # Multi-provider AI core
-│       ├── contextBuilder.ts # Live user data aggregation
-│       └── aiPlanner.ts      # Specialized Planner logic
-├── store/
-│   ├── useStore.ts        # Root store composition
-│   ├── goalSlice.ts
-│   └── bookSlice.ts
-└── hooks/
-    ├── useAuthSync.ts
-    └── useLoadUserData.ts
+├── src/
+│   ├── app/
+│   │   ├── auth/              # Sign in, sign up, sign out, oauth callbacks
+│   │   ├── tasks/             # Task board and kanban views
+│   │   ├── notes/             # 3-panel notes workspace & vault
+│   │   ├── trackers/          # Unified Hub (Habits, Reading, Goals, Finance)
+│   │   ├── planner/           # Neural Daily Planner
+│   │   ├── analytics/         # Productivity time-series analytics
+│   │   ├── ai/                # Dedicated AI Assistant chat
+│   │   └── api/ai/notes/      # AI notes summarizer, task extraction & writing polish
+│   ├── components/
+│   │   ├── auth/              # Auth forms and hero panels
+│   │   ├── notes/             # NotesLayout, NotesList, NotesSidebar, NotesEditor, Modals
+│   │   │   └── editor/        # EditorHeader, EditorToolbar, EditorStatusBar, ToolbarButton, states
+│   │   ├── trackers/          # TrackersHeader, TrackersContent, FinanceComingSoon
+│   │   ├── planner/           # Timeline, AIInsightsCard, EnergyDistribution
+│   │   ├── habits/            # CommitmentTracker, ConsistencyScore, ReadingTracker
+│   │   ├── goals/             # GoalsContent, GoalModal
+│   │   ├── analytics/         # Productivity charts & insights
+│   │   └── shared/            # AppSidebar, NotificationBell
+│   ├── utils/
+│   │   ├── notes.editor.types.ts  # Editor prop interfaces, format & save states
+│   │   ├── notes.editor.utils.ts  # Tag palettes, markdown-to-HTML parser, editor styles
+│   │   ├── analytics.types.ts / analytics.utils.ts
+│   │   └── goals.types.ts
+│   ├── lib/
+│   │   ├── supabase/          # Client, server, middleware, authActions, db operations
+│   │   └── ai/                # Multi-provider unifiedClient & contextBuilder
+│   ├── store/
+│   │   ├── useStore.ts        # Root Zustand store
+│   │   ├── noteSlice.ts       # Notes state & database synchronization
+│   │   ├── goalSlice.ts
+│   │   └── bookSlice.ts
+│   └── hooks/
+│       ├── useAuthSync.ts
+│       └── useLoadUserData.ts
 ```
 
 ---
@@ -208,15 +215,35 @@ create table books (
   added_at      bigint not null
 );
 
+-- Notes
+create table notes (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid references auth.users(id) on delete cascade not null,
+  title         text not null default 'Untitled note',
+  content       text not null default '',
+  notebook      text not null default 'General',
+  tags          text[] not null default '{}',
+  pinned        boolean not null default false,
+  archived      boolean not null default false,
+  trashed       boolean not null default false,
+  is_locked     boolean not null default false,
+  created_at    timestamp with time zone default timezone('utc'::text, now()),
+  updated_at    timestamp with time zone default timezone('utc'::text, now())
+);
 
 -- Enable RLS
 alter table tasks  enable row level security;
 alter table habits enable row level security;
 alter table goals  enable row level security;
+alter table books  enable row level security;
+alter table notes  enable row level security;
 
--- Policies (repeat for habits and goals)
-create policy "Users manage their own tasks"
-  on tasks for all using (auth.uid() = user_id);
+-- Policies
+create policy "Users manage their own tasks"  on tasks  for all using ((select auth.uid()) = user_id);
+create policy "Users manage their own habits" on habits for all using ((select auth.uid()) = user_id);
+create policy "Users manage their own goals"  on goals  for all using ((select auth.uid()) = user_id);
+create policy "Users manage their own books"  on books  for all using ((select auth.uid()) = user_id);
+create policy "Users manage their own notes"  on notes  for all using ((select auth.uid()) = user_id);
 ```
 
 ```bash
@@ -234,6 +261,9 @@ Open [http://localhost:3000](http://localhost:3000).
 - [x] Task management with priorities and tags
 - [x] Habit tracking with streaks
 - [x] Goals module with progress tracking
+- [x] Notes workspace with WYSIWYG editor & AI assist
+- [x] Encrypted Notes Vault with recovery key & freeze protection
+- [x] Unified Trackers hub (Habits, Reading, Goals, Finance)
 - [x] AI-powered daily planner (Gemini)
 - [x] AI morning brief
 - [x] Analytics dashboard

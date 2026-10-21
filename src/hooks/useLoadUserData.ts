@@ -41,6 +41,7 @@ export function useLoadUserData() {
           store.loadHabits(),
           store.loadGoals(),
           store.loadBooks(),
+          store.loadNotes(),
           store.loadHistory(),
         ]);
 
@@ -68,6 +69,10 @@ export function useLoadUserData() {
             useLebenStore.getState().setUser(session.user.id, null);
             if (typeof window !== "undefined") {
               localStorage.removeItem("leben-storage");
+              localStorage.removeItem("notes_vault_enabled");
+              localStorage.removeItem("notes_vault_locked");
+              localStorage.removeItem("notes_vault_pwd");
+              localStorage.removeItem("notes_vault_key");
             }
           }
 
@@ -94,6 +99,10 @@ export function useLoadUserData() {
             useLebenStore.getState().clearStore();
             if (typeof window !== "undefined") {
               localStorage.removeItem("leben-storage");
+              localStorage.removeItem("notes_vault_enabled");
+              localStorage.removeItem("notes_vault_locked");
+              localStorage.removeItem("notes_vault_pwd");
+              localStorage.removeItem("notes_vault_key");
             }
           }
         }

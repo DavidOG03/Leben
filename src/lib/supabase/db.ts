@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { Task, Habit, NotificationPrefs } from "@/store/useStore";
 import type { Goal } from "@/utils/goals.types";
 import type { Book } from "@/store/bookSlice";
+import type { Note } from "@/store/noteSlice";
 
 const getSupabase = () => createClient();
 
@@ -146,6 +147,36 @@ function mapBookToDB(book: Partial<Book>) {
   return row;
 }
 
+function mapNoteFromDB(row: any): Note {
+  return {
+    id: row.id,
+    title: row.title ?? "Untitled note",
+    content: row.content ?? "",
+    tags: Array.isArray(row.tags) ? row.tags : [],
+    notebook: row.notebook ?? "General",
+    pinned: row.pinned ?? false,
+    archived: row.archived ?? false,
+    trashed: row.trashed ?? false,
+    isLocked: row.is_locked ?? false,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapNoteToDB(note: Partial<Note>) {
+  const row: any = {};
+  if (note.id) row.id = note.id;
+  if (note.title !== undefined) row.title = note.title;
+  if (note.content !== undefined) row.content = note.content;
+  if (note.tags !== undefined) row.tags = note.tags;
+  if (note.notebook !== undefined) row.notebook = note.notebook;
+  if (note.pinned !== undefined) row.pinned = note.pinned;
+  if (note.archived !== undefined) row.archived = note.archived;
+  if (note.trashed !== undefined) row.trashed = note.trashed;
+  if (note.isLocked !== undefined) row.is_locked = note.isLocked;
+  return row;
+}
+
 // ─── Tasks ────────────────────────────────────────────────────────────────────
 
 export async function fetchTasks(): Promise<Task[]> {
@@ -276,6 +307,40 @@ export async function deleteBook(id: string): Promise<void> {
   if (error) throw error;
 }
 
+// ─── Notes ────────────────────────────────────────────────────────────────────
+
+export async function fetchNotes(): Promise<Note[]> {
+  const { data, error } = await getSupabase()
+    .from("notes")
+    .select("*")
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    console.error("fetchNotes:", error.message);
+    return [];
+  }
+  return (data ?? []).map(mapNoteFromDB);
+}
+
+export async function insertNote(note: Note): Promise<void> {
+  const { data: { user } } = await getSupabase().auth.getUser();
+  if (!user) throw new Error("guest_mode");
+  const dbRow = mapNoteToDB(note);
+  const { error } = await getSupabase().from("notes").insert({ ...dbRow, user_id: user.id });
+  if (error) throw error;
+}
+
+export async function updateNote(id: string, updates: Partial<Note>): Promise<void> {
+  const dbRow = mapNoteToDB(updates);
+  const { error } = await getSupabase().from("notes").update(dbRow).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteNote(id: string): Promise<void> {
+  const { error } = await getSupabase().from("notes").delete().eq("id", id);
+  if (error) throw error;
+}
+
 // ─── Productivity History ─────────────────────────────────────────────────────
 
 export async function fetchProductivityHistory(): Promise<Record<string, { completed: number; total: number }>> {
@@ -349,7 +414,7 @@ export async function savePushSubscription(subscription: any) {
 export async function purgeAllData(): Promise<void> {
   const { data: { user } } = await getSupabase().auth.getUser();
   if (!user) return;
-  const tables = ["tasks", "habits", "goals", "books", "productivity_history"];
+  const tables = ["tasks", "habits", "goals", "books", "productivity_history", "notes"];
   for (const table of tables) {
     const { error } = await getSupabase().from(table).delete().eq("user_id", user.id);
     if (error) console.error(`Failed to purge ${table}:`, error.message);

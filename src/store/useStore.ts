@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { createGoalsSlice, GoalsSlice } from "./goalSlice";
 import { createBooksSlice, BooksSlice } from "./bookSlice";
+import { createNotesSlice, NotesSlice, Note } from "./noteSlice";
 import {
   deleteTask,
   fetchTasks,
@@ -21,6 +22,9 @@ import {
   insertBook,
   updateBook as updateBookDb,
   deleteBook,
+  insertNote,
+  updateNote as updateNoteDb,
+  deleteNote as deleteNoteDb,
 } from "@/lib/supabase/db";
 import { calcStreak, calcLongestStreak } from "@/utils/habits";
 
@@ -95,6 +99,7 @@ export type OfflineMutationAction =
   | "insertHabit" | "updateHabit" | "removeHabit"
   | "insertGoal" | "updateGoal" | "deleteGoal"
   | "insertBook" | "updateBook" | "deleteBook"
+  | "insertNote" | "updateNote" | "deleteNote"
   | "upsertProductivityHistory";
 
 export interface OfflineMutation {
@@ -203,7 +208,7 @@ interface TasksHabitsSlice {
   purgeAll: () => Promise<void>;
 }
 
-export type LebenState = TasksHabitsSlice & GoalsSlice & BooksSlice;
+export type LebenState = TasksHabitsSlice & GoalsSlice & BooksSlice & NotesSlice;
 
 // ── Initial State ─────────────────────────────────────────────────────────────
 
@@ -221,6 +226,8 @@ const initialState = {
   goalsLoaded: false,
   books: [],
   booksLoaded: false,
+  notes: [],
+  notesLoaded: false,
   productivityHistory: {},
   historyLoaded: false,
   schedule: [],
@@ -293,6 +300,9 @@ export const useLebenStore = create<LebenState>()(
               case "insertBook": await insertBook(mutation.args[0]); break;
               case "updateBook": await updateBookDb(mutation.args[0], mutation.args[1]); break;
               case "deleteBook": await deleteBook(mutation.args[0]); break;
+              case "insertNote": await insertNote(mutation.args[0]); break;
+              case "updateNote": await updateNoteDb(mutation.args[0], mutation.args[1]); break;
+              case "deleteNote": await deleteNoteDb(mutation.args[0]); break;
             }
             set((s) => ({
               offlineQueue: s.offlineQueue.filter((m) => m.id !== mutation.id),
@@ -728,6 +738,7 @@ export const useLebenStore = create<LebenState>()(
           habits: [],
           goals: [],
           books: [],
+          notes: [],
           productivityHistory: {},
         });
       },
@@ -741,6 +752,7 @@ export const useLebenStore = create<LebenState>()(
           habits: [],
           goals: [],
           books: [],
+          notes: [],
           productivityHistory: {},
         });
         await purgeAllData();
@@ -751,6 +763,9 @@ export const useLebenStore = create<LebenState>()(
 
       // ── Books slice ───────────────────────────────────────────────────────────
       ...createBooksSlice(set, get, store),
+
+      // ── Notes slice ───────────────────────────────────────────────────────────
+      ...createNotesSlice(set, get, store),
     }),
     {
       name: "leben-storage",
@@ -763,6 +778,7 @@ export const useLebenStore = create<LebenState>()(
         habits: state.habits,
         goals: state.goals,
         books: state.books,
+        notes: state.notes,
         productivityHistory: state.productivityHistory,
         schedule: state.schedule,
         notificationPrefs: state.notificationPrefs,

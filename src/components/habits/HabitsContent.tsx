@@ -32,9 +32,7 @@ export default function HabitsContent() {
 
   /* derived */
   const activeHabit =
-    habits.find((h: Habit) => h.id === selectedHabitId) ??
-    habits[0] ??
-    null;
+    habits.find((h: Habit) => h.id === selectedHabitId) ?? habits[0] ?? null;
   // const allHabitsMatrix = buildAllHabitsMatrix(habits);
   const currentlyReading = books.filter(
     (b: Book) => b.currentPage < b.totalPages,
@@ -61,10 +59,7 @@ export default function HabitsContent() {
 
       {/* Stats row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <ConsistencyScore
-          habits={habits}
-          books={books}
-        />
+        <ConsistencyScore habits={habits} books={books} />
         <WeeklyProgress habits={habits} />
       </div>
 
@@ -78,10 +73,8 @@ export default function HabitsContent() {
 
       <CommitmentTracker />
 
-      <ReadingTracker onShowAddBook={setShowAddBook} books={books} />
-
       {/* Footer quote */}
-      <div
+      {/* <div
         className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 rounded-2xl p-6 md:p-8"
         style={{ backgroundColor: "#0e0e0e", border: "1px solid #161616" }}
       >
@@ -138,7 +131,7 @@ export default function HabitsContent() {
             </p>
           )}
         </div>
-      </div>
+      </div> */}
     </main>
   );
 }

@@ -77,7 +77,7 @@ export function EmptyPlannerState({ taskCount }: { taskCount: number }) {
             textTransform: "uppercase",
           }}
         >
-          Current tasks: {taskCount} / 3
+          Current tasks: {taskCount} / 2
         </div>
       </div>
     </div>

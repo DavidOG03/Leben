@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useMemo } from "react";
 import { Book } from "@/store/bookSlice";
 import { Habit } from "@/store/useStore";

@@ -3,9 +3,11 @@
 import { GearIcon } from "@/constants/Icons";
 import NotificationBell from "../shared/NotificationBell";
 import { useLebenStore } from "@/store/useStore";
+import { useRouter } from "next/navigation";
 
 export default function AITopBar() {
   const toggleSidebar = useLebenStore((s: any) => s.toggleSidebar);
+  const router = useRouter();
 
   return (
     <header
@@ -61,6 +63,7 @@ export default function AITopBar() {
             alignItems: "center",
             justifyContent: "center",
           }}
+          onClick={() => router.push("/settings")}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <circle cx="8" cy="6" r="2.5" fill="#888" />

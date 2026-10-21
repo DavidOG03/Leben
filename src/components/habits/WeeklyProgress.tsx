@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useMemo } from "react";
 import { Habit } from "@/store/useStore";
 import { WeeklyProgressProps } from "../../utils/habits.types";

@@ -72,3 +72,36 @@ export async function signOut(): Promise<void> {
 // See AuthSocialButtons.tsx for the implementation.
 
 export type OAuthProvider = "google" | "github";
+
+// ─── Step-Up Vault Verification Actions ────────────────────────────────────────
+
+export async function verifyAccountPassword(
+  password: string
+): Promise<AuthResult> {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user?.email) {
+      return { error: "No active user session found. Please sign in again." };
+    }
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password,
+    });
+
+    if (signInError) {
+      return { error: signInError.message };
+    }
+
+    return { error: null };
+  } catch (err: any) {
+    return { error: err?.message || "Verification failed." };
+  }
+}

@@ -6,16 +6,12 @@ import { signOut } from "@/lib/supabase/authActions";
 import {
   GridIcon,
   TaskIcon,
-  HabitIcon,
-  GoalIcon,
   AIIcon,
   AnalyticsIcon,
-  SettingsIcon,
-  HelpIcon,
-  LogoutIcon,
   GearIcon,
-  SparkleIcon,
-  LockIcon,
+  LogoutIcon,
+  NotesIcon,
+  TrackerIcon,
   CalIcon,
 } from "@/constants/Icons";
 
@@ -25,13 +21,13 @@ import { createClient } from "@/lib/supabase/client";
 import { useLebenStore } from "@/store/useStore";
 
 const navItems = [
-  { label: "Home", icon: <GridIcon />, href: "/" },
+  { label: "Dashboard", icon: <GridIcon />, href: "/" },
   { label: "Tasks", icon: <TaskIcon />, href: "/tasks" },
-  { label: "Habits", icon: <HabitIcon />, href: "/habits" },
-  { label: "Goals", icon: <GoalIcon />, href: "/goals" },
-  { label: "AI Chat", icon: <AIIcon />, href: "/ai" },
-  { label: "Daily Planner", icon: <CalIcon />, href: "/planner" },
+  { label: "Notes", icon: <NotesIcon />, href: "/notes" },
+  { label: "Trackers", icon: <TrackerIcon />, href: "/trackers" },
   { label: "Analytics", icon: <AnalyticsIcon />, href: "/analytics" },
+  { label: "Daily Planner", icon: <CalIcon />, href: "/planner" },
+  { label: "AI Assistant", icon: <AIIcon />, href: "/ai" },
   { label: "Settings", icon: <GearIcon />, href: "/settings" },
 ];
 
@@ -42,7 +38,7 @@ export default function AppSidebar() {
   const router = useRouter();
 
   const userName = userFullName || "Guest";
-  const userRole = isAuthenticated ? "Premium Curator" : "Preview Mode";
+  // const userRole = isAuthenticated ? "Premium Curator" : "Preview Mode";
 
   const isSidebarOpen = useLebenStore((s: any) => s.isSidebarOpen);
   const toggleSidebar = useLebenStore((s: any) => s.toggleSidebar);
@@ -102,11 +98,6 @@ export default function AppSidebar() {
             const active =
               pathname === item.href ||
               (item.href !== "/" && pathname.startsWith(item.href));
-            // const isLocked =
-            //   !isAuthenticated &&
-            //   (item.href === "/planner" ||
-            //    item.href === "/analytics" ||
-            //    item.href === "/ai");
 
             return (
               <Link
@@ -127,11 +118,6 @@ export default function AppSidebar() {
                   {item.icon}
                 </span>
                 {item.label}
-                {/* {isLocked && (
-                  <span className="ml-auto opacity-20 group-hover:opacity-100 transition-opacity">
-                    <LockIcon />
-                  </span>
-                )} */}
               </Link>
             );
           })}
@@ -139,12 +125,15 @@ export default function AppSidebar() {
 
         {/* Bottom */}
         <div className="px-3 space-y-px">
-          <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[#444] text-xs hover:text-white hover:bg-white/5 transition-colors">
-            <HelpIcon /> Help
-          </button>
           {isAuthenticated ? (
             <button
               onClick={() => {
+                if (typeof window !== "undefined") {
+                  localStorage.removeItem("notes_vault_enabled");
+                  localStorage.removeItem("notes_vault_locked");
+                  localStorage.removeItem("notes_vault_pwd");
+                  localStorage.removeItem("notes_vault_key");
+                }
                 useLebenStore.getState().clearStore();
                 signOut();
               }}
@@ -179,7 +168,7 @@ export default function AppSidebar() {
             <p className="text-white font-medium capitalize text-[12px] leading-[1.3]">
               {userName}
             </p>
-            <p className="text-[#444] text-[10px] leading-[1.3]">{userRole}</p>
+            {/* <p className="text-[#444] text-[10px] leading-[1.3]">{userRole}</p> */}
           </div>
         </div>
       </aside>
