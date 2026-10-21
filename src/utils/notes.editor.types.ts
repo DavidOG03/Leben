@@ -49,6 +49,8 @@ export interface EditorHeaderProps {
   isPersonal: boolean;
   vaultEnabled: boolean;
   onBackToList?: () => void;
+  showAiPanel?: boolean;
+  onToggleAi?: () => void;
   showTagInput: boolean;
   newTagInput: string;
   setNewTagInput: (val: string) => void;

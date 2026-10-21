@@ -134,18 +134,18 @@ export default function NotesSidebar({
 
   return (
     <>
-      {/* Mobile Drawer Backdrop */}
+      {/* Drawer Backdrop (for mobile and tablet/laptop screens < 1200px) */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm xl:hidden"
           onClick={onClose}
         />
       )}
 
       <aside
-        className={`fixed top-0 left-0 z-50 h-full flex flex-col flex-shrink-0 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
+        className={`fixed top-0 left-0 z-50 h-full flex flex-col flex-shrink-0 transform transition-transform duration-300 ease-in-out xl:relative xl:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
-        } w-[260px] md:w-[220px] overflow-y-auto`}
+        } w-[260px] xl:w-[220px] overflow-y-auto`}
         style={{
           backgroundColor: "#0a0a0a",
           borderRight: "1px solid #222222",
@@ -165,11 +165,11 @@ export default function NotesSidebar({
             </span>
           </div>
 
-          {/* Close button on mobile drawer */}
+          {/* Close button on drawer */}
           {onClose && (
             <button
               onClick={onClose}
-              className="flex md:hidden items-center justify-center w-7 h-7 rounded-md text-[#888888] hover:text-white hover:bg-white/10 transition-colors"
+              className="flex xl:hidden items-center justify-center w-7 h-7 rounded-md text-[#888888] hover:text-white hover:bg-white/10 transition-colors"
               title="Close drawer"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

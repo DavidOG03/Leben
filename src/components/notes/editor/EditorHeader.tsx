@@ -8,6 +8,7 @@ import {
   ArchiveIcon,
   PinIcon,
   TrashIcon,
+  SparkleIcon,
 } from "@/constants/Icons";
 
 export default function EditorHeader({
@@ -16,6 +17,8 @@ export default function EditorHeader({
   isPersonal,
   vaultEnabled,
   onBackToList,
+  showAiPanel = false,
+  onToggleAi,
   showTagInput,
   newTagInput,
   setNewTagInput,
@@ -156,6 +159,31 @@ export default function EditorHeader({
             style={{ fontSize: "10px", color: "#555555" }}
           >
             + tag
+          </button>
+        )}
+
+        {/* AI Assist toggle button */}
+        {onToggleAi && (
+          <button
+            onClick={onToggleAi}
+            title={showAiPanel ? "Hide AI Assist" : "Open AI Assist"}
+            className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-all hover:opacity-90"
+            style={{
+              backgroundColor: showAiPanel
+                ? "rgba(124,106,240,0.18)"
+                : "#161616",
+              border: `1px solid ${
+                showAiPanel ? "rgba(124,106,240,0.4)" : "#222222"
+              }`,
+              color: showAiPanel ? "#9d8ff5" : "#888888",
+            }}
+          >
+            <SparkleIcon
+              width="12"
+              height="12"
+              color={showAiPanel ? "#9d8ff5" : "#7c6af0"}
+            />
+            <span style={{ fontSize: "11px" }}>AI</span>
           </button>
         )}
 

@@ -85,7 +85,7 @@ export default function NotesList({
     <div
       className={`flex flex-col flex-shrink-0 h-full overflow-hidden transition-all duration-200 ${
         selectedNoteId ? "hidden md:flex" : "flex"
-      } w-full md:w-[300px]`}
+      } w-full md:w-[260px] lg:w-[280px] xl:w-[300px]`}
       style={{
         borderRight: "1px solid #222222",
         backgroundColor: "#0a0a0a",
@@ -93,13 +93,13 @@ export default function NotesList({
     >
       {/* Search + New */}
       <div className="px-4 pt-3 md:pt-4 pb-3 space-y-2.5">
-        {/* Mobile Header Bar (Hidden on desktop) */}
-        <div className="flex md:hidden items-center justify-between pb-2 border-b border-[#222222]">
+        {/* Header Bar for screens < 1200px (allows switching folders & vaults on mobile & tablet) */}
+        <div className="flex xl:hidden items-center justify-between pb-2 border-b border-[#222222]">
           <div className="flex items-center gap-2">
-            {/* Main App Sidebar Toggle */}
+            {/* Main App Sidebar Toggle (Only on mobile < 768px) */}
             <button
               onClick={() => toggleSidebar(true)}
-              className="p-1.5 rounded-lg text-[#888888] hover:text-white hover:bg-white/5 transition-colors"
+              className="md:hidden p-1.5 rounded-lg text-[#888888] hover:text-white hover:bg-white/5 transition-colors"
               title="Open app menu"
             >
               <svg
@@ -118,11 +118,11 @@ export default function NotesList({
               </svg>
             </button>
 
-            {/* Folder / Vault Drawer Trigger */}
+            {/* Folder / Vault Drawer Trigger (Visible on all screens < 1200px) */}
             {onOpenSidebar && (
               <button
                 onClick={onOpenSidebar}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors hover:bg-white/5 cursor-pointer"
                 style={{
                   backgroundColor: "#161616",
                   border: "1px solid #222222",
@@ -136,7 +136,7 @@ export default function NotesList({
                 ) : (
                   <FolderIcon />
                 )}
-                <span className="truncate max-w-[110px]">{filterLabel}</span>
+                <span className="truncate max-w-[120px]">{filterLabel}</span>
                 <svg
                   width="10"
                   height="10"

@@ -12,7 +12,9 @@ import {
 import { useLebenStore } from "@/store/useStore";
 
 interface Props {
-  onUnlock: (password: string) => boolean | { success: boolean; error?: string };
+  onUnlock: (
+    password: string,
+  ) => boolean | { success: boolean; error?: string };
   onClose?: () => void;
   onOpenResetModal?: () => void;
 }
@@ -112,7 +114,8 @@ export default function VaultLockModal({
           style={{
             width: "80px",
             height: "80px",
-            background: "linear-gradient(135deg, rgba(124,106,240,0.22), rgba(124,106,240,0.06))",
+            background:
+              "linear-gradient(135deg, rgba(124,106,240,0.22), rgba(124,106,240,0.06))",
             boxShadow: "0 0 32px rgba(124,106,240,0.2)",
             border: "1px solid rgba(124,106,240,0.3)",
           }}
@@ -126,24 +129,11 @@ export default function VaultLockModal({
         >
           {useRecovery ? "Enter Recovery Key" : "Your Personal Vault is locked"}
         </h2>
-        {userEmail && (
-          <div
-            className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full mb-3"
-            style={{
-              backgroundColor: "#161616",
-              border: "1px solid #222222",
-              fontSize: "11px",
-              color: "#9d8ff5",
-            }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#7c6af0]" />
-            <span>Account: {userEmail}</span>
-          </div>
-        )}
+
         <p className="mb-6" style={{ fontSize: "13px", color: "#888888" }}>
           {useRecovery
             ? "Enter your emergency recovery key (REC-...)"
-            : "Enter your master password to access your Personal notes"}
+            : "Enter your password to access your Personal notes"}
         </p>
 
         {/* Password or Recovery Key input */}
@@ -155,7 +145,6 @@ export default function VaultLockModal({
             height: "48px",
           }}
         >
-          <KeyIcon width="15" height="15" stroke="#7c6af0" />
           <input
             type={showPassword || useRecovery ? "text" : "password"}
             value={password}
@@ -168,7 +157,7 @@ export default function VaultLockModal({
             }}
             onKeyDown={handleKeyDown}
             placeholder={
-              useRecovery ? "REC-XXXX-XXXX-XXXX..." : "Master vault password"
+              useRecovery ? "REC-XXXX-XXXX-XXXX..." : "Vault password"
             }
             className="flex-1 bg-transparent outline-none"
             style={{
@@ -226,8 +215,11 @@ export default function VaultLockModal({
             backgroundColor:
               lockState === "rate_limit" || !password ? "#1c1c1c" : "#7c6af0",
             border:
-              lockState === "rate_limit" || !password ? "1px solid #222222" : "1px solid transparent",
-            color: lockState === "rate_limit" || !password ? "#555555" : "#ffffff",
+              lockState === "rate_limit" || !password
+                ? "1px solid #222222"
+                : "1px solid transparent",
+            color:
+              lockState === "rate_limit" || !password ? "#555555" : "#ffffff",
             cursor:
               lockState === "rate_limit" || !password
                 ? "not-allowed"

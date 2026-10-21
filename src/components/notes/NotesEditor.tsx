@@ -34,6 +34,7 @@ export default function NotesEditor({
   const [wordCount, setWordCount] = useState(0);
   const [newTagInput, setNewTagInput] = useState("");
   const [showTagInput, setShowTagInput] = useState(false);
+  const [showAiPanel, setShowAiPanel] = useState(false);
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const editorRef = useRef<HTMLDivElement>(null);
@@ -264,6 +265,8 @@ export default function NotesEditor({
           isPersonal={isPersonal}
           vaultEnabled={vaultEnabled}
           onBackToList={onBackToList}
+          showAiPanel={showAiPanel}
+          onToggleAi={() => setShowAiPanel(!showAiPanel)}
           showTagInput={showTagInput}
           newTagInput={newTagInput}
           setNewTagInput={setNewTagInput}
@@ -343,6 +346,8 @@ export default function NotesEditor({
         aiAction={aiAction}
         aiLoading={aiLoading}
         onTriggerAi={handleTriggerAi}
+        isOpen={showAiPanel}
+        onClose={() => setShowAiPanel(false)}
       />
 
       {/* AI Action Modal / Overlay */}
