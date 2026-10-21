@@ -18,6 +18,7 @@ export interface NotesEditorProps {
   note: Note | null;
   allNotes?: Note[];
   onSelectNote?: (id: string) => void;
+  onBackToList?: () => void;
   isLocked?: boolean;
   vaultEnabled?: boolean;
   vaultLocked?: boolean;
@@ -47,6 +48,7 @@ export interface EditorHeaderProps {
   title: string;
   isPersonal: boolean;
   vaultEnabled: boolean;
+  onBackToList?: () => void;
   showTagInput: boolean;
   newTagInput: string;
   setNewTagInput: (val: string) => void;

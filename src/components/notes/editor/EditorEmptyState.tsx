@@ -6,7 +6,7 @@ import { NoteDocumentIcon } from "@/constants/Icons";
 export default function EditorEmptyState() {
   return (
     <div
-      className="flex-1 flex flex-col items-center justify-center gap-4"
+      className="hidden md:flex flex-1 flex-col items-center justify-center gap-4"
       style={{ backgroundColor: "#0a0a0a" }}
     >
       <div

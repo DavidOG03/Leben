@@ -19,8 +19,12 @@ export default function EditorToolbar({
 }: EditorToolbarProps) {
   return (
     <div
-      className="flex items-center gap-0.5 px-6 py-2 flex-shrink-0"
-      style={{ borderBottom: "1px solid #222222" }}
+      className="flex items-center gap-0.5 px-3 md:px-6 py-2 flex-shrink-0 overflow-x-auto"
+      style={{
+        borderBottom: "1px solid #222222",
+        scrollbarWidth: "none",
+        msOverflowStyle: "none",
+      }}
     >
       <ToolbarButton
         title="Bold (Ctrl+B)"

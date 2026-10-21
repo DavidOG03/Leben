@@ -24,6 +24,8 @@ interface Props {
   onLockVault: () => void;
   onUnlockVault: () => void;
   onRestoreFrozenVault?: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 import { tagColor } from "@/utils/notes.editor.utils";
@@ -39,6 +41,8 @@ export default function NotesSidebar({
   onLockVault,
   onUnlockVault,
   onRestoreFrozenVault,
+  isOpen = false,
+  onClose,
 }: Props) {
   const active = (key: string) => activeFilter === key;
 
@@ -118,107 +122,140 @@ export default function NotesSidebar({
     },
   ];
 
+  const handleFilterClick = (key: string) => {
+    onFilterChange(key);
+    if (onClose) onClose();
+  };
+
+  const handleNotebookClick = (label: string) => {
+    onSelectNotebook(label);
+    if (onClose) onClose();
+  };
+
   return (
-    <aside
-      className="hidden md:flex flex-col flex-shrink-0 h-full overflow-y-auto"
-      style={{
-        width: "220px",
-        backgroundColor: "#0a0a0a",
-        borderRight: "1px solid #222222",
-      }}
-    >
-      {/* Header */}
-      <div
-        className="flex items-center justify-between px-4 pt-5 pb-3"
-        style={{ borderBottom: "1px solid #222222" }}
+    <>
+      {/* Mobile Drawer Backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      <aside
+        className={`fixed top-0 left-0 z-50 h-full flex flex-col flex-shrink-0 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        } w-[260px] md:w-[220px] overflow-y-auto`}
+        style={{
+          backgroundColor: "#0a0a0a",
+          borderRight: "1px solid #222222",
+        }}
       >
-        <div className="flex items-center gap-2">
-          {/* <NoteDocIcon className="w-3.5 h-3.5 text-[#555]" /> */}
-          <span
-            className="font-semibold tracking-widest"
-            style={{ fontSize: "10px", color: "#555555", letterSpacing: "0.12em" }}
-          >
-            NOTES VAULT
-          </span>
-        </div>
-      </div>
-
-      {/* Filters (Accessible Notes) */}
-      <nav className="px-2 pt-3 pb-1 space-y-px">
-        {filterItems.map((f) => {
-          const isActive = active(f.key);
-          return (
-            <button
-              key={f.key}
-              onClick={() => onFilterChange(f.key)}
-              className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg transition-colors text-left"
-              style={{
-                backgroundColor: isActive ? "#1e1e1e" : "transparent",
-                color: isActive ? "#f0f0f0" : "#555",
-                fontSize: "12px",
-              }}
+        {/* Header */}
+        <div
+          className="flex items-center justify-between px-4 pt-5 pb-3 flex-shrink-0"
+          style={{ borderBottom: "1px solid #222222" }}
+        >
+          <div className="flex items-center gap-2">
+            <span
+              className="font-semibold tracking-widest"
+              style={{ fontSize: "10px", color: "#555555", letterSpacing: "0.12em" }}
             >
-              <span style={{ color: isActive ? "#7c6af0" : "#444" }}>
-                {f.icon}
-              </span>
-              <span className="flex-1">{f.label}</span>
-              {f.count > 0 && (
-                <span
-                  style={{
-                    fontSize: "10px",
-                    color: isActive ? "#888" : "#333",
-                  }}
-                >
-                  {f.count}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </nav>
+              NOTES VAULT
+            </span>
+          </div>
 
-      {/* Accessible Folders (e.g. General, etc.) */}
-      {otherNotebooks.length > 0 && (
-        <div className="px-2 pt-1 space-y-px">
-          {otherNotebooks.map(([label, count]) => {
-            const isNbActive = active(`notebook:${label}`);
+          {/* Close button on mobile drawer */}
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="flex md:hidden items-center justify-center w-7 h-7 rounded-md text-[#888888] hover:text-white hover:bg-white/10 transition-colors"
+              title="Close drawer"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          )}
+        </div>
+
+        {/* Filters (Accessible Notes) */}
+        <nav className="px-2 pt-3 pb-1 space-y-px">
+          {filterItems.map((f) => {
+            const isActive = active(f.key);
             return (
               <button
-                key={label}
-                onClick={() => onSelectNotebook(label)}
-                className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors hover:bg-white/5 text-left"
+                key={f.key}
+                onClick={() => handleFilterClick(f.key)}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg transition-colors text-left"
                 style={{
+                  backgroundColor: isActive ? "#1e1e1e" : "transparent",
+                  color: isActive ? "#f0f0f0" : "#555",
                   fontSize: "12px",
-                  color: isNbActive ? "#f0f0f0" : "#555",
-                  backgroundColor: isNbActive ? "#1e1e1e" : "transparent",
                 }}
               >
-                <FolderIcon />
-                <span className="flex-1 truncate">{label}</span>
-                <span
-                  style={{
-                    fontSize: "10px",
-                    color: isNbActive ? "#888888" : "#555555",
-                  }}
-                >
-                  {count}
+                <span style={{ color: isActive ? "#7c6af0" : "#444" }}>
+                  {f.icon}
                 </span>
+                <span className="flex-1">{f.label}</span>
+                {f.count > 0 && (
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      color: isActive ? "#888" : "#333",
+                    }}
+                  >
+                    {f.count}
+                  </span>
+                )}
               </button>
             );
           })}
-        </div>
-      )}
+        </nav>
 
-      {/* Space separating accessible notes from Personal vault tab */}
-      <div className="my-3 mx-3 border-t border-[#222222]" />
+        {/* Accessible Folders (e.g. General, etc.) */}
+        {otherNotebooks.length > 0 && (
+          <div className="px-2 pt-1 space-y-px">
+            {otherNotebooks.map(([label, count]) => {
+              const isNbActive = active(`notebook:${label}`);
+              return (
+                <button
+                  key={label}
+                  onClick={() => handleNotebookClick(label)}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors hover:bg-white/5 text-left"
+                  style={{
+                    fontSize: "12px",
+                    color: isNbActive ? "#f0f0f0" : "#555",
+                    backgroundColor: isNbActive ? "#1e1e1e" : "transparent",
+                  }}
+                >
+                  <FolderIcon />
+                  <span className="flex-1 truncate">{label}</span>
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      color: isNbActive ? "#888888" : "#555555",
+                    }}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
-      {/* Personal Tab (Locked Vault Folder) */}
-      <div className="px-2 space-y-1">
-        {(() => {
-          const isPersonalActive = active("notebook:Personal");
-          return (
-            <button
-              onClick={() => onSelectNotebook("Personal")}
+        {/* Space separating accessible notes from Personal vault tab */}
+        <div className="my-3 mx-3 border-t border-[#222222]" />
+
+        {/* Personal Tab (Locked Vault Folder) */}
+        <div className="px-2 space-y-1">
+          {(() => {
+            const isPersonalActive = active("notebook:Personal");
+            return (
+              <button
+                onClick={() => handleNotebookClick("Personal")}
               className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors hover:bg-white/5 text-left"
               style={{
                 fontSize: "12px",
@@ -414,5 +451,6 @@ export default function NotesSidebar({
         )}
       </div>
     </aside>
+    </>
   );
 }

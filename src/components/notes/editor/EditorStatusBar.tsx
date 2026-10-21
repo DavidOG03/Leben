@@ -13,10 +13,14 @@ export default function EditorStatusBar({
 }: EditorStatusBarProps) {
   return (
     <div
-      className="flex items-center gap-5 px-6 py-2.5 flex-shrink-0"
-      style={{ borderTop: "1px solid #222222" }}
+      className="flex items-center gap-3 sm:gap-5 px-3 sm:px-6 py-2 flex-shrink-0 overflow-x-auto text-[10px]"
+      style={{
+        borderTop: "1px solid #222222",
+        scrollbarWidth: "none",
+        msOverflowStyle: "none",
+      }}
     >
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1.5 flex-shrink-0">
         <div
           className="rounded-full transition-colors"
           style={{
@@ -38,17 +42,17 @@ export default function EditorStatusBar({
               : "Unsaved changes"}
         </span>
       </div>
-      <span style={{ fontSize: "10px", color: "#555555" }}>
+      <span className="flex-shrink-0" style={{ fontSize: "10px", color: "#555555" }}>
         {wordCount.toLocaleString()} words
       </span>
-      <span style={{ fontSize: "10px", color: "#555555" }}>
+      <span className="hidden sm:inline flex-shrink-0" style={{ fontSize: "10px", color: "#555555" }}>
         {readTime} min read
       </span>
-      <span style={{ fontSize: "10px", color: "#555555" }}>
+      <span className="hidden md:inline flex-shrink-0" style={{ fontSize: "10px", color: "#555555" }}>
         Edited {relativeTime(updatedAt)}
       </span>
       <div className="flex-1" />
-      <div className="flex items-center gap-1">
+      <div className="hidden xs:flex items-center gap-1 flex-shrink-0">
         <MarkdownFileIcon />
         <span style={{ fontSize: "10px", color: "#555555" }}>Rich Text</span>
       </div>

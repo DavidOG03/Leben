@@ -18,6 +18,7 @@ export default function NotesEditor({
   note,
   allNotes,
   onSelectNote,
+  onBackToList,
   isLocked = false,
   vaultEnabled = false,
   onSetupVault,
@@ -207,7 +208,12 @@ export default function NotesEditor({
   }
 
   if (isLocked) {
-    return <EditorLockedState onUnlockRequest={onUnlockRequest} />;
+    return (
+      <EditorLockedState
+        onUnlockRequest={onUnlockRequest}
+        onBackToList={onBackToList}
+      />
+    );
   }
 
   const readTime = Math.max(1, Math.round(wordCount / 200));
@@ -257,6 +263,7 @@ export default function NotesEditor({
           title={title}
           isPersonal={isPersonal}
           vaultEnabled={vaultEnabled}
+          onBackToList={onBackToList}
           showTagInput={showTagInput}
           newTagInput={newTagInput}
           setNewTagInput={setNewTagInput}
@@ -279,16 +286,15 @@ export default function NotesEditor({
         />
 
         {/* Editable visual document area */}
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="flex-1 overflow-y-auto px-4 py-4 md:px-8 md:py-6">
           <textarea
             ref={titleRef}
             value={title}
             onChange={handleTitleChange}
             placeholder="Note title"
             rows={1}
-            className="w-full bg-transparent outline-none resize-none font-black text-white mb-5 leading-tight"
+            className="w-full bg-transparent outline-none resize-none font-black text-white mb-4 md:mb-5 leading-tight text-2xl md:text-3xl"
             style={{
-              fontSize: "32px",
               letterSpacing: "-0.03em",
               lineHeight: 1.15,
               caretColor: "#7c6af0",

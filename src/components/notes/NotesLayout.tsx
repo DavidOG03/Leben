@@ -65,6 +65,7 @@ export default function NotesLayout() {
   const [showLockedModal, setShowLockedModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // User-scoped vault key helper so Account A never locks Account B
   const getVaultKey = useCallback(
@@ -441,21 +442,30 @@ export default function NotesLayout() {
 
   return (
     <div className="flex flex-1 h-full overflow-hidden relative">
-      {/* Left sidebar */}
+      {/* Left sidebar (Collapsible drawer on mobile, static aside on desktop) */}
       <NotesSidebar
         notes={notes}
         activeFilter={activeFilter}
-        onFilterChange={(f) => { setActiveFilter(f); setSelectedNoteId(null); }}
-        onSelectNotebook={handleSelectNotebook}
+        onFilterChange={(f) => {
+          setActiveFilter(f);
+          setSelectedNoteId(null);
+          setMobileSidebarOpen(false);
+        }}
+        onSelectNotebook={(nb) => {
+          handleSelectNotebook(nb);
+          setMobileSidebarOpen(false);
+        }}
         vaultEnabled={vaultEnabled}
         vaultLocked={vaultLocked}
         onSetupVault={() => setShowSetupModal(true)}
         onLockVault={handleLockVault}
         onUnlockVault={() => setShowLockedModal(true)}
         onRestoreFrozenVault={() => setShowRestoreModal(true)}
+        isOpen={mobileSidebarOpen}
+        onClose={() => setMobileSidebarOpen(false)}
       />
 
-      {/* Middle list */}
+      {/* Middle list (Hidden on mobile if a note is selected) */}
       <NotesList
         notes={filteredNotes}
         selectedNoteId={selectedNoteId}
@@ -478,9 +488,10 @@ export default function NotesLayout() {
         relativeTime={relativeTime}
         notePreview={notePreview}
         vaultLocked={vaultLocked && vaultEnabled}
+        onOpenSidebar={() => setMobileSidebarOpen(true)}
       />
 
-      {/* Right editor */}
+      {/* Right editor (Hidden on mobile if no note is selected) */}
       <NotesEditor
         note={selectedNote}
         allNotes={notes.filter((n) =>
@@ -489,6 +500,7 @@ export default function NotesLayout() {
             : n.notebook !== "Personal" && !n.isLocked && n.notebook !== "Frozen Vault"
         )}
         onSelectNote={setSelectedNoteId}
+        onBackToList={() => setSelectedNoteId(null)}
         isLocked={isPersonalLocked}
         vaultEnabled={vaultEnabled}
         vaultLocked={vaultLocked}

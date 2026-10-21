@@ -15,6 +15,7 @@ export default function EditorHeader({
   title,
   isPersonal,
   vaultEnabled,
+  onBackToList,
   showTagInput,
   newTagInput,
   setNewTagInput,
@@ -29,11 +30,33 @@ export default function EditorHeader({
 }: EditorHeaderProps) {
   return (
     <div
-      className="flex items-center justify-between px-6 py-2.5 flex-shrink-0 gap-3"
+      className="flex items-center justify-between px-3 md:px-6 py-2.5 flex-shrink-0 gap-2 md:gap-3"
       style={{ borderBottom: "1px solid #222222" }}
     >
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 min-w-0">
+      {/* Breadcrumb + Mobile Back Button */}
+      <div className="flex items-center gap-1.5 md:gap-2 min-w-0">
+        {onBackToList && (
+          <button
+            onClick={onBackToList}
+            className="flex md:hidden items-center gap-1 px-2 py-1 -ml-1 rounded-lg text-[#888888] hover:text-[#f0f0f0] hover:bg-white/5 transition-colors flex-shrink-0"
+            title="Back to notes list"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            <span style={{ fontSize: "11px", fontWeight: 500 }}>Notes</span>
+          </button>
+        )}
+
         <button
           onClick={() => {
             const nextNb = window.prompt(
@@ -44,7 +67,7 @@ export default function EditorHeader({
               onUpdateNotebook(nextNb.trim());
             }
           }}
-          className="flex items-center gap-1 hover:underline transition-all"
+          className="flex items-center gap-1 hover:underline transition-all truncate"
           style={{
             fontSize: "12px",
             color: isPersonal ? "#7c6af0" : "#888888",
@@ -52,18 +75,18 @@ export default function EditorHeader({
           title="Click to move to another notebook"
         >
           {isPersonal && <LockIcon width="10" height="10" />}
-          {note.notebook || "General"}
+          <span className="truncate max-w-[80px] sm:max-w-none">{note.notebook || "General"}</span>
         </button>
         <span style={{ fontSize: "12px", color: "#555555" }}>/</span>
         <span
           className="truncate"
-          style={{ fontSize: "12px", color: "#888888", maxWidth: "180px" }}
+          style={{ fontSize: "12px", color: "#888888", maxWidth: "120px" }}
         >
           {title || "Untitled note"}
         </span>
         {isPersonal && (
           <span
-            className="px-1.5 py-0.5 rounded flex items-center gap-1 ml-1"
+            className="px-1.5 py-0.5 rounded flex items-center gap-1 ml-0.5 flex-shrink-0"
             style={{
               fontSize: "9px",
               backgroundColor: "rgba(124,106,240,0.12)",
