@@ -5,7 +5,7 @@ import { useLebenStore, Habit } from "@/store/useStore";
 import type { DailyRitualProps } from "../../utils/habits.types";
 import { BellIcon } from "@/constants/Icons";
 import ReminderPicker from "../shared/ReminderPicker";
-import { calcStreak } from "@/utils/habits";
+import { calcStreak, calcHabitConsistency } from "@/utils/habits";
 
 const DailyRituals: React.FC<DailyRitualProps> = ({
   setShowAddHabit,
@@ -126,7 +126,7 @@ const DailyRituals: React.FC<DailyRitualProps> = ({
             {habits.map((habit) => {
               const todayStr = new Date().toISOString().slice(0, 10);
               const isChecked = habit.completedDates?.includes(todayStr) ?? false;
-              // If we need current streak, we can also add it: const currentStreak = calcStreak(habit.completedDates || []);
+              const consistency = calcHabitConsistency(habit);
 
               return (
               <div
@@ -252,6 +252,7 @@ const DailyRituals: React.FC<DailyRitualProps> = ({
                     >
                       {habit.label}
                     </p>
+    
                     <p
                       style={{
                         fontSize: "11px",
@@ -261,17 +262,73 @@ const DailyRituals: React.FC<DailyRitualProps> = ({
                     >
                       {habit.sub}
                     </p>
+    
                   </>
                 )}
                 <p
                   style={{
                     fontSize: "10px",
                     color: "#444",
-                    marginBottom: "14px",
+                    marginBottom: "8px",
                   }}
                 >
                   Best: {habit.longestStreak}d
                 </p>
+
+
+                {/* Consistency & Discipline Meter */}
+                <div
+                  className="pt-2.5 pb-2 mb-3 border-t border-[#1a1a1a]"
+                  style={{ borderTop: "1px solid #1a1a1a" }}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span
+                      className="uppercase font-semibold tracking-wider"
+                      style={{ fontSize: "9px", color: "#666", letterSpacing: "0.08em" }}
+                    >
+                      Consistency
+                    </span>
+                    <span
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                      style={{
+                        backgroundColor: consistency.statusBg,
+                        color: consistency.statusColor,
+                        border: `1px solid ${consistency.statusBorder}`,
+                      }}
+                      title={`${consistency.status} (${consistency.consistencyScore}%)`}
+                    >
+                      {consistency.statusBadge}
+                    </span>
+                  </div>
+
+                  <div className="flex items-baseline justify-between mb-1.5">
+                    <span
+                      className="font-bold text-white text-base"
+                      style={{ letterSpacing: "-0.02em" }}
+                    >
+                      {consistency.consistencyScore}%
+                    </span>
+                    <span style={{ fontSize: "10px", color: "#666" }}>
+                      <strong className="text-[#bbb]">{consistency.completedDays}</strong> / {consistency.dayCount} {consistency.dayCount === 1 ? "day" : "days"}
+                    </span>
+                  </div>
+
+                  {/* Visual Progress Bar */}
+                  <div
+                    className="w-full rounded-full overflow-hidden"
+                    style={{ height: "3px", backgroundColor: "#1c1c1c" }}
+                  >
+                    <div
+                      className="h-full rounded-full transition-all duration-300"
+                      style={{
+                        width: `${consistency.consistencyScore}%`,
+                        backgroundColor: consistency.statusColor,
+                      }}
+                    />
+                  </div>
+                </div>
+
+
                 <div className="flex items-center justify-between">
                   <span
                     style={{

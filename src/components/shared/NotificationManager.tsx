@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useLebenStore } from "@/store/useStore";
+import { useLebenStore, ToastMessage } from "@/store/useStore";
 
 interface Toast {
   id: string;
@@ -76,6 +76,108 @@ function ReminderToast({
   );
 }
 
+function StoreToastItem({
+  toast,
+  onDismiss,
+}: {
+  toast: ToastMessage;
+  onDismiss: (id: string) => void;
+}) {
+  const isSuccess = toast.type === "success";
+  const isError = toast.type === "error";
+  const isSyncing = toast.type === "syncing";
+
+  const accentColor = isSuccess ? "#4caf7d" : isError ? "#f06a6a" : isSyncing ? "#7c6af0" : "#888888";
+  const bgColor = isSuccess
+    ? "rgba(18, 28, 22, 0.95)"
+    : isError
+      ? "rgba(32, 18, 18, 0.95)"
+      : "rgba(22, 22, 30, 0.95)";
+  const borderColor = isSuccess
+    ? "rgba(76, 175, 125, 0.35)"
+    : isError
+      ? "rgba(240, 106, 106, 0.35)"
+      : "rgba(124, 106, 240, 0.35)";
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "12px",
+        backgroundColor: bgColor,
+        border: `1px solid ${borderColor}`,
+        borderRadius: "12px",
+        padding: "12px 16px",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+        minWidth: "280px",
+        maxWidth: "360px",
+        backdropFilter: "blur(12px)",
+        animation: "lebenSlideIn 0.3s cubic-bezier(0.16,1,0.3,1) forwards",
+        pointerEvents: "all",
+      }}
+    >
+      <div
+        style={{
+          width: "28px",
+          height: "28px",
+          borderRadius: "8px",
+          background: `${accentColor}18`,
+          border: `1px solid ${accentColor}33`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        {isSuccess ? (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        ) : isError ? (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        ) : isSyncing ? (
+          <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="2.5">
+            <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+            <path d="M12 2a10 10 0 0 1 10 10" />
+          </svg>
+        ) : (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="16" x2="12" y2="12" />
+            <line x1="12" y1="8" x2="12.01" y2="8" />
+          </svg>
+        )}
+      </div>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ margin: 0, fontSize: "12px", color: "#f0f0f0", fontWeight: 500, lineHeight: 1.4 }}>
+          {toast.message}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => onDismiss(toast.id)}
+        style={{
+          background: "none",
+          border: "none",
+          color: "#777",
+          fontSize: "16px",
+          cursor: "pointer",
+          lineHeight: 1,
+          padding: "2px",
+        }}
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
 // ---------- helpers ----------
 
 /**
@@ -96,6 +198,8 @@ export default function NotificationManager() {
   const habits   = useLebenStore((state) => state.habits);
   const schedule = useLebenStore((state) => state.schedule);
   const addNotification = useLebenStore((state) => state.addNotification);
+  const storeToasts = useLebenStore((state) => state.toasts);
+  const removeStoreToast = useLebenStore((state) => state.removeToast);
 
   // Key format: "id::YYYY-MM-DD" → resets automatically on a new day
   const notifiedRef = useRef<Set<string>>(new Set());
@@ -208,7 +312,8 @@ export default function NotificationManager() {
     return () => clearInterval(interval);
   }, [tasks, habits, schedule, fireNotification]);
 
-  if (toasts.length === 0) return null;
+  const hasToasts = toasts.length > 0 || (storeToasts && storeToasts.length > 0);
+  if (!hasToasts) return null;
 
   return (
     <>
@@ -233,6 +338,9 @@ export default function NotificationManager() {
       >
         {toasts.map((toast) => (
           <ReminderToast key={toast.id} toast={toast} onDismiss={dismissToast} />
+        ))}
+        {storeToasts?.map((toast) => (
+          <StoreToastItem key={toast.id} toast={toast} onDismiss={removeStoreToast} />
         ))}
       </div>
     </>

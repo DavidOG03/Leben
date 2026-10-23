@@ -20,9 +20,15 @@ export interface ReadingTrackerProps {
   books: Book[];
 }
 
+export type {
+  HabitConsistency,
+  HabitDisciplineStatus,
+  OverallConsistencySummary,
+} from "./habits";
+
 export interface ConsistencyScoreProps {
   habits: Habit[];
-  consistencyScore: number;
-  checkedCount: number;
+  consistencyScore?: number;
+  checkedCount?: number;
   books: Book[];
 }

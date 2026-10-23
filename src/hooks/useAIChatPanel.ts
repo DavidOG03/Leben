@@ -97,6 +97,7 @@ export function useAIChatPanel() {
       completedDates: [],
       name: draft.label,
       pct: 0,
+      createdAt: new Date().toISOString(),
     };
   };
 

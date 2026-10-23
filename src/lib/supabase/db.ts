@@ -154,12 +154,12 @@ function mapNoteFromDB(row: any): Note {
     content: row.content ?? "",
     tags: Array.isArray(row.tags) ? row.tags : [],
     notebook: row.notebook ?? "General",
-    pinned: row.pinned ?? false,
-    archived: row.archived ?? false,
-    trashed: row.trashed ?? false,
-    isLocked: row.is_locked ?? false,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    pinned: Boolean(row.pinned),
+    archived: Boolean(row.archived),
+    trashed: Boolean(row.trashed),
+    isLocked: Boolean(row.is_locked),
+    createdAt: row.created_at || new Date().toISOString(),
+    updatedAt: row.updated_at || row.created_at || new Date().toISOString(),
   };
 }
 
@@ -310,9 +310,17 @@ export async function deleteBook(id: string): Promise<void> {
 // ─── Notes ────────────────────────────────────────────────────────────────────
 
 export async function fetchNotes(): Promise<Note[]> {
-  const { data, error } = await getSupabase()
+  const supabase = getSupabase();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user ?? (await supabase.auth.getUser()).data?.user;
+  if (!user) {
+    return [];
+  }
+
+  const { data, error } = await supabase
     .from("notes")
     .select("*")
+    .eq("user_id", user.id)
     .order("updated_at", { ascending: false });
 
   if (error) {

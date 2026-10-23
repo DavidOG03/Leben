@@ -26,7 +26,7 @@ import {
   updateNote as updateNoteDb,
   deleteNote as deleteNoteDb,
 } from "@/lib/supabase/db";
-import { calcStreak, calcLongestStreak } from "@/utils/habits";
+import { calcStreak, calcLongestStreak, calcHabitConsistency } from "@/utils/habits";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -326,10 +326,13 @@ export const useLebenStore = create<LebenState>()(
       },
 
       addToast: (toast) => {
+        const existing = get().toasts.find((t) => t.message === toast.message);
+        if (existing) return;
+
         const id = Math.random().toString(36).substring(7);
         set((state) => ({ toasts: [...state.toasts, { ...toast, id }] }));
         if (toast.type !== "syncing") {
-          setTimeout(() => get().removeToast(id), 4000);
+          setTimeout(() => get().removeToast(id), 3500);
         }
       },
 
@@ -499,11 +502,17 @@ export const useLebenStore = create<LebenState>()(
       },
 
       addHabit: async (habit) => {
-        set((s) => ({ habits: [...s.habits, habit] }));
+        const habitWithCreated: Habit = {
+          ...habit,
+          createdAt: habit.createdAt || new Date().toISOString(),
+        };
+        const consistency = calcHabitConsistency(habitWithCreated);
+        habitWithCreated.pct = consistency.consistencyScore;
+        set((s) => ({ habits: [...s.habits, habitWithCreated] }));
         try {
-          await insertHabit(habit);
+          await insertHabit(habitWithCreated);
         } catch {
-          get().addOfflineMutation("insertHabit", [habit]);
+          get().addOfflineMutation("insertHabit", [habitWithCreated]);
         }
       },
 
@@ -519,11 +528,17 @@ export const useLebenStore = create<LebenState>()(
 
         const newStreak = calcStreak(newDates);
         const newLongest = calcLongestStreak(newDates);
+        const updatedHabit = {
+          ...habit,
+          completedDates: newDates,
+        };
+        const consistency = calcHabitConsistency(updatedHabit);
         const updates = {
           checked: !alreadyDone,
           streak: newStreak,
           longestStreak: newLongest,
           completedDates: newDates,
+          pct: consistency.consistencyScore,
           reminderAt: !alreadyDone ? undefined : habit.reminderAt,
         };
 

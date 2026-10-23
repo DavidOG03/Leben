@@ -171,7 +171,7 @@ export function NotesAiAssistPanel({
             </p>
           )}
 
-          {/* Document Stats */}
+          {/* Document Stats
           <div className="mt-5 pt-4 border-t border-[#222222] px-2 space-y-2">
             <p
               className="font-semibold uppercase"
@@ -201,7 +201,7 @@ export function NotesAiAssistPanel({
                 {relativeTime(updatedAt)}
               </span>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </>

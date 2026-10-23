@@ -29,6 +29,7 @@ export default function AddHabitModal({ onAdd, onClose }: AddHabitModalProps) {
       completedDates: [],
       name: "",
       pct: 0,
+      createdAt: new Date().toISOString(),
     });
     onClose();
   };

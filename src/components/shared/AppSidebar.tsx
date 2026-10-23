@@ -128,12 +128,6 @@ export default function AppSidebar() {
           {isAuthenticated ? (
             <button
               onClick={() => {
-                if (typeof window !== "undefined") {
-                  localStorage.removeItem("notes_vault_enabled");
-                  localStorage.removeItem("notes_vault_locked");
-                  localStorage.removeItem("notes_vault_pwd");
-                  localStorage.removeItem("notes_vault_key");
-                }
                 useLebenStore.getState().clearStore();
                 signOut();
               }}

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useLebenStore } from "@/store/useStore";
 import type { NotesEditorProps, SaveState } from "@/utils/notes.editor.types";
 import { markdownToHtml, EDITOR_SURFACE_CSS } from "@/utils/notes.editor.utils";
 import EditorEmptyState from "./editor/EditorEmptyState";
@@ -29,6 +31,8 @@ export default function NotesEditor({
   onRestore,
   relativeTime,
 }: NotesEditorProps) {
+  const router = useRouter();
+  const userId = useLebenStore((s: any) => s.userId);
   const [title, setTitle] = useState("");
   const [saveState, setSaveState] = useState<SaveState>("saved");
   const [wordCount, setWordCount] = useState(0);
@@ -109,15 +113,20 @@ export default function NotesEditor({
     if (note) {
       setTitle(note.title);
       latestTitle.current = note.title;
-      const initialHtml = markdownToHtml(note.content || "");
+      const contentStr = note.content || "";
+      const isEncrypted = contentStr.startsWith("ENC:v1:");
+      const initialHtml = isEncrypted
+        ? `<p style="color: #777;"><em>🔒 Encrypted note. Please unlock your vault to view and edit.</em></p>`
+        : markdownToHtml(contentStr);
       if (editorRef.current) {
         editorRef.current.innerHTML = initialHtml;
+        editorRef.current.contentEditable = isEncrypted ? "false" : "true";
         const text = editorRef.current.innerText || "";
         setWordCount(text.split(/\s+/).filter(Boolean).length);
       }
       setSaveState("saved");
     }
-  }, [note?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [note?.id, note?.content]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-grow title height
   useEffect(() => {
@@ -197,6 +206,10 @@ export default function NotesEditor({
     if (isPersonal) {
       onUpdate(note.id, { notebook: "General" });
     } else {
+      if (!userId) {
+        router.push("/auth/signin");
+        return;
+      }
       if (!vaultEnabled && onSetupVault) {
         onSetupVault();
       }
@@ -277,7 +290,13 @@ export default function NotesEditor({
           onTogglePin={handleTogglePin}
           onArchive={onArchive}
           onDelete={onDelete}
-          onUpdateNotebook={(nextNb) => onUpdate(note.id, { notebook: nextNb })}
+          onUpdateNotebook={(nextNb) => {
+            if (nextNb === "Personal" && !userId) {
+              router.push("/auth/signin");
+              return;
+            }
+            onUpdate(note.id, { notebook: nextNb });
+          }}
         />
 
         {/* Toolbar */}

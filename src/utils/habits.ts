@@ -106,3 +106,248 @@ export function calcLongestStreak(history: string[]): number {
 
   return Math.max(maxStreak, currentStreak);
 }
+
+/**
+ * Calculates the total elapsed days (day count) for a habit since tracking started.
+ * Automatically increments by 1 each calendar day at midnight.
+ */
+export function getHabitDayCount(habit: Habit): number {
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0, 10);
+  const [ty, tm, td] = todayStr.split("-").map(Number);
+  const todayUtc = Date.UTC(ty, tm - 1, td);
+
+  let startUtc: number;
+  if (habit.createdAt) {
+    const createdStr = habit.createdAt.slice(0, 10);
+    const [cy, cm, cd] = createdStr.split("-").map(Number);
+    startUtc = Date.UTC(cy, cm - 1, cd);
+  } else if (habit.completedDates && habit.completedDates.length > 0) {
+    const earliestStr = [...habit.completedDates].sort()[0].slice(0, 10);
+    const [ey, em, ed] = earliestStr.split("-").map(Number);
+    startUtc = Date.UTC(ey, em - 1, ed);
+  } else {
+    startUtc = todayUtc;
+  }
+
+  if (startUtc > todayUtc) {
+    startUtc = todayUtc;
+  }
+
+  const diffDays = Math.floor((todayUtc - startUtc) / (1000 * 60 * 60 * 24));
+  const dayCount = diffDays + 1;
+
+  // Ensure dayCount is at least 1 and at least the count of recorded completion days
+  const uniqueCompletions = new Set(habit.completedDates || []).size;
+  return Math.max(1, dayCount, uniqueCompletions);
+}
+
+/**
+ * Returns the count of days marked completed for a habit (the second variable).
+ * Increases by 1 only on days the user marks the habit completed via streak button.
+ */
+export function getHabitCompletedDays(habit: Habit): number {
+  if (!habit.completedDates || habit.completedDates.length === 0) return 0;
+  return new Set(habit.completedDates.map((d) => d.slice(0, 10))).size;
+}
+
+export type HabitDisciplineStatus = "Disciplined" | "Consistent" | "Building" | "Slacking";
+
+export interface HabitConsistency {
+  dayCount: number;
+  completedDays: number;
+  consistencyScore: number; // 0 - 100
+  status: HabitDisciplineStatus;
+  statusColor: string;
+  statusBg: string;
+  statusBorder: string;
+  statusBadge: string;
+}
+
+/**
+ * Calculates consistency percentage and discipline status for a single habit:
+ * consistencyScore = (completedDays / dayCount) * 100%
+ */
+export function calcHabitConsistency(habit: Habit): HabitConsistency {
+  const dayCount = getHabitDayCount(habit);
+  const completedDays = getHabitCompletedDays(habit);
+
+  // Consistency percentage = (completedDays / dayCount) * 100
+  const rawScore = dayCount > 0 ? (completedDays / dayCount) * 100 : 0;
+  const consistencyScore = Math.min(100, Math.max(0, Math.round(rawScore)));
+
+  let status: HabitDisciplineStatus;
+  let statusColor: string;
+  let statusBg: string;
+  let statusBorder: string;
+  let statusBadge: string;
+
+  if (consistencyScore >= 80) {
+    status = "Disciplined";
+    statusColor = "#4caf7d";
+    statusBg = "rgba(76, 175, 125, 0.12)";
+    statusBorder = "rgba(76, 175, 125, 0.28)";
+    statusBadge = "🛡️ Disciplined";
+  } else if (consistencyScore >= 60) {
+    status = "Consistent";
+    statusColor = "#7c6af0";
+    statusBg = "rgba(124, 106, 240, 0.12)";
+    statusBorder = "rgba(124, 106, 240, 0.28)";
+    statusBadge = "⚡ Consistent";
+  } else if (consistencyScore >= 40) {
+    status = "Building";
+    statusColor = "#f0a44f";
+    statusBg = "rgba(240, 164, 79, 0.12)";
+    statusBorder = "rgba(240, 164, 79, 0.28)";
+    statusBadge = "⏳ Building";
+  } else {
+    status = "Slacking";
+    statusColor = "#f06a6a";
+    statusBg = "rgba(240, 106, 106, 0.12)";
+    statusBorder = "rgba(240, 106, 106, 0.28)";
+    statusBadge = "⚠️ Slacking";
+  }
+
+  return {
+    dayCount,
+    completedDays,
+    consistencyScore,
+    status,
+    statusColor,
+    statusBg,
+    statusBorder,
+    statusBadge,
+  };
+}
+
+export interface OverallConsistencySummary {
+  overallScore: number;
+  maxDayCount: number;
+  totalCompletedDays: number;
+  totalHabits: number;
+  checkedToday: number;
+  disciplinedCount: number;
+  consistentCount: number;
+  buildingCount: number;
+  slackingCount: number;
+  status: HabitDisciplineStatus;
+  statusColor: string;
+  statusBg: string;
+  statusBorder: string;
+  statusBadge: string;
+  habitScores: Array<{
+    habit: Habit;
+    consistency: HabitConsistency;
+  }>;
+}
+
+export function calcOverallConsistency(habits: Habit[]): OverallConsistencySummary {
+  if (!habits || habits.length === 0) {
+    return {
+      overallScore: 0,
+      maxDayCount: 0,
+      totalCompletedDays: 0,
+      totalHabits: 0,
+      checkedToday: 0,
+      disciplinedCount: 0,
+      consistentCount: 0,
+      buildingCount: 0,
+      slackingCount: 0,
+      status: "Building",
+      statusColor: "#555",
+      statusBg: "rgba(85, 85, 85, 0.12)",
+      statusBorder: "rgba(85, 85, 85, 0.25)",
+      statusBadge: "⏳ No habits",
+      habitScores: [],
+    };
+  }
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const habitScores = habits.map((habit) => ({
+    habit,
+    consistency: calcHabitConsistency(habit),
+  }));
+
+  const checkedToday = habits.filter((h) =>
+    h.completedDates?.some((d) => d.slice(0, 10) === todayStr)
+  ).length;
+
+  const totalScore = habitScores.reduce(
+    (sum, item) => sum + item.consistency.consistencyScore,
+    0
+  );
+  const overallScore = Math.round(totalScore / habits.length);
+
+  const maxDayCount = Math.max(
+    1,
+    ...habitScores.map((item) => item.consistency.dayCount)
+  );
+
+  const totalCompletedDays = habitScores.reduce(
+    (sum, item) => sum + item.consistency.completedDays,
+    0
+  );
+
+  const disciplinedCount = habitScores.filter(
+    (item) => item.consistency.status === "Disciplined"
+  ).length;
+  const consistentCount = habitScores.filter(
+    (item) => item.consistency.status === "Consistent"
+  ).length;
+  const buildingCount = habitScores.filter(
+    (item) => item.consistency.status === "Building"
+  ).length;
+  const slackingCount = habitScores.filter(
+    (item) => item.consistency.status === "Slacking"
+  ).length;
+
+  let status: HabitDisciplineStatus;
+  let statusColor: string;
+  let statusBg: string;
+  let statusBorder: string;
+  let statusBadge: string;
+
+  if (overallScore >= 80) {
+    status = "Disciplined";
+    statusColor = "#4caf7d";
+    statusBg = "rgba(76, 175, 125, 0.12)";
+    statusBorder = "rgba(76, 175, 125, 0.28)";
+    statusBadge = "🛡️ Disciplined";
+  } else if (overallScore >= 60) {
+    status = "Consistent";
+    statusColor = "#7c6af0";
+    statusBg = "rgba(124, 106, 240, 0.12)";
+    statusBorder = "rgba(124, 106, 240, 0.28)";
+    statusBadge = "⚡ Consistent";
+  } else if (overallScore >= 40) {
+    status = "Building";
+    statusColor = "#f0a44f";
+    statusBg = "rgba(240, 164, 79, 0.12)";
+    statusBorder = "rgba(240, 164, 79, 0.28)";
+    statusBadge = "⏳ Building";
+  } else {
+    status = "Slacking";
+    statusColor = "#f06a6a";
+    statusBg = "rgba(240, 106, 106, 0.12)";
+    statusBorder = "rgba(240, 106, 106, 0.28)";
+    statusBadge = "⚠️ Slacking";
+  }
+
+  return {
+    overallScore,
+    maxDayCount,
+    totalCompletedDays,
+    totalHabits: habits.length,
+    checkedToday,
+    disciplinedCount,
+    consistentCount,
+    buildingCount,
+    slackingCount,
+    status,
+    statusColor,
+    statusBg,
+    statusBorder,
+    statusBadge,
+    habitScores,
+  };
+}

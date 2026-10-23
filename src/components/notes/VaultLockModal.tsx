@@ -14,7 +14,10 @@ import { useLebenStore } from "@/store/useStore";
 interface Props {
   onUnlock: (
     password: string,
-  ) => boolean | { success: boolean; error?: string };
+  ) =>
+    | boolean
+    | { success: boolean; error?: string }
+    | Promise<boolean | { success: boolean; error?: string }>;
   onClose?: () => void;
   onOpenResetModal?: () => void;
 }
@@ -35,15 +38,14 @@ export default function VaultLockModal({
   const [attempts, setAttempts] = useState(0);
   const [countdown, setCountdown] = useState(0);
 
-  const handleUnlock = () => {
+  const handleUnlock = async () => {
     if (lockState === "rate_limit" || !password) return;
 
     setLockState("unlocking");
     setCustomError(null);
 
-    // Simulate unlock check
-    setTimeout(() => {
-      const res = onUnlock(password);
+    try {
+      const res = await onUnlock(password);
       const isSuccess = typeof res === "boolean" ? res : res.success;
       if (isSuccess) {
         // Parent unmounts modal
@@ -73,7 +75,10 @@ export default function VaultLockModal({
         }
         setPassword("");
       }
-    }, 400);
+    } catch (e: any) {
+      setLockState("error");
+      setCustomError(e?.message || "Unlock failed");
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

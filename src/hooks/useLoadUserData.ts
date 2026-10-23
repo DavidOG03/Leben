@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { useLebenStore } from "@/store/useStore";
 import { createClient } from "@/lib/supabase/client";
+import { syncVaultFromSupabase } from "@/utils/vaultStorage";
 
 export function useLoadUserData() {
   useEffect(() => {
@@ -30,6 +31,9 @@ export function useLoadUserData() {
       const email = user.email || null;
       useLebenStore.getState().setUser(user.id, email, fullName);
 
+      // Hydrate & synchronize vault security state for this user session
+      syncVaultFromSupabase(user).catch(() => {});
+
       try {
         useLebenStore.getState().setIsSyncing(true);
 
@@ -41,7 +45,7 @@ export function useLoadUserData() {
           store.loadHabits(),
           store.loadGoals(),
           store.loadBooks(),
-          store.loadNotes(),
+          store.loadNotes(true),
           store.loadHistory(),
         ]);
 
@@ -108,6 +112,13 @@ export function useLoadUserData() {
         }
       },
     );
+
+    // Ensure user session and latest notes/data are loaded on initial screen load or refresh
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        loadUserData();
+      }
+    });
 
     return () => {
       subscription.unsubscribe();

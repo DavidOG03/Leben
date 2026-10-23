@@ -37,7 +37,7 @@ export function AuthSocialButtons() {
   };
 
   return (
-    <div className="social-buttons">
+    <div className="social-buttons" style={{ gridTemplateColumns: "1fr" }}>
       <button
         className="social-btn"
         onClick={() => handleOAuth("google")}
@@ -68,13 +68,13 @@ export function AuthSocialButtons() {
         </span>
       </button>
 
-      <button
+      {/* Sign in with GitHub button commented out */}
+      {/* <button
         className="social-btn"
         onClick={() => handleOAuth("github")}
         disabled={loadingProvider !== null}
         aria-label="Continue with GitHub"
       >
-        {/* GitHub SVG icon */}
         <svg
           width="18"
           height="18"
@@ -87,7 +87,7 @@ export function AuthSocialButtons() {
         <span>
           {loadingProvider === "github" ? "Redirecting..." : "GitHub"}
         </span>
-      </button>
+      </button> */}
     </div>
   );
 }

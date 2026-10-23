@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import NotesSidebar from "./NotesSidebar";
 import NotesList from "./NotesList";
 import NotesEditor from "./NotesEditor";
@@ -11,11 +12,22 @@ import VaultRestoreModal from "./VaultRestoreModal";
 import { useLebenStore } from "@/store/useStore";
 import { generateNoteId } from "@/store/noteSlice";
 import type { Note } from "@/store/noteSlice";
+import { loadVaultState, persistVaultState } from "@/utils/vaultStorage";
+import {
+  createVaultCryptoBundle,
+  tryUnlockVaultWithSecret,
+  clearActiveVaultKey,
+  updateVaultCredentials,
+  getActiveVaultKey,
+} from "@/utils/vaultCrypto";
 
 export type { Note } from "@/store/noteSlice";
 
 function notePreview(content: string): string {
   if (!content) return "";
+  if (content.startsWith("ENC:v1:")) {
+    return "🔒 Encrypted note — Unlock vault to view";
+  }
   return content
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ")
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ")
@@ -48,6 +60,7 @@ function relativeTime(iso: string): string {
 }
 
 export default function NotesLayout() {
+  const router = useRouter();
   const userId = useLebenStore((s: any) => s.userId);
   const notes = useLebenStore((s: any) => s.notes as Note[]);
   const notesLoaded = useLebenStore((s: any) => s.notesLoaded);
@@ -59,40 +72,45 @@ export default function NotesLayout() {
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [vaultEnabled, setVaultEnabled] = useState(false);
-  const [vaultLocked, setVaultLocked] = useState(false);
+  const [vaultEnabled, setVaultEnabled] = useState(() => {
+    if (typeof window !== "undefined") {
+      return loadVaultState(userId).enabled;
+    }
+    return false;
+  });
+  const [vaultLocked, setVaultLocked] = useState(() => {
+    if (typeof window !== "undefined") {
+      const s = loadVaultState(userId);
+      return s.enabled && s.locked;
+    }
+    return false;
+  });
   const [showSetupModal, setShowSetupModal] = useState(false);
+  const [setupModalMode, setSetupModalMode] = useState<"setup" | "recovery_reset">("setup");
   const [showLockedModal, setShowLockedModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  // User-scoped vault key helper so Account A never locks Account B
-  const getVaultKey = useCallback(
-    (key: string) => (userId ? `notes_vault_${userId}_${key}` : `notes_vault_guest_${key}`),
-    [userId]
-  );
-
-  // Sync vault security state scoped to current user & load notes
+  // Fetch fresh notes from Supabase on mount / screen refresh and sync vault state
   useEffect(() => {
-    if (!notesLoaded) {
-      loadNotes();
-    }
+    loadNotes(true);
 
     if (typeof window !== "undefined") {
-      // Clear legacy unscoped keys that previously contaminated all accounts on the same browser
-      localStorage.removeItem("notes_vault_enabled");
-      localStorage.removeItem("notes_vault_locked");
-      localStorage.removeItem("notes_vault_pwd");
-      localStorage.removeItem("notes_vault_key");
-
-      const userEnabled = localStorage.getItem(getVaultKey("enabled")) === "true";
-      const userLocked = localStorage.getItem(getVaultKey("locked")) !== "false";
-
-      setVaultEnabled(userEnabled);
-      setVaultLocked(userEnabled && userLocked);
+      const state = loadVaultState(userId);
+      setVaultEnabled(state.enabled);
+      setVaultLocked(state.enabled && state.locked);
     }
-  }, [userId, getVaultKey, loadNotes, notesLoaded]);
+  }, [userId, loadNotes]);
+
+  // Refetch notes whenever user refocuses the browser window
+  useEffect(() => {
+    const handleFocus = () => {
+      loadNotes(true);
+    };
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [loadNotes]);
 
   // Migrate any legacy localStorage notes to Supabase store
   useEffect(() => {
@@ -126,9 +144,23 @@ export default function NotesLayout() {
 
   /* ── CRUD ──────────────────────────────────────────── */
 
+  const handleSetupVault = useCallback(() => {
+    if (!userId) {
+      router.push("/auth/signin");
+      return;
+    }
+    setSetupModalMode("setup");
+    setShowSetupModal(true);
+  }, [userId, router]);
+
   const handleCreateNote = useCallback(async () => {
-    const now = new Date().toISOString();
     const isPersonalTab = activeFilter === "notebook:Personal";
+    if (isPersonalTab && !userId) {
+      router.push("/auth/signin");
+      return;
+    }
+
+    const now = new Date().toISOString();
     const defaultNotebook = isPersonalTab
       ? "Personal"
       : activeFilter.startsWith("notebook:")
@@ -150,13 +182,17 @@ export default function NotesLayout() {
     };
     await addNote(newNote);
     setSelectedNoteId(newNote.id);
-  }, [activeFilter, addNote]);
+  }, [activeFilter, addNote, userId, router]);
 
   const handleUpdateNote = useCallback(
-    (id: string, updates: Partial<Pick<Note, "title" | "content" | "tags" | "notebook" | "pinned">>) => {
+    (id: string, updates: Partial<Pick<Note, "title" | "content" | "tags" | "notebook" | "pinned" | "isLocked">>) => {
+      if ((updates.notebook === "Personal" || updates.isLocked) && !userId) {
+        router.push("/auth/signin");
+        return;
+      }
       updateNote(id, updates);
     },
-    [updateNote]
+    [updateNote, userId, router]
   );
 
   const handleDeleteNote = useCallback(
@@ -190,82 +226,98 @@ export default function NotesLayout() {
     [updateNote]
   );
 
-  /* ── Vault Handlers (Scoped to active user) ─────────── */
+  /* ── Vault Handlers (True Zero-Knowledge Client-Side Crypto) ── */
 
-  const handleEnableVault = (password: string, recoveryKey: string) => {
-    const key = (k: string) => getVaultKey(k);
-    localStorage.setItem(key("enabled"), "true");
-    localStorage.setItem(key("locked"), "false");
-    localStorage.setItem(key("pwd"), password);
-    localStorage.setItem(key("key"), recoveryKey);
+  const handleEnableVault = async (password: string, recoveryKey: string) => {
+    if (!userId) {
+      router.push("/auth/signin");
+      return;
+    }
+
+    const state = loadVaultState(userId);
+    const existingBundle = state.cryptoBundle;
+
+    if (setupModalMode === "recovery_reset" && existingBundle) {
+      // DRY: Re-wrap existing active vault key with new password & recovery key
+      const activeKey = await getActiveVaultKey();
+      const updatedBundle = await updateVaultCredentials(
+        password,
+        recoveryKey,
+        existingBundle,
+        activeKey,
+      );
+      await persistVaultState(userId, {
+        enabled: true,
+        locked: false,
+        cryptoBundle: updatedBundle,
+      });
+      (useLebenStore.getState() as any).addToast?.({
+        message: "New master password saved successfully",
+        type: "success",
+      });
+    } else {
+      // Generate true zero-knowledge client-side encryption bundle
+      const { bundle } = await createVaultCryptoBundle(password, recoveryKey);
+      await persistVaultState(userId, {
+        enabled: true,
+        locked: false,
+        cryptoBundle: bundle,
+      });
+    }
+
     setVaultEnabled(true);
     setVaultLocked(false);
     setShowSetupModal(false);
+    setSetupModalMode("setup");
+    loadNotes(true);
   };
 
-  const handleLockVault = useCallback(() => {
-    localStorage.setItem(getVaultKey("locked"), "true");
+  const handleLockVault = useCallback(async () => {
+    if (!userId) {
+      router.push("/auth/signin");
+      return;
+    }
+    clearActiveVaultKey();
+    await persistVaultState(userId, { locked: true });
     setVaultLocked(true);
-  }, [getVaultKey]);
+  }, [userId, router]);
 
   const handleUnlock = useCallback(
-    (password: string): boolean | { success: boolean; error?: string } => {
-      const stored = localStorage.getItem(getVaultKey("pwd"));
-      const storedKey = localStorage.getItem(getVaultKey("key"));
+    async (secret: string): Promise<boolean | { success: boolean; error?: string }> => {
+      const state = loadVaultState(userId);
+      const bundle = state.cryptoBundle;
 
-      const cleanInput = password.trim();
-      const inputUpper = cleanInput.toUpperCase();
-      const inputNorm = inputUpper.replace(/[^A-Z0-9]/g, "");
-
-      // 1. Check direct password match
-      if (stored && cleanInput === stored) {
-        localStorage.setItem(getVaultKey("locked"), "false");
-        setVaultLocked(false);
-        setShowLockedModal(false);
-        return { success: true };
-      }
-
-      // 2. Check recovery key for active account (case & formatting resilient)
-      if (storedKey) {
-        const storedKeyUpper = storedKey.trim().toUpperCase();
-        const storedKeyNorm = storedKeyUpper.replace(/[^A-Z0-9]/g, "");
-
-        if (inputUpper === storedKeyUpper || (inputNorm.length >= 12 && inputNorm === storedKeyNorm)) {
-          localStorage.setItem(getVaultKey("locked"), "false");
-          setVaultLocked(false);
-          setShowLockedModal(false);
-          return { success: true };
-        }
-      }
-
-      // 3. User entered a recovery key that does not match this account
-      const isKeyLike = inputUpper.startsWith("REC-") || inputNorm.length >= 16;
-      if (isKeyLike && typeof window !== "undefined") {
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i);
-          if (k && k.startsWith("notes_vault_") && k.endsWith("_key") && k !== getVaultKey("key")) {
-            const otherKey = (localStorage.getItem(k) || "").trim().toUpperCase();
-            const otherNorm = otherKey.replace(/[^A-Z0-9]/g, "");
-            if (otherKey && (inputUpper === otherKey || (inputNorm.length >= 12 && inputNorm === otherNorm))) {
-              return {
-                success: false,
-                error: "This recovery key belongs to another user account on this device. Please use your own downloaded recovery key.",
-              };
-            }
-          }
-        }
+      if (!bundle) {
         return {
           success: false,
-          error: "Invalid recovery key for this account. Please verify your downloaded recovery file.",
+          error: "Vault security bundle not found. Please set up your vault.",
         };
       }
 
-      return {
-        success: false,
-        error: "Incorrect master password. Please try again.",
-      };
+      const res = await tryUnlockVaultWithSecret(secret, bundle);
+      if (!res.success) {
+        return {
+          success: false,
+          error: res.error || "Incorrect master password or recovery key.",
+        };
+      }
+
+      await persistVaultState(userId, { locked: false });
+      setVaultLocked(false);
+      setShowLockedModal(false);
+
+      // Re-fetch / decrypt personal notes into view
+      loadNotes(true);
+
+      // DRY: If unlocked using Emergency Recovery Key, prompt user to create a new master password
+      if (res.isRecoveryKey) {
+        setSetupModalMode("recovery_reset");
+        setShowSetupModal(true);
+      }
+
+      return { success: true };
     },
-    [getVaultKey]
+    [userId, loadNotes]
   );
 
   /* ── Option 3: Frozen Vault Reset & Restore ─────────── */
@@ -285,17 +337,15 @@ export default function NotesLayout() {
       });
     }
 
-    // Preserve the old credentials under frozen storage so legitimate owner can recover later
-    const oldPwd = localStorage.getItem(getVaultKey("pwd"));
-    const oldKey = localStorage.getItem(getVaultKey("key"));
-    if (oldPwd) localStorage.setItem(getVaultKey("frozen_pwd"), oldPwd);
-    if (oldKey) localStorage.setItem(getVaultKey("frozen_key"), oldKey);
-
-    // Clear active vault configuration for this user
-    localStorage.removeItem(getVaultKey("enabled"));
-    localStorage.removeItem(getVaultKey("locked"));
-    localStorage.removeItem(getVaultKey("pwd"));
-    localStorage.removeItem(getVaultKey("key"));
+    const state = loadVaultState(userId);
+    await persistVaultState(userId, {
+      frozenPassword: state.password || undefined,
+      frozenRecoveryKey: state.recoveryKey || undefined,
+      enabled: false,
+      locked: false,
+      password: "",
+      recoveryKey: "",
+    });
 
     setVaultEnabled(false);
     setVaultLocked(false);
@@ -304,14 +354,15 @@ export default function NotesLayout() {
 
     // Open fresh vault setup modal
     setShowSetupModal(true);
-  }, [notes, updateNote, getVaultKey]);
+  }, [notes, updateNote, userId]);
 
   // Restores frozen notes back into active Personal vault when correct old password/key is entered
   const handleRestoreFrozenVault = useCallback((passwordOrKey: string): boolean | { success: boolean; error?: string } => {
-    const storedFrozenPwd = localStorage.getItem(getVaultKey("frozen_pwd"));
-    const storedFrozenKey = localStorage.getItem(getVaultKey("frozen_key"));
-    const activePwd = localStorage.getItem(getVaultKey("pwd"));
-    const activeKey = localStorage.getItem(getVaultKey("key"));
+    const state = loadVaultState(userId);
+    const storedFrozenPwd = state.frozenPassword;
+    const storedFrozenKey = state.frozenRecoveryKey;
+    const activePwd = state.password;
+    const activeKey = state.recoveryKey;
 
     const inputClean = passwordOrKey.trim();
     const inputUpper = inputClean.toUpperCase();
@@ -340,8 +391,7 @@ export default function NotesLayout() {
             k &&
             k.startsWith("notes_vault_") &&
             (k.endsWith("_key") || k.endsWith("_frozen_key")) &&
-            k !== getVaultKey("key") &&
-            k !== getVaultKey("frozen_key")
+            !k.includes("session")
           ) {
             const otherVal = (localStorage.getItem(k) || "").trim().toUpperCase();
             const otherNorm = otherVal.replace(/[^A-Z0-9]/g, "");
@@ -370,18 +420,24 @@ export default function NotesLayout() {
       });
     }
 
-    localStorage.removeItem(getVaultKey("frozen_pwd"));
-    localStorage.removeItem(getVaultKey("frozen_key"));
+    persistVaultState(userId, {
+      frozenPassword: "",
+      frozenRecoveryKey: "",
+    });
     return true;
-  }, [notes, updateNote, getVaultKey]);
+  }, [notes, updateNote, userId]);
 
   const handleSelectNotebook = useCallback((notebook: string) => {
+    if (notebook === "Personal" && !userId) {
+      router.push("/auth/signin");
+      return;
+    }
     setActiveFilter(`notebook:${notebook}`);
     setSelectedNoteId(null);
     if (notebook === "Personal" && vaultEnabled && vaultLocked) {
       setShowLockedModal(true);
     }
-  }, [vaultEnabled, vaultLocked]);
+  }, [userId, router, vaultEnabled, vaultLocked]);
 
   /* ── Filtering ─────────────────────────────────────── */
 
@@ -457,7 +513,7 @@ export default function NotesLayout() {
         }}
         vaultEnabled={vaultEnabled}
         vaultLocked={vaultLocked}
-        onSetupVault={() => setShowSetupModal(true)}
+        onSetupVault={handleSetupVault}
         onLockVault={handleLockVault}
         onUnlockVault={() => setShowLockedModal(true)}
         onRestoreFrozenVault={() => setShowRestoreModal(true)}
@@ -504,7 +560,7 @@ export default function NotesLayout() {
         isLocked={isPersonalLocked}
         vaultEnabled={vaultEnabled}
         vaultLocked={vaultLocked}
-        onSetupVault={() => setShowSetupModal(true)}
+        onSetupVault={handleSetupVault}
         onUnlockRequest={() => setShowLockedModal(true)}
         onUpdate={handleUpdateNote}
         onDelete={handleDeleteNote}
@@ -516,8 +572,12 @@ export default function NotesLayout() {
       {/* Modals */}
       {showSetupModal && (
         <VaultSetupModal
-          onClose={() => setShowSetupModal(false)}
+          onClose={() => {
+            setShowSetupModal(false);
+            setSetupModalMode("setup");
+          }}
           onEnable={handleEnableVault}
+          mode={setupModalMode}
         />
       )}
       {showLockedModal && (

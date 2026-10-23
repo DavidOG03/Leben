@@ -364,10 +364,19 @@ export default function SettingsContent() {
           LIVE SYNC: ACTIVE • DB SECURE
         </span> */}
         <span
-          style={{ fontSize: "10px", color: "#2a2a2a", letterSpacing: "0.1em" }}
+          style={{ fontSize: "10px", color: "#444", letterSpacing: "0.1em" }}
         >
-          Leben V1.0
+          Leben V2.0
         </span>
+        <a
+          href="/privacy"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ fontSize: "11px", color: "#666" }}
+          className="hover:text-[#7c6af0] transition-colors"
+        >
+          Privacy Policy ↗
+        </a>
       </div>
     </main>
   );

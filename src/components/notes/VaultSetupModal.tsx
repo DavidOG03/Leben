@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   CloseIcon,
   LockIcon,
@@ -18,6 +19,7 @@ import { useLebenStore } from "@/store/useStore";
 interface Props {
   onClose: () => void;
   onEnable: (password: string, recoveryKey: string) => void;
+  mode?: "setup" | "recovery_reset";
 }
 
 function generateRecoveryKey(userIdentifier?: string | null) {
@@ -60,9 +62,20 @@ const strengthLabels = [
 
 const strengthColors = ["", "#f06a6a", "#f0a44f", "#f0d44f", "#4caf7d"];
 
-export default function VaultSetupModal({ onClose, onEnable }: Props) {
+export default function VaultSetupModal({
+  onClose,
+  onEnable,
+  mode = "setup",
+}: Props) {
+  const router = useRouter();
   const userId = useLebenStore((s: any) => s.userId);
   const userEmail = useLebenStore((s: any) => s.userEmail);
+
+  useEffect(() => {
+    if (!userId) {
+      router.push("/auth/signin");
+    }
+  }, [userId, router]);
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -174,11 +187,19 @@ export default function VaultSetupModal({ onClose, onEnable }: Props) {
               width: "44px",
               height: "44px",
               background:
-                "linear-gradient(135deg, rgba(124,106,240,0.22), rgba(124,106,240,0.06))",
-              border: "1px solid rgba(124,106,240,0.25)",
+                mode === "recovery_reset"
+                  ? "linear-gradient(135deg, rgba(240,164,79,0.22), rgba(240,164,79,0.06))"
+                  : "linear-gradient(135deg, rgba(124,106,240,0.22), rgba(124,106,240,0.06))",
+              border:
+                mode === "recovery_reset"
+                  ? "1px solid rgba(240,164,79,0.3)"
+                  : "1px solid rgba(124,106,240,0.25)",
             }}
           >
-            <LockIcon className="w-5 h-5 text-[#7c6af0]" />
+            <LockIcon
+              className="w-5 h-5"
+              style={{ color: mode === "recovery_reset" ? "#f0a44f" : "#7c6af0" }}
+            />
           </div>
           <div className="flex items-center gap-2">
             <div
@@ -186,12 +207,11 @@ export default function VaultSetupModal({ onClose, onEnable }: Props) {
               style={{
                 width: "7px",
                 height: "7px",
-                backgroundColor: "#4caf7d",
+                backgroundColor: mode === "recovery_reset" ? "#f0a44f" : "#4caf7d",
               }}
             />
-            <span style={{ fontSize: "12px", color: "#888888" }}>
-              Vault Security Setup
-              {/* {userEmail ? `• ${userEmail}` : ""} */}
+            <span style={{ fontSize: "12px", color: mode === "recovery_reset" ? "#f0a44f" : "#888888" }}>
+              {mode === "recovery_reset" ? "Master Password Reset Required" : "Vault Security Setup"}
             </span>
           </div>
         </div>
@@ -204,13 +224,15 @@ export default function VaultSetupModal({ onClose, onEnable }: Props) {
             lineHeight: 1.1,
           }}
         >
-          Protect your notes
+          {mode === "recovery_reset" ? "Create a new master password" : "Protect your notes"}
         </h2>
         <p
           className="mb-6"
           style={{ fontSize: "13px", color: "#888888", lineHeight: 1.6 }}
         >
-          Set up a password to safeguard your sensitive notes.
+          {mode === "recovery_reset"
+            ? "You unlocked your vault using your Emergency Recovery Key. Please set a new master password now so your vault remains secure and accessible."
+            : "Set up a password to safeguard your sensitive notes."}
         </p>
 
         {/* Master Password */}
@@ -445,7 +467,7 @@ export default function VaultSetupModal({ onClose, onEnable }: Props) {
             }}
           >
             <LockIcon className="w-3.5 h-3.5" />
-            Enable lock
+            {mode === "recovery_reset" ? "Save New Password" : "Enable lock"}
           </button>
         </div>
 
@@ -455,8 +477,9 @@ export default function VaultSetupModal({ onClose, onEnable }: Props) {
             className="text-center mt-2"
             style={{ fontSize: "11px", color: "#888888" }}
           >
-            ⚠️ You must copy or download your recovery key before enabling the
-            lock.
+            {mode === "recovery_reset"
+              ? "⚠️ Please copy or download your emergency recovery key to confirm your new credentials."
+              : "⚠️ You must copy or download your recovery key before enabling the lock."}
           </p>
         )}
       </div>
