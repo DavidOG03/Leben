@@ -368,7 +368,7 @@ export default function NotesLayout() {
     const inputUpper = inputClean.toUpperCase();
     const inputNorm = inputUpper.replace(/[^A-Z0-9]/g, "");
 
-    const keyMatches = (stored: string | null) => {
+    const keyMatches = (stored?: string | null) => {
       if (!stored) return false;
       const sUpper = stored.trim().toUpperCase();
       const sNorm = sUpper.replace(/[^A-Z0-9]/g, "");

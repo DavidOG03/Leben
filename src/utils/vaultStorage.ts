@@ -6,10 +6,10 @@ export interface VaultState {
   locked: boolean;
   cryptoBundle: VaultCryptoBundle | null;
   // Legacy backward-compatibility fields (no longer hold plaintext)
-  password?: string | null;
-  recoveryKey?: string | null;
-  frozenPassword?: string | null;
-  frozenRecoveryKey?: string | null;
+  password: string | null;
+  recoveryKey: string | null;
+  frozenPassword: string | null;
+  frozenRecoveryKey: string | null;
 }
 
 /**
@@ -48,11 +48,15 @@ export function loadVaultState(userId?: string | null): VaultState {
   const sKey = (k: string) => `notes_vault_session_${k}`;
 
   // Check user-scoped key first, then fallback to session key
-  const enabledRaw = localStorage.getItem(uKey("enabled")) ?? localStorage.getItem(sKey("enabled"));
+  const enabledRaw =
+    localStorage.getItem(uKey("enabled")) ??
+    localStorage.getItem(sKey("enabled"));
   const enabled = enabledRaw === "true";
 
   let cryptoBundle: VaultCryptoBundle | null = null;
-  const bundleRaw = localStorage.getItem(uKey("crypto_bundle")) ?? localStorage.getItem(sKey("crypto_bundle"));
+  const bundleRaw =
+    localStorage.getItem(uKey("crypto_bundle")) ??
+    localStorage.getItem(sKey("crypto_bundle"));
   if (bundleRaw) {
     try {
       cryptoBundle = JSON.parse(bundleRaw);
@@ -60,11 +64,17 @@ export function loadVaultState(userId?: string | null): VaultState {
   }
 
   // Check if session holds the decrypted in-memory vault key
-  const hasSessionKey = Boolean(sessionStorage.getItem("notes_vault_session_key"));
+  const hasSessionKey = Boolean(
+    sessionStorage.getItem("notes_vault_session_key"),
+  );
 
-  const lockedRaw = localStorage.getItem(uKey("locked")) ?? localStorage.getItem(sKey("locked"));
+  const lockedRaw =
+    localStorage.getItem(uKey("locked")) ??
+    localStorage.getItem(sKey("locked"));
   // If enabled: locked if explicitly marked locked OR if bundle exists but no active session key
-  const locked = enabled ? (lockedRaw === "true" || (Boolean(cryptoBundle) && !hasSessionKey)) : false;
+  const locked = enabled
+    ? lockedRaw === "true" || (Boolean(cryptoBundle) && !hasSessionKey)
+    : false;
 
   return {
     enabled,
@@ -84,7 +94,7 @@ export function loadVaultState(userId?: string | null): VaultState {
  */
 export async function persistVaultState(
   userId: string | null | undefined,
-  updates: Partial<VaultState>
+  updates: Partial<VaultState>,
 ) {
   if (typeof window === "undefined") return;
 
@@ -138,9 +148,12 @@ export async function persistVaultState(
 
     if (user) {
       const metadataUpdates: Record<string, any> = {};
-      if (updates.enabled !== undefined) metadataUpdates.vault_enabled = updates.enabled;
-      if (updates.locked !== undefined) metadataUpdates.vault_locked = updates.locked;
-      if (updates.cryptoBundle !== undefined) metadataUpdates.vault_crypto_bundle = updates.cryptoBundle;
+      if (updates.enabled !== undefined)
+        metadataUpdates.vault_enabled = updates.enabled;
+      if (updates.locked !== undefined)
+        metadataUpdates.vault_locked = updates.locked;
+      if (updates.cryptoBundle !== undefined)
+        metadataUpdates.vault_crypto_bundle = updates.cryptoBundle;
 
       // Actively purge plaintext credentials from Supabase metadata
       metadataUpdates.vault_pwd = null;
@@ -161,7 +174,9 @@ export async function persistVaultState(
 /**
  * Hydrates vault crypto bundle from Supabase user_metadata upon login or initial load.
  */
-export async function syncVaultFromSupabase(user: any): Promise<VaultState | null> {
+export async function syncVaultFromSupabase(
+  user: any,
+): Promise<VaultState | null> {
   if (!user || typeof window === "undefined") return null;
 
   const meta = user.user_metadata || {};
@@ -195,7 +210,9 @@ export async function syncVaultFromSupabase(user: any): Promise<VaultState | nul
     localStorage.removeItem(sKey("frozen_key"));
 
     // Check if session has active vault key
-    const hasSessionKey = Boolean(sessionStorage.getItem("notes_vault_session_key"));
+    const hasSessionKey = Boolean(
+      sessionStorage.getItem("notes_vault_session_key"),
+    );
     const locked = enabled ? !hasSessionKey : false;
 
     localStorage.setItem(uKey("locked"), String(locked));
@@ -205,6 +222,10 @@ export async function syncVaultFromSupabase(user: any): Promise<VaultState | nul
       enabled,
       locked,
       cryptoBundle: bundle,
+      password: "",
+      recoveryKey: "",
+      frozenPassword: "",
+      frozenRecoveryKey: "",
     };
   }
 
