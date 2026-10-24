@@ -114,11 +114,13 @@ export function useLoadUserData() {
     );
 
     // Ensure user session and latest notes/data are loaded on initial screen load or refresh
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        loadUserData();
+    const initSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session?.user) {
+        await loadUserData();
       }
-    });
+    };
+    initSession();
 
     return () => {
       subscription.unsubscribe();
